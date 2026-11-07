@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COMICO Gestion</title>
+<style>
+:root{--g:#0b6b4b;--g2:#e6f2ed;--ink:#1d2a25;--mut:#66756e;--line:#dbe3df;--bg:#f4f6f5;--red:#b3261e;--amber:#8a5a00}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+.shell{display:flex;min-height:100vh}
+aside{width:250px;background:#0a3d2c;color:#e9f3ee;display:flex;flex-direction:column;padding:16px 12px;position:sticky;top:0;height:100vh;flex-shrink:0}
+aside .brand{font-weight:700;font-size:17px;padding:4px 8px 14px;border-bottom:1px solid #ffffff22;margin-bottom:10px}
+aside .brand small{display:block;font-weight:400;font-size:12px;opacity:.75}
+aside nav{flex:1;overflow:auto;display:flex;flex-direction:column;gap:2px}
+aside nav a{color:inherit;text-decoration:none;padding:9px 10px;border-radius:8px}
+aside nav a:hover{background:#ffffff14}
+aside nav a.on{background:#ffffff26;font-weight:600}
+.me{border-top:1px solid #ffffff22;padding-top:12px;font-size:14px}
+.me small{display:block;opacity:.7;margin-bottom:8px}
+main{flex:1;min-width:0}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:19px;flex:1}
+.hij{font-size:13px;color:var(--mut);text-align:right}
+.burger{display:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+#view{padding:20px;max-width:1200px}
+.btn{background:var(--g);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:inherit;border:1px solid currentColor;opacity:.9}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn.red{background:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h3{margin:0 0 10px;font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:26px;color:var(--g)}
+.stat span{color:var(--mut);font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input[type=search]{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);background:#fafcfb;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.in{color:var(--g);font-weight:600}
+td.out{color:var(--amber);font-weight:600}
+tr.void td{text-decoration:line-through;color:var(--mut)}
+td.act{white-space:nowrap;text-align:right}
+td.act .btn{margin-left:4px}
+.empty{padding:28px;text-align:center;color:var(--mut)}
+.sub{display:block;font-size:12px;color:var(--mut)}
+.backdrop{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:20}
+.modal{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:560px;box-shadow:0 10px 40px #0004}
+.modal.wide{max-width:760px}
+.modal h2{margin:0 0 14px;font-size:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
+.grid label.full{grid-column:1/-1}
+.grid input,.grid select,.grid textarea,.auth input,.auth select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:15px;width:100%}
+.bar{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;color:var(--ink)}
+.bar .btn.ghost{color:var(--ink)}
+.auth{max-width:380px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px}
+.auth h1{margin:0 0 4px;font-size:22px;color:var(--g)}
+.auth p{color:var(--mut);margin:0 0 16px}
+.auth label{display:block;margin-bottom:12px;font-size:13px;color:var(--mut)}
+.auth .btn{width:100%;padding:10px}
+.note{font-size:13px;color:var(--mut)}
+.sheet{border:2px solid var(--g);padding:24px;border-radius:6px;color:#000}
+.sheet .head{text-align:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+.sheet .head small{display:block;font-size:20px;margin-top:6px;letter-spacing:.06em;text-transform:uppercase}
+.sheet p{margin:10px 0}
+.sheet .foot{margin-top:28px;font-size:13px;color:#444;display:flex;justify-content:space-between;gap:12px}
+.sheet table td{padding:6px 8px}
+.idcard{width:340px;max-width:100%;border:2px solid var(--g);border-radius:12px;padding:14px;margin:0 auto;color:#000}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#222;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;z-index:50;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--red)}
+#toast.ok{background:var(--g)}
+@media(max-width:860px){
+ aside{position:fixed;left:0;top:0;z-index:15;transform:translateX(-100%);transition:.2s}
+ aside.open{transform:none}
+ .burger{display:block}
+ .grid{grid-template-columns:1fr}
+ #view{padding:12px}
+ .hij{display:none}
+}
+@media print{
+ body{background:#fff}
+ #app,#toast,.no-print{display:none!important}
+ .backdrop{position:static;background:none;padding:0;display:block}
+ .modal{box-shadow:none;max-width:none;padding:0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* =====================  COMICO Gestion  ===================== */
+
+const KEY = 'comico_gestion_v1';
+const MODS = ['dashboard','entities','mosques','members','leaders','finance','events','acts','audit','admin'];
+const TITLES = {
+  dashboard:'Tableau de bord', entities:'Structure et organes', mosques:'Mosquées', members:'Membres',
+  leaders:'Responsables religieux', finance:'Finances', events:'Événements et fêtes',
+  acts:'Attestations religieuses', audit:"Journal d'audit", admin:'Administration'
+};
+const ROLES = {
+  admin:{label:'Administrateur', read:MODS, write:['entities','mosques','members','leaders','finance','events','acts','admin']},
+  secretariat:{label:'Secrétariat', read:MODS.filter(m=>m!=='admin'), write:['entities','mosques','members','leaders','events','acts']},
+  tresorier:{label:'Trésorier', read:['dashboard','mosques','members','finance','events','audit'], write:['finance']},
+  imam:{label:'Imam / comité de mosquée', read:['dashboard','mosques','members','events','acts'], write:['members','acts']},
+  lecture:{label:'Consultation', read:['dashboard','entities','mosques','events'], write:[]}
+};
+
+const LEVELS = ['National','Provincial','Ville / Commune / Territoire'];
+const FUNCS = ['Imam','Khatib','Muezzin','Mufti','Ouléma','Qadi','Enseignant coranique','Guide de Hajj et Omra','Autre'];
+const INCOME = ['Cotisation','Zakat','Sadaqa (don libre)','Don pour la construction',"Don de l'Aïd",'Waqf','Autre recette'];
+const EXPENSE = ['Fonctionnement','Aide sociale','Travaux et entretien','Primes et salaires','Hajj et Omra','Autre dépense'];
+const isIncome = k => INCOME.includes(k);
+
+/* ---------- utilitaires ---------- */
+const $ = (s, e = document) => e.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const fmtDate = iso => iso ? String(iso).split('-').reverse().join('/') : '';
+const hijri = iso => {
+  if (!iso) return '';
+  try { 
+    return new Intl.DateTimeFormat('fr-FR-u-ca-islamic-umalqura', {day:'numeric', month:'long', year:'numeric'}).format(new Date(iso + 'T12:00:00')); 
+  } catch (e) {
+    try {
+      return new Intl.DateTimeFormat('fr-FR-u-ca-islamic', {day:'numeric', month:'long', year:'numeric'}).format(new Date(iso + 'T12:00:00'));
+    } catch(err) { return ''; }
+  }
+};
+const money = (n, c) => { try { return new Intl.NumberFormat('fr-FR', {style:'currency', currency:c || 'USD'}).format(n || 0); } catch (e) { return (n || 0) + ' ' + c; } };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+/* ---------- base de données locale ---------- */
+const blank = () => ({entities:[], mosques:[], members:[], leaders:[], finance:[], events:[], acts:[], audit:[], users:[], seq:{}});
+let db = (() => {
+  try { const d = JSON.parse(localStorage.getItem(KEY)); return d ? Object.assign(blank(), d) : blank(); }
+  catch (e) { return blank(); }
+})();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('Enregistrement impossible : stockage plein ou bloqué', 'err'); }
+}
+function nextNo(prefix) {
+  const y = new Date().getFullYear(), k = prefix + y;
+  db.seq[k] = (db.seq[k] || 0) + 1;
+  return `${prefix}-${y}-${String(db.seq[k]).padStart(4, '0')}`;
+}
+function log(action, mod, label) {
+  db.audit.unshift({id:uid(), at:new Date().toISOString(), user:session ? session.username : 'système', action, mod, label});
+  if (db.audit.length > 3000) db.audit.length = 3000;
+}
+
+/* ---------- session et mots de passe ---------- */
+let session = null;
+try {
+  const s = JSON.parse(sessionStorage.getItem('comico_session'));
+  const u = s && db.users.find(x => x.username === s.username);
+  if (u) session = {username:u.username, name:u.name, role:u.role};
+} catch (e) {}
+const canRead = m => !!session && ROLES[session.role] && ROLES[session.role].read.includes(m);
+const canWrite = m => !!session && ROLES[session.role] && ROLES[session.role].write.includes(m);
+
+const useSubtle = !!(window.crypto && crypto.subtle);
+async function hashPw(pw, salt, alg) {
+  const s = salt + ':' + pw;
+  if (alg === 's') {
+    if (!useSubtle) throw new Error('subtle');
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'f' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+async function makeUser(username, name, role, pw) {
+  const salt = uid(), alg = useSubtle ? 's' : 'f';
+  return {id:uid(), username, name, role, salt, alg, hash:await hashPw(pw, salt, alg), createdAt:new Date().toISOString()};
+}
+
+/* ---------- libellés et références ---------- */
+const LABEL = {
+  entities:r => r.name,
+  mosques:r => r.name,
+  members:r => [r.last, r.post, r.first].filter(Boolean).join(' '),
+  leaders:r => r.name,
+  finance:r => `${r.no} (${r.kind})`,
+  events:r => `${r.title} (${fmtDate(r.date)})`,
+  acts:r => `${r.no} ${r.kind} : ${r.person1}`
+};
+const refLabel = (c, id) => { const r = db[c].find(x => x.id === id); return r ? LABEL[c](r) : ''; };
+
+function depthOf(e) {
+  let d = 0, p = e;
+  const seen = new Set();
+  while (p && p.parent && !seen.has(p.id)) { seen.add(p.id); p = db.entities.find(x => x.id === p.parent); if (p) d++; }
+  return d;
+}
+function treeOrder() {
+  const out = [], seen = new Set();
+  const walk = (parent) => {
+    db.entities.filter(e => (e.parent || '') === parent || (parent === '' && !db.entities.some(x => x.id === e.parent)))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+      .forEach(e => { if (seen.has(e.id)) return; seen.add(e.id); out.push(e); walk(e.id); });
+  };
+  walk('');
+  db.entities.forEach(e => { if (!seen.has(e.id)) out.push(e); });
+  return out;
+}
+
+/* ---------- schémas des modules ---------- */
+const cellDate = k => r => fmtDate(r[k]);
+const SCHEMA = {
+  entities:{
+    single:'entité', fields:[
+      {k:'name', l:'Nom', t:'text', req:1},
+      {k:'level', l:'Niveau', t:'select', o:LEVELS, req:1},
+      {k:'parent', l:'Dépend de', t:'ref', c:'entities'},
+      {k:'head', l:'Responsable (représentant, président)', t:'text'},
+      {k:'phone', l:'Téléphone', t:'tel'},
+      {k:'notes', l:'Notes (mandat, statut, procès-verbal)', t:'textarea'}
+    ],
+    cols:[
+      {l:'Nom', f:r => '— '.repeat(depthOf(r)) + r.name},
+      {l:'Niveau', f:r => r.level},
+      {l:'Dépend de', f:r => refLabel('entities', r.parent)},
+      {l:'Responsable', f:r => r.head},
+      {l:'Téléphone', f:r => r.phone}
+    ],
+    check:(d, id) => (id && d.parent === id) ? 'Une entité ne peut pas dépendre d\'elle-même' : ''
+  },
+  mosques:{
+    single:'mosquée', fields:[
+      {k:'name', l:'Nom de la mosquée', t:'text', req:1},
+      {k:'entity', l:'Comité de rattachement', t:'ref', c:'entities'},
+      {k:'address', l:'Adresse', t:'text'},
+      {k:'gps', l:'Position GPS (latitude, longitude)', t:'text'},
+      {k:'capacity', l:'Capacité (personnes)', t:'number'},
+      {k:'imam', l:'Imam principal', t:'ref', c:'leaders'},
+      {k:'state', l:'État', t:'select', o:['En service','En construction','À rénover','Fermée'], d:'En service'},
+      {k:'notes', l:'Notes (terrain, titre de propriété, travaux)', t:'textarea'}
+    ],
+    cols:[
+      {l:'Mosquée', f:r => r.name},
+      {l:'Comité', f:r => refLabel('entities', r.entity)},
+      {l:'Adresse', f:r => r.address},
+      {l:'Imam', f:r => refLabel('leaders', r.imam)},
+      {l:'Capacité', f:r => r.capacity},
+      {l:'État', f:r => r.state}
+    ]
+  },
+  members:{
+    single:'membre', fields:[
+      {k:'last', l:'Nom', t:'text', req:1},
+      {k:'post', l:'Postnom', t:'text'},
+      {k:'first', l:'Prénom', t:'text', req:1},
+      {k:'sex', l:'Sexe', t:'select', o:['Masculin','Féminin'], req:1},
+      {k:'birth', l:'Date de naissance', t:'date'},
+      {k:'phone', l:'Téléphone', t:'tel'},
+      {k:'address', l:'Adresse', t:'text'},
+      {k:'mosque', l:'Mosquée', t:'ref', c:'mosques'},
+      {k:'since', l:"Date d'adhésion", t:'date', d:() => today()},
+      {k:'status', l:'Statut', t:'select', o:['Actif','Inactif','Décédé'], d:'Actif', req:1},
+      {k:'notes', l:'Notes', t:'textarea'}
+    ],
+    cols:[
+      {l:'N° de carte', f:r => r.card},
+      {l:'Nom complet', f:r => LABEL.members(r)},
+      {l:'Sexe', f:r => r.sex},
+      {l:'Téléphone', f:r => r.phone},
+      {l:'Mosquée', f:r => refLabel('mosques', r.mosque)},
+      {l:'Adhésion', f:cellDate('since')},
+      {l:'Statut', f:r => r.status}
+    ],
+    onCreate:r => { r.card = nextNo('COM'); },
+    actions:[{id:'card', label:'Carte'}]
+  },
+  leaders:{
+    single:'responsable religieux', fields:[
+      {k:'name', l:'Nom complet', t:'text', req:1},
+      {k:'role', l:'Fonction', t:'select', o:FUNCS, req:1},
+      {k:'mosque', l:'Mosquée', t:'ref', c:'mosques'},
+      {k:'phone', l:'Téléphone', t:'tel'},
+      {k:'diploma', l:'Formation / diplôme', t:'text'},
+      {k:'start', l:'Début du mandat', t:'date'},
+      {k:'end', l:'Fin du mandat', t:'date'},
+      {k:'notes', l:'Notes (nomination, procès-verbal)', t:'textarea'}
+    ],
+    cols:[
+      {l:'Nom', f:r => r.name},
+      {l:'Fonction', f:r => r.role},
+      {l:'Mosquée', f:r => refLabel('mosques', r.mosque)},
+      {l:'Téléphone', f:r => r.phone},
+      {l:'Mandat', f:r => [fmtDate(r.start), fmtDate(r.end)].filter(Boolean).join(' → ')}
+    ]
+  },
+  finance:{
+    single:'opération financière', noEdit:true, noDelete:true, fields:[
+      {k:'date', l:'Date', t:'date', req:1, d:() => today()},
+      {k:'kind', l:'Nature', t:'select', g:[['Recettes', INCOME], ['Dépenses', EXPENSE]], req:1},
+      {k:'amount', l:'Montant', t:'number', req:1},
+      {k:'cur', l:'Devise', t:'select', o:['USD','CDF'], d:'USD', req:1},
+      {k:'entity', l:'Comité / entité', t:'ref', c:'entities'},
+      {k:'member', l:'Membre concerné (facultatif)', t:'ref', c:'members'},
+      {k:'mode', l:'Mode de paiement', t:'select', o:['Espèces','Mobile money','Banque'], d:'Espèces', req:1},
+      {k:'ref', l:'Référence de la transaction', t:'text'},
+      {k:'note', l:'Libellé / justification', t:'textarea'}
+    ],
+    cols:[
+      {l:'N°', f:r => r.no},
+      {l:'Date', f:cellDate('date')},
+      {l:'Nature', f:r => r.kind},
+      {l:'Sens', f:r => isIncome(r.kind) ? 'Recette' : 'Dépense'},
+      {l:'Montant', f:r => money(r.amount, r.cur), cls:r => r.status === 'Annulée' ? '' : (isIncome(r.kind) ? 'in' : 'out')},
+      {l:'Paiement', f:r => r.mode},
+      {l:'Entité', f:r => refLabel('entities', r.entity)},
+      {l:'Statut', f:r => r.status === 'Annulée' ? 'Annulée : ' + (r.cancelReason || '') : 'Valide'}
+    ],
+    check:d => d.amount > 0 ? '' : 'Le montant doit être supérieur à zéro',
+    onCreate:r => { r.no = nextNo('REC'); r.status = 'Valide'; },
+    actions:[{id:'receipt', label:'Reçu'}, {id:'cancel', label:'Annuler', w:true, show:r => r.status !== 'Annulée'}]
+  },
+  events:{
+    single:'événement', fields:[
+      {k:'title', l:'Titre', t:'text', req:1},
+      {k:'kind', l:'Type', t:'select', o:['Aïd al-Fitr','Aïd al-Adha','Ramadan','Mawlid','Réunion','Formation','Collecte','Autre'], req:1},
+      {k:'date', l:'Date', t:'date', req:1},
+      {k:'end', l:'Date de fin', t:'date'},
+      {k:'place', l:'Lieu', t:'text'},
+      {k:'entity', l:'Comité organisateur', t:'ref', c:'entities'},
+      {k:'notes', l:'Notes (logistique, budget, bénévoles)', t:'textarea'}
+    ],
+    cols:[
+      {l:'Titre', f:r => r.title},
+      {l:'Type', f:r => r.kind},
+      {l:'Date', f:r => fmtDate(r.date) + (r.end ? ' → ' + fmtDate(r.end) : ''), sub:r => hijri(r.date)},
+      {l:'Lieu', f:r => r.place},
+      {l:'Organisateur', f:r => refLabel('entities', r.entity)}
+    ]
+  },
+  acts:{
+    single:'attestation', fields:[
+      {k:'kind', l:'Type', t:'select', o:['Mariage','Divorce','Conversion','Naissance','Décès'], req:1},
+      {k:'date', l:'Date de l\'événement', t:'date', req:1, d:() => today()},
+      {k:'place', l:'Lieu', t:'text'},
+      {k:'person1', l:'Personne concernée (époux, converti, enfant, défunt)', t:'text', req:1},
+      {k:'person2', l:'Deuxième personne (épouse) ou parents', t:'text'},
+      {k:'witnesses', l:'Témoins', t:'text'},
+      {k:'imam', l:'Imam officiant', t:'ref', c:'leaders'},
+      {k:'mosque', l:'Mosquée', t:'ref', c:'mosques'},
+      {k:'details', l:'Précisions (dot, nom donné, etc.)', t:'textarea'}
+    ],
+    cols:[
+      {l:'N°', f:r => r.no},
+      {l:'Type', f:r => r.kind},
+      {l:'Date', f:cellDate('date')},
+      {l:'Personnes', f:r => [r.person1, r.person2].filter(Boolean).join(' et ')},
+      {l:'Imam', f:r => refLabel('leaders', r.imam)},
+      {l:'Mosquée', f:r => refLabel('mosques', r.mosque)}
+    ],
+    onCreate:r => { r.no = nextNo('ATT'); },
+    actions:[{id:'attest', label:'Attestation'}]
+  }
+};
+
+const cell = (r, c) => { const v = c.f(r); return v === undefined || v === null ? '' : String(v); };
+function sorted(mod) {
+  if (mod === 'entities') return treeOrder();
+  const rows = [...db[mod]];
+  if (mod === 'finance' || mod === 'acts') return rows.sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt));
+  if (mod === 'events') return rows.sort((a, b) => a.date.localeCompare(b.date));
+  return rows.sort((a, b) => LABEL[mod](a).localeCompare(LABEL[mod](b), 'fr'));
+}
+function usedBy(mod, id) {
+  for (const m of Object.keys(SCHEMA))
+    for (const f of SCHEMA[m].fields)
+      if (f.t === 'ref' && f.c === mod && db[m].some(x => x[f.k] === id)) return TITLES[m];
+  return '';
+}
+
+/* ---------- interface : éléments communs ---------- */
+function toast(msg, type) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'show ' + (type || '');
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, 3400);
+}
+function modal(html, wide) {
+  $('#modal-root').innerHTML = `<div class="backdrop"><div class="modal ${wide ? 'wide' : ''}" role="dialog">${html}</div></div>`;
+}
+const closeModal = () => { $('#modal-root').innerHTML = ''; };
+function download(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function sheet(title, body) {
+  modal(`<div class="sheet"><div class="head"><b>COMMUNAUTÉ ISLAMIQUE DU CONGO (COMICO)</b><small>${esc(title)}</small></div>${body}
+    <div class="foot"><span>Émis le ${fmtDate(today())} par ${esc(session.name)}</span><span>Signature et cachet</span></div></div>
+    <div class="bar no-print"><button class="btn ghost" data-act="close">Fermer</button><button class="btn" data-act="print">Imprimer</button></div>`, true);
+}
+
+/* ---------- authentification ---------- */
+function renderAuth() {
+  const first = db.users.length === 0;
+  $('#app').innerHTML = `<form class="auth" data-form="${first ? 'setup' : 'login'}">
+    <h1>COMICO Gestion</h1>
+    <p>${first ? 'Première utilisation : créez le compte administrateur.' : 'Connectez-vous pour continuer.'}</p>
+    ${first ? '<label>Nom complet<input name="name" required></label>' : ''}
+    <label>Identifiant<input name="username" required autocomplete="username"></label>
+    <label>Mot de passe${first ? ' (6 caractères minimum)' : ''}<input name="pw" type="password" required minlength="${first ? 6 : 1}" autocomplete="${first ? 'new-password' : 'current-password'}"></label>
+    <button class="btn">${first ? 'Créer et entrer' : 'Se connecter'}</button>
+    <p class="note" style="margin-top:14px">Données enregistrées dans ce navigateur. Faites des sauvegardes régulières (Administration).</p>
+  </form>`;
+}
+async function doSetup(f) {
+  const fd = new FormData(f), pw = fd.get('pw');
+  if (String(pw).length < 6) return toast('Mot de passe trop court', 'err');
+  const u = await makeUser(String(fd.get('username')).trim(), String(fd.get('name')).trim(), 'admin', pw);
+  db.users.push(u); session = {username:u.username, name:u.name, role:u.role};
+  sessionStorage.setItem('comico_session', JSON.stringify(session));
+  log('Création du compte administrateur', 'admin', u.username); save(); start();
+}
+async function doLogin(f) {
+  const fd = new FormData(f), un = String(fd.get('username')).trim(), pw = fd.get('pw');
+  const u = db.users.find(x => x.username === un);
+  let ok = false;
+  try { ok = !!u && (await hashPw(pw, u.salt, u.alg)) === u.hash; }
+  catch (e) { return toast('Ouvrez le fichier comme à la création du compte (même mode de sécurité du navigateur)', 'err'); }
+  if (!ok) { log('Échec de connexion', 'admin', un); save(); return toast('Identifiant ou mot de passe incorrect', 'err'); }
+  session = {username:u.username, name:u.name, role:u.role};
+  sessionStorage.setItem('comico_session', JSON.stringify(session));
+  log('Connexion', 'admin', u.username); save(); start();
+}
+function logout() { log('Déconnexion', 'admin', session.username); save(); session = null; sessionStorage.removeItem('comico_session'); start(); }
+
+/* ---------- mise en page et navigation ---------- */
+const state = {q:{}};
+const route = () => { const m = (location.hash || '#/dashboard').slice(2).split('/')[0] || 'dashboard'; return MODS.includes(m) ? m : 'dashboard'; };
+
+function start() { if (!session) return renderAuth(); renderShell(); }
+function renderShell() {
+  let mod = route();
+  if (!canRead(mod)) mod = 'dashboard';
+  const nav = MODS.filter(canRead).map(m => `<a href="#/${m}" class="${m === mod ? 'on' : ''}">${esc(TITLES[m])}</a>`).join('');
+  $('#app').innerHTML = `<div class="shell">
+    <aside id="side"><div class="brand">COMICO Gestion<small>Communauté islamique du Congo</small></div>
+      <nav>${nav}</nav>
+      <div class="me"><b>${esc(session.name)}</b><small>${esc(ROLES[session.role].label)}</small>
+        <button class="btn ghost sm" data-act="logout">Déconnexion</button></div></aside>
+    <main><header><button class="burger" data-act="menu" aria-label="Menu">☰</button><h1>${esc(TITLES[mod])}</h1>
+      <span class="hij">${esc(hijri(today()))}<br>${fmtDate(today())}</span></header>
+      <section id="view"></section></main></div>`;
+  const v = $('#view');
+  if (mod === 'dashboard') v.innerHTML = viewDashboard();
+  else if (mod === 'audit') { v.innerHTML = viewAudit(); drawAudit(); }
+  else if (mod === 'admin') v.innerHTML = viewAdmin();
+  else { v.innerHTML = viewCrud(mod); drawTable(mod); }
+}
+window.addEventListener('hashchange', () => { if (session) renderShell(); });
+
+/* ---------- tableau de bord ---------- */
+function financeSummary() {
+  const y = String(new Date().getFullYear()), by = {};
+  for (const r of db.finance) {
+    if (r.status === 'Annulée' || !String(r.date).startsWith(y)) continue;
+    const c = r.cur; by[c] = by[c] || {in:0, out:0};
+    if (isIncome(r.kind)) by[c].in += r.amount; else by[c].out += r.amount;
+  }
+  const keys = Object.keys(by);
+  if (!keys.length) return `<p class="note">Aucune opération enregistrée en ${y}.</p>`;
+  return `<div class="cards">${keys.map(c => `<div class="stat"><span>Recettes ${y} (${c})</span><b>${esc(money(by[c].in, c))}</b></div>
+    <div class="stat"><span>Dépenses ${y} (${c})</span><b style="color:var(--amber)">${esc(money(by[c].out, c))}</b></div>
+    <div class="stat"><span>Solde ${y} (${c})</span><b>${esc(money(by[c].in - by[c].out, c))}</b></div>`).join('')}</div>`;
+}
+function viewDashboard() {
+  const active = db.members.filter(m => m.status === 'Actif').length;
+  const up = db.events.filter(e => (e.end || e.date) >= today()).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const empty = !db.entities.length && !db.members.length && !db.mosques.length;
+  return `${empty && canWrite('entities') ? `<div class="card"><h3>Pour commencer</h3><p>Créez d'abord la structure (national, province, comités), puis les mosquées et les membres. Vous pouvez aussi charger quelques données d'exemple pour essayer.</p>
+      <button class="btn" data-act="seed">Charger des données d'exemple</button></div>` : ''}
+    <div class="cards">
+      <div class="stat"><b>${db.entities.length}</b><span>Entités (comités)</span></div>
+      <div class="stat"><b>${db.mosques.length}</b><span>Mosquées</span></div>
+      <div class="stat"><b>${active}</b><span>Membres actifs</span></div>
+      <div class="stat"><b>${db.leaders.length}</b><span>Responsables religieux</span></div>
+      <div class="stat"><b>${db.acts.length}</b><span>Attestations émises</span></div>
+    </div>
+    ${canRead('finance') ? `<div class="card"><h3>Finances de l'année</h3>${financeSummary()}</div>` : ''}
+    <div class="card"><h3>Prochains événements</h3>${up.length ? `<table><tbody>${up.map(e => `<tr><td>${esc(e.title)}<span class="sub">${esc(e.kind)}</span></td><td>${fmtDate(e.date)}<span class="sub">${esc(hijri(e.date))}</span></td><td>${esc(e.place || '')}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Aucun événement à venir.</p>'}</div>
+    <p class="note">Les dates hégiriennes sont calculées automatiquement (calendrier Umm al-Qura) et peuvent différer d'un jour de l'observation du croissant : le Conseil des oulémas reste l'autorité pour le début du Ramadan et des fêtes.</p>`;
+}
+
+/* ---------- modules à liste (CRUD générique) ---------- */
+function viewCrud(mod) {
+  const w = canWrite(mod);
+  return `${mod === 'finance' ? `<div class="card"><h3>Résumé de l'année</h3>${financeSummary()}</div>` : ''}
+    <div class="toolbar"><input type="search" id="q" placeholder="Rechercher…" value="${esc(state.q[mod] || '')}">
+      ${w ? `<button class="btn" data-act="add" data-mod="${mod}">+ Ajouter</button>` : ''}
+      <button class="btn ghost" style="color:var(--g)" data-act="csv" data-mod="${mod}">Exporter (Excel)</button></div>
+    <div class="tw" id="tbl"></div>`;
+}
+function drawTable(mod) {
+  const S = SCHEMA[mod];
+  const q = (state.q[mod] || '').toLowerCase();
+  let rows = sorted(mod);
+  if (q) rows = rows.filter(r => S.cols.some(c => cell(r, c).toLowerCase().includes(q)));
+  const box = $('#tbl');
+  if (!rows.length) { box.innerHTML = `<div class="empty">${q ? 'Aucun résultat.' : 'Aucun enregistrement pour le moment.'}</div>`; return; }
+  const acts = r => {
+    const out = [];
+    for (const a of (S.actions || [])) if ((!a.w || canWrite(mod)) && (!a.show || a.show(r))) out.push(`<button class="btn ghost sm" style="color:var(--g)" data-act="${a.id}" data-mod="${mod}" data-id="${r.id}">${a.label}</button>`);
+    if (canWrite(mod) && !S.noEdit) out.push(`<button class="btn ghost sm" style="color:var(--ink)" data-act="edit" data-mod="${mod}" data-id="${r.id}">Modifier</button>`);
+    if (canWrite(mod) && !S.noDelete) out.push(`<button class="btn ghost sm" style="color:var(--red)" data-act="del" data-mod="${mod}" data-id="${r.id}">Supprimer</button>`);
+    return out.join('');
+  };
+  box.innerHTML = `<table><thead><tr>${S.cols.map(c => `<th>${esc(c.l)}</th>`).join('')}<th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r.status === 'Annulée' ? 'void' : ''}">${S.cols.map(c => `<td class="${c.cls ? c.cls(r) : ''}">${esc(cell(r, c))}${c.sub && c.sub(r) ? `<span class="sub">${esc(c.sub(r))}</span>` : ''}</td>`).join('')}<td class="act">${acts(r)}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+function fieldHTML(f, val) {
+  const n = `name="${f.k}"`, req = f.req ? ' required' : '', v = val === undefined || val === null ? '' : val;
+  if (f.t === 'textarea') return `<textarea ${n} rows="3">${esc(v)}</textarea>`;
+  if (f.t === 'select') {
+    const opt = o => `<option value="${esc(o)}" ${o === v ? 'selected' : ''}>${esc(o)}</option>`;
+    const body = f.g ? f.g.map(([g, os]) => `<optgroup label="${esc(g)}">${os.map(opt).join('')}</optgroup>`).join('') : f.o.map(opt).join('');
+    return `<select ${n}${req}>${f.req ? '<option value="">Choisir…</option>' : '<option value=""></option>'}${body}</select>`;
+  }
+  if (f.t === 'ref') {
+    const list = [...db[f.c]].sort((a, b) => LABEL[f.c](a).localeCompare(LABEL[f.c](b), 'fr'));
+    return `<select ${n}${req}><option value=""></option>${list.map(r => `<option value="${r.id}" ${r.id === v ? 'selected' : ''}>${esc(LABEL[f.c](r))}</option>`).join('')}</select>`;
+  }
+  const type = f.t === 'number' ? 'number" step="any" min="0' : f.t;
+  return `<input ${n} type="${type}" value="${esc(v)}"${req}>`;
+}
+function openForm(mod, id) {
+  if (!canWrite(mod)) return toast('Droit insuffisant', 'err');
+  const S = SCHEMA[mod], rec = id ? db[mod].find(x => x.id === id) : null;
+  modal(`<form data-form="${mod}" data-id="${id || ''}"><h2>${rec ? 'Modifier' : 'Ajouter'} : ${esc(S.single)}</h2>
+    <div class="grid">${S.fields.map(f => `<label class="${f.t === 'textarea' ? 'full' : ''}"><span>${esc(f.l)}${f.req ? ' *' : ''}</span>${fieldHTML(f, rec ? rec[f.k] : (typeof f.d === 'function' ? f.d() : f.d))}</label>`).join('')}</div>
+    <div class="bar"><button type="button" class="btn ghost" data-act="close">Annuler</button><button class="btn">Enregistrer</button></div></form>`);
+}
+function submitCrud(f) {
+  const mod = f.dataset.form, S = SCHEMA[mod], id = f.dataset.id;
+  if (!canWrite(mod)) return toast('Droit insuffisant', 'err');
+  const fd = new FormData(f), data = {};
+  for (const fl of S.fields) {
+    let v = String(fd.get(fl.k) || '').trim();
+    if (fl.t === 'number') v = v === '' ? '' : parseFloat(v);
+    data[fl.k] = v;
+    if (fl.req && (v === '' || Number.isNaN(v))) return toast('Champ obligatoire : ' + fl.l, 'err');
+  }
+  const err = S.check && S.check(data, id);
+  if (err) return toast(err, 'err');
+  if (id) {
+    const r = db[mod].find(x => x.id === id); if (!r) return;
+    Object.assign(r, data); r.updatedAt = new Date().toISOString(); r.updatedBy = session.username;
+    log('Modification', mod, LABEL[mod](r));
+  } else {
+    const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session.username}, data);
+    if (S.onCreate) S.onCreate(r);
+    db[mod].push(r); log('Création', mod, LABEL[mod](r));
+  }
+  save(); closeModal(); renderShell(); toast('Enregistré', 'ok');
+}
+function delRec(mod, id) {
+  if (!canWrite(mod) || SCHEMA[mod].noDelete) return;
+  const r = db[mod].find(x => x.id === id); if (!r) return;
+  const used = usedBy(mod, id);
+  if (used) return toast(`Suppression impossible : élément utilisé dans « ${used} »`, 'err');
+  if (!confirm(`Supprimer « ${LABEL[mod](r)} » ?`)) return;
+  db[mod] = db[mod].filter(x => x.id !== id);
+  log('Suppression', mod, LABEL[mod](r)); save(); renderShell(); toast('Supprimé', 'ok');
+}
+function csvExport(mod) {
+  const S = SCHEMA[mod], guard = v => /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+  const lines = [S.cols.map(c => c.l), ...sorted(mod).map(r => S.cols.map(c => cell(r, c)))]
+    .map(a => a.map(v => `"${guard(String(v)).replace(/"/g, '""')}"`).join(';'));
+  download(`${mod}-${today()}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+  log('Export CSV', mod, `${lines.length - 1} lignes`); save();
+}
+
+/* ---------- documents imprimables ---------- */
+function receipt(id) {
+  const r = db.finance.find(x => x.id === id); if (!r) return;
+  const inc = isIncome(r.kind), who = refLabel('members', r.member);
+  sheet(inc ? 'Reçu' : 'Pièce de dépense', `<p><b>N° ${esc(r.no)}</b> · Date : ${fmtDate(r.date)}</p>
+    <table><tbody>
+      <tr><td>Nature</td><td><b>${esc(r.kind)}</b></td></tr>
+      <tr><td>Montant</td><td><b>${esc(money(r.amount, r.cur))}</b></td></tr>
+      ${who ? `<tr><td>${inc ? 'Reçu de' : 'Concerne'}</td><td>${esc(who)}</td></tr>` : ''}
+      ${r.entity ? `<tr><td>Comité</td><td>${esc(refLabel('entities', r.entity))}</td></tr>` : ''}
+      <tr><td>Mode de paiement</td><td>${esc(r.mode)}${r.ref ? ' · réf. ' + esc(r.ref) : ''}</td></tr>
+      ${r.note ? `<tr><td>Libellé</td><td>${esc(r.note)}</td></tr>` : ''}
+      ${r.status === 'Annulée' ? `<tr><td>Statut</td><td><b>ANNULÉE</b> : ${esc(r.cancelReason || '')}</td></tr>` : ''}
+    </tbody></table>`);
+}
+function memberCard(id) {
+  const m = db.members.find(x => x.id === id); if (!m) return;
+  modal(`<div class="idcard"><b style="color:var(--g)">COMICO</b> · Carte de membre
+    <p style="font-size:18px;margin:10px 0 4px"><b>${esc(LABEL.members(m))}</b></p>
+    <div>N° ${esc(m.card)}</div><div>Mosquée : ${esc(refLabel('mosques', m.mosque) || '—')}</div>
+    <div>Membre depuis : ${fmtDate(m.since) || '—'}</div></div>
+    <div class="bar no-print"><button class="btn ghost" data-act="close">Fermer</button><button class="btn" data-act="print">Imprimer</button></div>`);
+}
+function attestation(id) {
+  const r = db.acts.find(x => x.id === id); if (!r) return;
+  const p1 = `<b>${esc(r.person1)}</b>`, p2 = r.person2 ? `<b>${esc(r.person2)}</b>` : '', h = hijri(r.date);
+  const d = fmtDate(r.date) + (h ? ` (${esc(h)})` : ''), place = r.place ? ` à ${esc(r.place)}` : '';
+  const imam = refLabel('leaders', r.imam), mosque = refLabel('mosques', r.mosque);
+  const wit = r.witnesses ? ` en présence des témoins : ${esc(r.witnesses)}` : '';
+  const lines = {
+    'Mariage':`le mariage religieux (nikah) de ${p1}${p2 ? ' et de ' + p2 : ''} a été célébré le ${d}${place},${wit || ' conformément aux règles de la religion musulmane'}.`,
+    'Divorce':`le divorce religieux de ${p1}${p2 ? ' et de ' + p2 : ''} a été constaté le ${d}${place}${wit}.`,
+    'Conversion':`${p1} a prononcé la profession de foi islamique (shahada) le ${d}${place}${wit}.`,
+    'Naissance':`la cérémonie de nomination de l'enfant ${p1}${p2 ? ', de ' + p2 : ''}, a eu lieu le ${d}${place}.`,
+    'Décès':`${p1} est décédé(e) le ${d}${place} et que la prière funéraire a été accomplie selon le rite musulman${wit}.`
+  };
+  sheet('Attestation religieuse de ' + r.kind.toLowerCase(), `<p><b>N° ${esc(r.no)}</b></p>
+    <p>Je soussigné${imam ? ', <b>' + esc(imam) + '</b>' : ''}${mosque ? ', de la mosquée <b>' + esc(mosque) + '</b>' : ''}, atteste que ${lines[r.kind] || ''}</p>
+    ${r.details ? `<p>${esc(r.details)}</p>` : ''}
+    <p class="note">Cette attestation est de nature religieuse et ne remplace pas l'acte d'état civil officiel.</p>`);
+}
+
+/* ---------- journal d'audit ---------- */
+function viewAudit() {
+  return `<div class="toolbar"><input type="search" id="qa" placeholder="Rechercher dans le journal…" value="${esc(state.q.audit || '')}">
+    <button class="btn ghost" style="color:var(--g)" data-act="csvaudit">Exporter (Excel)</button></div>
+    <div class="tw" id="tbl"></div><p class="note">Chaque création, modification, suppression, connexion et export est enregistré (3000 dernières actions).</p>`;
+}
+function drawAudit() {
+  const q = (state.q.audit || '').toLowerCase();
+  const rows = db.audit.filter(a => !q || `${a.user} ${a.action} ${a.mod} ${a.label}`.toLowerCase().includes(q)).slice(0, 300);
+  $('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Module</th><th>Élément</th></tr></thead><tbody>
+    ${rows.map(a => `<tr><td>${esc(new Date(a.at).toLocaleString('fr-FR'))}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td><td>${esc(TITLES[a.mod] || a.mod)}</td><td>${esc(a.label)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Aucune entrée.</div>';
+}
+
+/* ---------- administration ---------- */
+function viewAdmin() {
+  return `<div class="card"><h3>Utilisateurs</h3>
+    <div class="tw"><table><thead><tr><th>Identifiant</th><th>Nom</th><th>Rôle</th><th></th></tr></thead><tbody>
+    ${db.users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.name)}</td><td>${esc(ROLES[u.role] ? ROLES[u.role].label : u.role)}</td>
+      <td class="act"><button class="btn ghost sm" style="color:var(--ink)" data-act="resetpw" data-id="${u.id}">Mot de passe</button>
+      ${u.username !== session.username ? `<button class="btn ghost sm" style="color:var(--red)" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn" data-act="adduser">+ Ajouter un utilisateur</button></div></div>
+  <div class="card"><h3>Sauvegarde</h3>
+    <p class="note">Les données sont dans ce navigateur. Exportez régulièrement un fichier de sauvegarde et gardez-le en lieu sûr (clé USB, Google Drive).</p>
+    <div class="toolbar"><button class="btn" data-act="backup">Télécharger la sauvegarde</button>
+      <button class="btn ghost" style="color:var(--g)" data-act="restore">Restaurer une sauvegarde</button>
+      <input type="file" id="rf" accept="application/json,.json" hidden></div></div>
+  <div class="card"><h3>Zone dangereuse</h3><button class="btn red" data-act="wipe">Effacer toutes les données</button></div>`;
+}
+function openUserForm() {
+  modal(`<form data-form="user"><h2>Nouvel utilisateur</h2><div class="grid">
+    <label><span>Nom complet *</span><input name="name" required></label>
+    <label><span>Identifiant *</span><input name="username" required autocomplete="off"></label>
+    <label><span>Rôle *</span><select name="role">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('')}</select></label>
+    <label><span>Mot de passe * (6 caractères minimum)</span><input name="pw" type="password" required minlength="6" autocomplete="new-password"></label></div>
+    <div class="bar"><button type="button" class="btn ghost" data-act="close">Annuler</button><button class="btn">Créer</button></div></form>`);
+}
+async function submitUser(f) {
+  if (!canWrite('admin')) return;
+  const fd = new FormData(f), un = String(fd.get('username')).trim();
+  if (db.users.some(u => u.username === un)) return toast('Cet identifiant existe déjà', 'err');
+  const u = await makeUser(un, String(fd.get('name')).trim(), String(fd.get('role')), String(fd.get('pw')));
+  db.users.push(u); log('Création utilisateur', 'admin', `${un} (${u.role})`); save(); closeModal(); renderShell(); toast('Utilisateur créé', 'ok');
+}
+function seedDemo() {
+  const add = (mod, o) => { const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session.username}, o); if (SCHEMA[mod].onCreate) SCHEMA[mod].onCreate(r); db[mod].push(r); return r.id; };
+  const nat = add('entities', {name:'Direction nationale (exemple)', level:'National'});
+  const prov = add('entities', {name:'Comité provincial (exemple)', level:'Provincial', parent:nat});
+  const loc = add('entities', {name:'Comité local (exemple)', level:'Ville / Commune / Territoire', parent:prov});
+  const im = add('leaders', {name:'Imam Exemple', role:'Imam'});
+  const m1 = add('mosques', {name:'Mosquée Exemple 1', entity:loc, capacity:300, imam:im, state:'En service'});
+  add('mosques', {name:'Mosquée Exemple 2', entity:loc, capacity:150, state:'En construction'});
+  const a = add('members', {last:'Exemple', first:'Premier', sex:'Masculin', mosque:m1, status:'Actif', since:today()});
+  add('members', {last:'Exemple', first:'Deuxième', sex:'Féminin', mosque:m1, status:'Actif', since:today()});
+  add('finance', {date:today(), kind:'Cotisation', amount:20, cur:'USD', entity:loc, member:a, mode:'Espèces'});
+  add('finance', {date:today(), kind:'Zakat', amount:150, cur:'USD', entity:loc, mode:'Mobile money'});
+  add('finance', {date:today(), kind:'Aide sociale', amount:60, cur:'USD', entity:loc, mode:'Espèces', note:'Aide à une famille (exemple)'});
+  add('events', {title:'Réunion du comité (exemple)', kind:'Réunion', date:today(), place:'Mosquée Exemple 1', entity:loc});
+  log('Chargement des données d\'exemple', 'admin', ''); save(); renderShell(); toast('Données d\'exemple chargées', 'ok');
+}
+
+/* ---------- événements ---------- */
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('backdrop')) return closeModal();
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, mod = el.dataset.mod, id = el.dataset.id;
+  switch (a) {
+    case 'logout': return logout();
+    case 'menu': return $('#side').classList.toggle('open');
+    case 'close': return closeModal();
+    case 'print': return window.print();
+    case 'add': return openForm(mod);
+    case 'edit': return openForm(mod, id);
+    case 'del': return delRec(mod, id);
+    case 'csv': return csvExport(mod);
+    case 'csvaudit': {
+      const lines = [['Date','Utilisateur','Action','Module','Élément'], ...db.audit.map(x => [new Date(x.at).toLocaleString('fr-FR'), x.user, x.action, TITLES[x.mod] || x.mod, x.label])]
+        .map(r => r.map(v => `"${(/^[=+\-@]/.test(String(v)) ? "'" : '') + String(v).replace(/"/g, '""')}"`).join(';'));
+      return download(`audit-${today()}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+    }
+    case 'receipt': return receipt(id);
+    case 'card': return memberCard(id);
+    case 'attest': return attestation(id);
+    case 'cancel': {
+      if (!canWrite('finance')) return;
+      const r = db.finance.find(x => x.id === id); if (!r || r.status === 'Annulée') return;
+      const why = prompt(`Motif de l'annulation de ${r.no} :`);
+      if (!why || !why.trim()) return toast('Motif obligatoire', 'err');
+      r.status = 'Annulée'; r.cancelReason = why.trim(); r.cancelBy = session.username; r.cancelAt = new Date().toISOString();
+      log('Annulation', 'finance', `${r.no} : ${r.cancelReason}`); save(); renderShell(); return toast('Opération annulée', 'ok');
+    }
+    case 'seed': return canWrite('entities') && seedDemo();
+    case 'adduser': return canWrite('admin') && openUserForm();
+    case 'deluser': {
+      if (!canWrite('admin')) return;
+      const u = db.users.find(x => x.id === id); if (!u || u.username === session.username) return;
+      if (!confirm(`Supprimer l'utilisateur « ${u.username} » ?`)) return;
+      db.users = db.users.filter(x => x.id !== id); log('Suppression utilisateur', 'admin', u.username); save(); return renderShell();
+    }
+    case 'resetpw': {
+      if (!canWrite('admin')) return;
+      const u = db.users.find(x => x.id === id); if (!u) return;
+      const pw = prompt(`Nouveau mot de passe pour « ${u.username} » (6 caractères minimum) :`);
+      if (!pw) return;
+      if (pw.length < 6) return toast('Mot de passe trop court', 'err');
+      makeUser(u.username, u.name, u.role, pw).then(n => { Object.assign(u, {salt:n.salt, alg:n.alg, hash:n.hash}); log('Changement de mot de passe', 'admin', u.username); save(); toast('Mot de passe changé', 'ok'); });
+      return;
+    }
+    case 'backup':
+      download(`comico-sauvegarde-${today()}.json`, JSON.stringify(db), 'application/json');
+      log('Sauvegarde téléchargée', 'admin', ''); save(); return;
+    case 'restore': return $('#rf').click();
+    case 'wipe': {
+      if (!canWrite('admin')) return;
+      if (prompt('Cette action efface tout. Tapez EFFACER pour confirmer :') !== 'EFFACER') return;
+      db = blank(); save(); session = null; sessionStorage.removeItem('comico_session'); return start();
+    }
+  }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { state.q[route()] = e.target.value; drawTable(route()); }
+  if (e.target.id === 'qa') { state.q.audit = e.target.value; drawAudit(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id !== 'rf' || !e.target.files[0] || !canWrite('admin')) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!d || !Array.isArray(d.entities) || !Array.isArray(d.users)) throw new Error('format');
+      if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+      db = Object.assign(blank(), d); log('Sauvegarde restaurée', 'admin', ''); save();
+      const u = db.users.find(x => x.username === session.username);
+      if (!u) { session = null; sessionStorage.removeItem('comico_session'); } else session.role = u.role;
+      start(); toast('Sauvegarde restaurée', 'ok');
+    } catch (err) { toast('Fichier de sauvegarde invalide', 'err'); }
+  };
+  rd.readAsText(e.target.files[0]);
+});
+document.addEventListener('submit', e => {
+  const f = e.target, k = f.dataset && f.dataset.form; if (!k) return;
+  e.preventDefault();
+  if (k === 'setup') doSetup(f);
+  else if (k === 'login') doLogin(f);
+  else if (k === 'user') submitUser(f);
+  else if (SCHEMA[k]) submitCrud(f);
+});
+
+start();
+</script>
+</body>
+</html>
