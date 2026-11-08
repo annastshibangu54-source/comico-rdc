@@ -1390,10 +1390,11 @@ function promptLoginCode(id) {
 
 function promptCentralDeleteSchool(id) {
     const pass = prompt("Entrez le mot de passe Administrateur Central :");
-    if (pass === ADMIN_MASTER_PASSWORD) {
+    if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
         appData.schools = appData.schools.filter(x => x.id !== id);
         saveData();
         renderSchoolsList();
+        renderAdminCentralTable();
         alert("Madras supprimée.");
     }
 }
@@ -1608,7 +1609,7 @@ function renderDossiersStorageTable() {}
 function handleSaveCalendrierScolaire(e) { e.preventDefault(); }
 function renderCalendrierTable() {}
 
-functionrefreshHoraireOptions() {}
+function refreshHoraireOptions() {}
 function handleSaveHoraireCours(e) { e.preventDefault(); }
 function renderHorairesTable() {}
 
