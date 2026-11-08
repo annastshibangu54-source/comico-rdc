@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>COMICO-RDC Plateforme Intégrée de Gestion Sportive et Administrative</title>
+<title>COMICO-RDC Plateforme Intégrée de Gestion de la Communauté Musulmanes en République Démocratique du Congo</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <!-- Google Web Fonts-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,7 +38,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 .secret-modal-card { background: #fff; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
 .secret-code-badge { font-size: 26px; font-weight: 800; color: #0d6efd; letter-spacing: 2px; background: #e7f1ff; padding: 10px 20px; border-radius: 8px; border: 2px dashed #0d6efd; display: inline-block; margin: 15px 0; }
 
-/* MODALE DE CONSULTATION DE FICHIER SÉCURISÉE */
+/* MODALE DE CONSULTATION DE FICHIER / DOCUMENT INTÉGRÉE */
 .file-viewer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
 .file-viewer-card { background: #fff; width: 100%; max-width: 800px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
 .file-viewer-header { background: #0d6efd; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -104,7 +104,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="container-fluid bg-primary py-5 mb-5 no-print">
 <div class="container py-5 text-center">
 <h1 class="display-3 text-white">Plateforme Intégrée COMICO-RDC</h1>
-<p class="fs-4 text-white">Comité Olympique et Sportif Congolais - Gestion professionnelle des Fédérations et Structures</p>
+<p class="fs-4 text-white">Communauté Musulmanes en République Démocratique du Congo - Gestion professionnelle des Représentations et Structures</p>
 </div>
 </div>
 
@@ -116,16 +116,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4">
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-university fa-3x text-primary mb-3"></i>
-<h4 class="fw-bold">1. Créer une Structure / Fédération</h4>
-<p class="text-muted small">Enregistrer une nouvelle entité sportive avec son identité complète.</p>
+<h4 class="fw-bold">1. Créer une Structure / Représentation</h4>
+<p class="text-muted small">Enregistrer une nouvelle entité islamique avec son identité complète.</p>
 <button onclick="openSchoolForm()" class="btn btn-outline-primary btn-sm mt-2 fw-bold">Accéder à la création</button>
 </div>
 </div>
 <div class="col-md-4">
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-user-plus fa-3x text-success mb-3"></i>
-<h4 class="fw-bold">2. Inscription Membres / Athlètes</h4>
-<p class="text-muted small">Inscrire directement un membre ou athlète dans une structure active.</p>
+<h4 class="fw-bold">2. Inscription Membres / Fidèles</h4>
+<p class="text-muted small">Inscrire directement un membre ou fidèle dans une structure active.</p>
 <button onclick="openDirectRegistrationModal()" class="btn btn-outline-success btn-sm mt-2 fw-bold">Procéder à l'inscription</button>
 </div>
 </div>
@@ -133,7 +133,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-briefcase fa-3x text-warning mb-3"></i>
 <h4 class="fw-bold">3. Demande de Mission / Poste</h4>
-<p class="text-muted small">Postuler à un poste technique, administratif ou de représentation.</p>
+<p class="text-muted small">Postuler à un poste cultuel, administratif ou de représentation.</p>
 <button onclick="openJobApplicationSection()" class="btn btn-outline-warning btn-sm mt-2 fw-bold">Soumettre candidature</button>
 </div>
 </div>
@@ -184,7 +184,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div class="text-center mt-4">
-<h1 class="mb-4">Liste des Structures & Fédérations Enregistrées</h1>
+<h1 class="mb-4">Liste des Structures & Représentations Enregistrées</h1>
 </div>
 <div id="schoolsListContainer" class="row g-3"></div>
 </div>
@@ -198,17 +198,17 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
 <input type="hidden" id="editSchoolId">
 
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-school me-2"></i>1. Identité de l'Entité / Fédération</h5>
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-school me-2"></i>1. Identité de l'Entité / Représentation</h5>
 <div class="row g-3 mb-4">
-<div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Structure : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Fédération Congolaise de Football" required></div>
+<div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Structure : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Représentation Provinciale Islamique" required></div>
 <div class="col-md-6"><label class="form-label fw-bold">Logo / Emblem (Image optionnelle) :</label><input type="file" id="schoolLogoFile" class="form-control" accept="image/*"></div>
 <div class="col-md-4">
 <label class="form-label fw-bold">Type de Structure : *</label>
 <select id="schoolRegime" class="form-select" required>
-<option value="Fédération Nationale">Fédération Nationale</option>
-<option value="Association Sportive">Association Sportive</option>
-<option value="Comité Provinciale">Comité Provinciale</option>
-<option value="Club / Entité Affiliée">Club / Entité Affiliée</option>
+<option value="Représentation Nationale">Représentation Nationale</option>
+<option value="Représentation Provinciale">Représentation Provinciale</option>
+<option value="Comité Local / Mosquée">Comité Local / Mosquée</option>
+<option value="Entité Affiliée">Entité Affiliée</option>
 </select>
 </div>
 <div class="col-md-4"><label class="form-label fw-bold">Code / Matricule COMICO :</label><input type="text" id="schoolSecope" class="form-control" placeholder="Ex: COMICO-2026-001"></div>
@@ -218,9 +218,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-map-marker-alt me-2"></i>2. Localisation Administrative</h5>
 <div class="row g-3 mb-4">
 <div class="col-md-4">
-<label class="form-label fw-bold">Province Sportive : *</label>
+<label class="form-label fw-bold">Province : *</label>
 <select id="schoolProvince" class="form-select" onchange="updateSubDivisions()" required>
-<option value="">-- Choisir une Province Sportive --</option>
+<option value="">-- Choisir une Province --</option>
 <option value="KINSHASA">KINSHASA</option>
 <option value="HAUT-KATANGA">HAUT-KATANGA</option>
 <option value="NORD-KIVU">NORD-KIVU</option>
@@ -237,7 +237,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </select>
 </div>
 <div class="col-md-4"><label class="form-label fw-bold">Commune : *</label><input type="text" id="schoolCommune" class="form-control" placeholder="Ex: Gombe" required></div>
-<div class="col-md-8"><label class="form-label fw-bold">Adresse Physique du Siège : *</label><input type="text" id="schoolAddress" class="form-control" placeholder="Ex: Stade des Martyrs" required></div>
+<div class="col-md-8"><label class="form-label fw-bold">Adresse Physique du Siège : *</label><input type="text" id="schoolAddress" class="form-control" placeholder="Ex: Grand Mosquée" required></div>
 </div>
 
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-balance-scale me-2"></i>3. Identification Fiscale & Juridique</h5>
@@ -245,7 +245,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4"><label class="form-label fw-bold">Numéro NIF :</label><input type="text" id="schoolNif" class="form-control" placeholder="Ex: A1234567B"></div>
 <div class="col-md-4"><label class="form-label fw-bold">Numéro RCCM :</label><input type="text" id="schoolRccm" class="form-control" placeholder="Ex: CD/KIN/RCCM/20-B-0012"></div>
 <div class="col-md-4"><label class="form-label fw-bold">ID National (ID Nat) :</label><input type="text" id="schoolIdNat" class="form-control" placeholder="Ex: 01-93-N12345P"></div>
-<div class="col-md-12"><label class="form-label fw-bold">Arrêté Ministériel / Agrément Sportif :</label><input type="text" id="schoolAgrement" class="form-control" placeholder="Ex: MINSPORT/CABMIN/001/2022"></div>
+<div class="col-md-12"><label class="form-label fw-bold">Arrêté Ministériel / Agrément :</label><input type="text" id="schoolAgrement" class="form-control" placeholder="Ex: MININTER/CABMIN/001/2022"></div>
 </div>
 
 <div class="action-bar mt-4 no-print">
@@ -275,7 +275,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
-<div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Fédérations & Gestion COMICO</h4></div>
+<div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Représentations & Gestion COMICO</h4></div>
 <div class="card-body p-4">
 <table class="table table-bordered align-middle">
 <thead><tr><th>Logo</th><th>Structure</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Secret</th><th>Actions Administration Centrale</th></tr></thead>
@@ -303,7 +303,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card-body p-4">
 <form onsubmit="handleSendJobApplication(event)">
 <div class="row g-3">
-<div class="col-md-6"><label>Structure / Fédération :</label><select id="jobSchoolSelect" class="form-select" required></select></div>
+<div class="col-md-6"><label>Structure / Représentation :</label><select id="jobSchoolSelect" class="form-select" required></select></div>
 <div class="col-md-6"><label>Nom Complet :</label><input type="text" id="jobApplicantName" class="form-control" required></div>
 <div class="col-md-6"><label>Poste Sollicité / Fonction :</label><input type="text" id="jobRole" class="form-control" required></div>
 <div class="col-12">
@@ -345,26 +345,26 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 <div id="paramsSubmenu" class="params-submenu">
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-direction', this)"><i class="fa fa-user-tie me-2"></i> Comité Directeur</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Disciplines / Catégories</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Entraîneurs & Officiels</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Athlètes / Membres</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Départements / Cercles</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Imams & Cadres Religieux</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Fidèles & Membres</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-carte-eleve', this)"><i class="fa fa-id-card me-2"></i> Carte de Membre</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Épreuves & Règlements</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Saisie des Performances</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bilans de Compétition</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Enseignements & Règlements</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Suivi des Activités Cultuelles</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bilans d'Activités</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins-periodiques', this)"><i class="fa fa-file-alt me-2"></i> Rapports Périodiques</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Trésorerie & Cotisations</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Trésorerie & Zakat / Cotisations</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Entraînements</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Rassemblements</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Orientations</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-armoiries', this)"><i class="fa fa-shield-alt me-2"></i> Emblèmes & Devise</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-palmares', this)"><i class="fa fa-trophy me-2"></i> Palmarès & Médailles</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-palmares', this)"><i class="fa fa-trophy me-2"></i> Réalisations & Actions</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Sportif</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Programme des Séances</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Islamique</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Programme des Prières & Séances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
@@ -375,7 +375,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <div class="card mb-4 border-0 shadow-sm bg-light p-3">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Saisons Sportives</h6>
+        <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Saisons / Années d'Activités</h6>
         <div>
             <button id="btnUnlockSchoolYears" class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="promptUnlockSchoolYears()"><i class="fa fa-key me-1"></i> Déverrouiller les Saisons</button>
             <div id="schoolYearsSectionsContainer" class="d-flex align-items-center gap-2" style="display: none !important;">
@@ -400,10 +400,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4"><input type="text" id="dirName" class="form-control" placeholder="Nom et Prénom" required></div>
 <div class="col-md-4">
 <select id="dirRole" class="form-select" required>
-<option value="Président">Président</option>
+<option value="Représentant Légal">Représentant Légal</option>
 <option value="Secrétaire Général">Secrétaire Général</option>
 <option value="Trésorier Général">Trésorier Général</option>
-<option value="Directeur Technique National">Directeur Technique National</option>
+<option value="Chargé des Affaires Religieuses">Chargé des Affaires Religieuses</option>
 <option value="Membre Exécutif">Membre Exécutif</option>
 </select>
 </div>
@@ -421,9 +421,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- 2. CLASSES / DISCIPLINES -->
 <div class="tab-pane" id="tab-classes">
-<h5 class="text-primary fw-bold mb-3">Enregistrement des Disciplines & Catégories</h5>
+<h5 class="text-primary fw-bold mb-3">Enregistrement des Départements & Cercles</h5>
 <form id="formClass" onsubmit="handleSaveClass(event)" class="row g-2 mb-3 no-print">
-<div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom de la discipline / catégorie (ex: Judo - Seniors M)" required></div>
+<div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom du département / cercle (ex: Cercle d'Études Islamiques)" required></div>
 <div class="col-md-4">
 <div class="action-bar m-0">
 <button type="submit" class="btn btn-success btn-sm fw-bold flex-fill"><i class="fa fa-plus me-1"></i> Ajouter</button>
@@ -437,10 +437,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- 3. ENSEIGNANTS / ENTRAÎNEURS -->
 <div class="tab-pane" id="tab-profs">
-<h5 class="text-primary fw-bold mb-3">Entraîneurs & Officiels Techniques</h5>
+<h5 class="text-primary fw-bold mb-3">Imams & Cadres Religieux</h5>
 <div id="teachersLockedContainer" class="text-center py-5">
-    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Cette section est sécurisée. Veuillez saisir le <b>code secret de la structure</b> pour afficher la gestion des entraîneurs.</p>
-    <button class="btn btn-primary btn-sm fw-bold px-4" onclick="promptUnlockTeachers()"><i class="fa fa-key me-1"></i> Déverrouiller la section Entraîneurs</button>
+    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Cette section est sécurisée. Veuillez saisir le <b>code secret de la structure</b> pour afficher la gestion des imams et cadres religieux.</p>
+    <button class="btn btn-primary btn-sm fw-bold px-4" onclick="promptUnlockTeachers()"><i class="fa fa-key me-1"></i> Déverrouiller la section Imams</button>
 </div>
 <div id="teachersUnlockedContainer" style="display: none;">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -448,7 +448,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
     </div>
     <form id="formTeacher" onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 no-print">
-    <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'entraîneur" required></div>
+    <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'imam / cadre" required></div>
     <div class="col-md-4"><select id="teacherClass" class="form-select"></select></div>
     <div class="col-md-4">
     <div class="action-bar m-0">
@@ -458,21 +458,21 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     </div>
     </form>
-    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Discipline / Catégorie</th><th>Code Agent</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Département / Cercle</th><th>Code Agent</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
 </div>
 </div>
 
 <!-- 4. ELEVES / MEMBRES -->
 <div class="tab-pane" id="tab-eleves-reg">
-<h5 class="text-primary fw-bold mb-3">Inscription des Athlètes & Membres</h5>
+<h5 class="text-primary fw-bold mb-3">Inscription des Fidèles & Membres</h5>
 <div id="studentsContainerList"></div>
 </div>
 
 <!-- CARTE MEMBRE -->
 <div class="tab-pane" id="tab-carte-eleve">
-<h5 class="text-primary fw-bold mb-3">Carte de Membre / Athlète COMICO</h5>
+<h5 class="text-primary fw-bold mb-3">Carte de Membre / Fidèle COMICO</h5>
 <div class="row mb-3 no-print">
-<div class="col-md-4"><label>Discipline / Catégorie :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
+<div class="col-md-4"><label>Département / Cercle :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
 <div class="col-md-4"><label>Membre :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
 <div class="col-md-4"><label>Photo du Membre :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
 </div>
@@ -483,7 +483,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <div class="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
             <img id="cardSchoolLogo" src="" alt="Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
             <div class="text-center flex-grow-1 px-2">
-                <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">COMITÉ OLYMPIQUE ET SPORTIF CONGOLAIS</div>
+                <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">COMMUNAUTÉ MUSULMANES EN RDC</div>
                 <div id="cardSchoolName" class="text-primary fw-bold" style="font-size: 11px;">-</div>
             </div>
             <div style="width: 40px;"></div>
@@ -493,7 +493,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                 <div style="font-size: 11px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
                 <div style="font-size: 11px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
                 <div style="font-size: 11px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
-                <div style="font-size: 11px;"><b>Catégorie :</b> <span id="cardClasseVal">-</span></div>
+                <div style="font-size: 11px;"><b>Département :</b> <span id="cardClasseVal">-</span></div>
             </div>
             <div class="col-4 text-end">
                 <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 65px; height: 75px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
@@ -515,7 +515,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <h5 class="text-secondary fw-bold mb-3 no-print"><i class="fa fa-id-card-alt me-2"></i>Cartes Enregistrées / Archivées</h5>
 <div class="table-responsive no-print">
 <table class="table table-bordered align-middle">
-<thead><tr><th>Date</th><th>Matricule</th><th>Nom & Prénom</th><th>Catégorie</th><th>Action</th></tr></thead>
+<thead><tr><th>Date</th><th>Matricule</th><th>Nom & Prénom</th><th>Département</th><th>Action</th></tr></thead>
 <tbody id="savedCardsTableBody"></tbody>
 </table>
 </div>
@@ -523,10 +523,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- COURS / RÈGLEMENTS -->
 <div class="tab-pane" id="tab-cours">
-<h5 class="text-primary fw-bold mb-3">Épreuves, Modules & Règlements</h5>
+<h5 class="text-primary fw-bold mb-3">Enseignements, Modules & Règlements</h5>
 <form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
 <div class="col-md-4"><select id="courseClassSelect" class="form-select" required></select></div>
-<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé de l'épreuve / module" required></div>
+<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé de l'enseignement / module" required></div>
 <div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
 <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
 <div class="col-12 action-bar mt-2">
@@ -534,19 +534,19 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Épreuve</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+<table class="table table-bordered"><thead><tr><th>Enseignement</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
 </div>
 
 <!-- NOTES / PERFORMANCES -->
 <div class="tab-pane" id="tab-notes">
-<h5 class="text-primary fw-bold mb-3">Saisie des Performances & Notes</h5>
+<h5 class="text-primary fw-bold mb-3">Suivi des Activités & Évaluations Cultuelles</h5>
 <div class="row g-2 mb-3 no-print">
 <div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
 <div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
 </div>
 <div id="notesSheetContainer" class="mb-3"></div>
 <div class="action-bar no-print">
-<button class="btn btn-success btn-sm fw-bold" onclick="alert('Performances enregistrées automatiquement')"><i class="fa fa-save me-1"></i> Enregistrer</button>
+<button class="btn btn-success btn-sm fw-bold" onclick="alert('Activités enregistrées automatiquement')"><i class="fa fa-save me-1"></i> Enregistrer</button>
 <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -554,7 +554,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- BULLETINS / RAPPORTS DE COMPÉTITION -->
 <div class="tab-pane" id="tab-bulletins">
-<h5 class="text-primary fw-bold mb-3 no-print">Bilan de Compétition</h5>
+<h5 class="text-primary fw-bold mb-3 no-print">Bilan d'Activités</h5>
 <div class="row g-2 mb-3 no-print">
 <div class="col-md-5"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
 <div class="col-md-5"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
@@ -582,7 +582,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 <div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
 </div>
-<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une catégorie et un membre.</p></div></div>
+<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez un département et un membre.</p></div></div>
 <div class="action-bar mt-3 no-print">
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -590,13 +590,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- TRÉSORERIE & COTISATIONS -->
 <div class="tab-pane" id="tab-frais">
-<h5 class="text-primary fw-bold mb-3">Trésorerie & Cotisations</h5>
+<h5 class="text-primary fw-bold mb-3">Trésorerie & Zakat / Cotisations</h5>
 <form id="formPaymentCustom" onsubmit="handleSaveCaissePaymentCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
   <select id="caisseCategorie" class="form-select form-select-sm" onchange="updateCaisseFieldsVisibility()" required>
-    <option value="Eleve">1. Athlète / Membre</option>
-    <option value="Enseignant">2. Entraîneur / Officiel</option>
+    <option value="Eleve">1. Fidèle / Membre</option>
+    <option value="Enseignant">2. Imam / Cadre Religieux</option>
     <option value="Administrateur">3. Dirigeant / Admin</option>
   </select>
 </div>
@@ -718,13 +718,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
-<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Séances</h5>
+<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Rassemblements</h5>
 <form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
   <select id="presCategorie" class="form-select form-select-sm" onchange="updatePresenceFieldsVisibility()" required>
-    <option value="Eleve">1. Athlète / Membre</option>
-    <option value="Enseignant">2. Entraîneur / Officiel</option>
+    <option value="Eleve">1. Fidèle / Membre</option>
+    <option value="Enseignant">2. Imam / Cadre Religieux</option>
     <option value="Administrateur">3. Dirigeant / Admin</option>
   </select>
 </div>
@@ -743,7 +743,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <select id="presStatutEleve" class="form-select form-select-sm">
     <option value="Présent">Présent(e)</option>
     <option value="Absent">Absent(e)</option>
-    <option value="Blessé">Blessé(e)</option>
+    <option value="Excusé">Excusé(e)</option>
   </select>
 </div>
 
@@ -781,18 +781,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Orientations</h5>
 <form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print">
 <div class="col-md-4"><select id="discClassSelect" class="form-select" onchange="loadStudentsForDiscipline()" required></select></div>
 <div class="col-md-4"><select id="discStudentSelect" class="form-select" required></select></div>
-<div class="col-md-4"><input type="text" id="discobs" class="form-control" placeholder="Motif / Sanction" required></div>
+<div class="col-md-4"><input type="text" id="discobs" class="form-control" placeholder="Motif / Orientation" required></div>
 <div class="col-12 action-bar mt-2">
 <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button>
 <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Membre</th><th>Sanction</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+<table class="table table-bordered"><thead><tr><th>Membre</th><th>Orientation / Sanction</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
 </div>
 
 <!-- COMMUNICATION -->
@@ -827,7 +827,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       </div>
       <div class="col-md-6">
         <label class="form-label fw-bold">Devise Officielle :</label>
-        <input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Fair-Play - Unité - Performance">
+        <input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Paix - Fraternité - Travail">
       </div>
       <div class="col-12 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button>
@@ -843,13 +843,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PALMARÈS -->
 <div class="tab-pane" id="tab-palmares">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Palmarès & Médailles</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Réalisations & Actions</h5>
   <div class="row g-2 mb-3 no-print">
     <div class="col-md-6">
       <select id="palmaresClassSelect" class="form-select" onchange="renderPalmaresTable()"></select>
     </div>
     <div class="col-md-6">
-      <button class="btn btn-primary btn-sm fw-bold px-4" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer le Palmarès</button>
+      <button class="btn btn-primary btn-sm fw-bold px-4" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer les Réalisations</button>
     </div>
   </div>
   <div id="palmaresTableContainer"></div>
@@ -872,7 +872,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Expéditeur / Destinataire :</label>
-      <input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Ex: Ministère des Sports" required>
+      <input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Ex: Ministère de l'Intérieur" required>
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">N° de Référence :</label>
@@ -880,7 +880,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div class="col-md-8 mt-2">
       <label class="form-label fw-bold small">Objet du Document :</label>
-      <input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Ex: Invitation aux jeux olympiques..." required>
+      <input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Ex: Organisation de la fête de l'Aïd..." required>
     </div>
     <div class="col-md-4 mt-2">
       <label class="form-label fw-bold small"><i class="fa fa-paperclip me-1"></i>Pièce Jointe :</label>
@@ -914,8 +914,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       <div class="col-md-3">
         <label class="form-label fw-bold small">Catégorie du Dossier :</label>
         <select id="dossierCategory" class="form-select form-select-sm" onchange="updateDossierPersonOptions()" required>
-          <option value="Eleve">Athlète / Membre</option>
-          <option value="Enseignant">Entraîneur / Officiel</option>
+          <option value="Eleve">Fidèle / Membre</option>
+          <option value="Enseignant">Imam / Cadre Religieux</option>
           <option value="Administratif">Dirigeant / Admin</option>
         </select>
       </div>
@@ -925,7 +925,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       </div>
       <div class="col-md-5">
         <label class="form-label fw-bold small">Type de Pièce :</label>
-        <input type="text" id="dossierDocType" class="form-control form-control-sm" placeholder="Ex: Passeport, Licence, Certificat médical..." required>
+        <input type="text" id="dossierDocType" class="form-control form-control-sm" placeholder="Ex: Passeport, Attestation, Certificat..." required>
       </div>
       <div class="col-md-8 mt-2">
         <label class="form-label fw-bold small">Fichier Scanné :</label>
@@ -950,17 +950,17 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- CALENDRIER -->
 <div class="tab-pane" id="tab-calendrier-vacances">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Sportif & Compétitions</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Islamique & Événements</h5>
   <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-4">
       <label class="form-label fw-bold small">Intitulé de l'Événement :</label>
-      <input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Championnat National / Stage" required>
+      <input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Aïd el-Fitr / Conférence" required>
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Type :</label>
       <select id="calType" class="form-select form-select-sm" required>
-        <option value="Compétition">Compétition Officielle</option>
-        <option value="Stage">Stage de Formation</option>
+        <option value="Fête Religieuse">Fête Religieuse</option>
+        <option value="Conférence">Conférence / Séminaire</option>
         <option value="Assemblée">Assemblée Générale</option>
         <option value="Clôture">Clôture Saison</option>
       </select>
@@ -992,10 +992,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- HORAIRES -->
 <div class="tab-pane" id="tab-horaires-cours">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Programme des Séances d'Entraînement</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Programme des Prières & Séances</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-3">
-      <label class="form-label fw-bold small">Catégorie :</label>
+      <label class="form-label fw-bold small">Département :</label>
       <select id="horaireClassSelect" class="form-select form-select-sm" required></select>
     </div>
     <div class="col-md-3">
@@ -1012,11 +1012,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Plage Horaire :</label>
-      <input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="Ex: 15h00 - 17h00" required>
+      <input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="Ex: 12h00 - 14h00" required>
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Intitulé de la Séance :</label>
-      <input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Ex: Entraînement technique" required>
+      <input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Ex: Prêche du Vendredi / Cours coranique" required>
     </div>
     <div class="col-12 mt-3 d-flex justify-content-end gap-2">
       <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Ajouter</button>
@@ -1027,7 +1027,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <table class="table table-bordered table-sm align-middle">
       <thead>
         <tr class="table-primary">
-          <th>Catégorie</th><th>Jour</th><th>Heure</th><th>Séance</th><th class="no-print">Action</th>
+          <th>Département</th><th>Jour</th><th>Heure</th><th>Séance</th><th class="no-print">Action</th>
         </tr>
       </thead>
       <tbody id="horairesTableBody"></tbody>
@@ -1063,7 +1063,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
             </div>
             <div class="col-lg-3 col-md-6">
                 <h4 class="text-white mb-3">Contact</h4>
-                <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Stade des Martyrs, Kinshasa, RDC</p>
+                <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Kinshasa, RDC</p>
                 <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+243 90 681 99 93</p>
                 <p class="mb-2"><i class="fa fa-envelope me-3"></i>contact@comico-rdc.org</p>
             </div>
