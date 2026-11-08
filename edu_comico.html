@@ -1549,7 +1549,30 @@ function verifyCandidateCodeAndDisplayReply() {}
 
 function openAdminCentralPanel() {
     const pass = prompt("Mot de passe Admin Central :");
-    if(pass === ADMIN_MASTER_PASSWORD) showSection('view-admin-central');
+    if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        showSection('view-admin-central');
+        renderAdminCentralTable();
+    } else if(pass !== null) {
+        alert("Mot de passe incorrect.");
+    }
+}
+
+function renderAdminCentralTable() {
+    const tbody = document.getElementById('adminSchoolsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (appData.schools || []).map(s => `
+        <tr>
+            <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
+            <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
+            <td>${s.province} / ${s.subDivision || '-'}</td>
+            <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
+            <td><code>${s.secretCode}</code></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
+                <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
 function toggleSchoolPaymentStatus(id) {}
@@ -1585,7 +1608,7 @@ function renderDossiersStorageTable() {}
 function handleSaveCalendrierScolaire(e) { e.preventDefault(); }
 function renderCalendrierTable() {}
 
-function refreshHoraireOptions() {}
+functionrefreshHoraireOptions() {}
 function handleSaveHoraireCours(e) { e.preventDefault(); }
 function renderHorairesTable() {}
 
