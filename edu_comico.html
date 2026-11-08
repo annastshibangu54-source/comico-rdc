@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>COMICO-RDC Plateforme Intégrée de Gestion de la Communauté Musulmanes en République Démocratique du Congo</title>
+<title>COMICO-RDC Plateforme Intégrée de Gestion des Madras (Écoles Islamiques) en République Démocratique du Congo</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <!-- Google Web Fonts-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,7 +67,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
                 <a href="index.html" class="nav-item nav-link">Accueil</a>
-                <a href="gestion_comico.html" class="nav-item nav-link active">Gestion COMICO</a>
+                <a href="gestion_comico.html" class="nav-item nav-link active">Gestion Madras</a>
                 <a href="contact.html" class="nav-item nav-link">Contact</a>
                 <a href="javascript:void(0);" class="nav-item nav-link text-danger fw-bold" onclick="openAdminCentralPanel()"><i class="fa fa-user-shield me-1"></i> Admin Central</a>
             </div>
@@ -79,8 +79,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="secretCodeModal" class="secret-modal-overlay">
   <div class="secret-modal-card">
     <i class="fa fa-check-circle fa-4x text-success mb-3"></i>
-    <h3 class="fw-bold">Entité COMICO Créée avec Succès !</h3>
-    <p class="text-muted small">Voici votre <b>Code Secret</b> unique. Notez-le bien, il vous sera demandé pour ouvrir votre structure :</p>
+    <h3 class="fw-bold">Madras Créée avec Succès !</h3>
+    <p class="text-muted small">Voici votre <b>Code Secret</b> unique. Notez-le bien, il vous sera demandé pour ouvrir votre établissement :</p>
     <div id="modalSecretCodeDisplay" class="secret-code-badge">SEC-0000</div>
     <div>
       <button class="btn btn-outline-primary btn-sm me-2" onclick="copySecretCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
@@ -104,7 +104,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="container-fluid bg-primary py-5 mb-5 no-print">
 <div class="container py-5 text-center">
 <h1 class="display-3 text-white">Plateforme Intégrée COMICO-RDC</h1>
-<p class="fs-4 text-white">Communauté Musulmanes en République Démocratique du Congo - Gestion professionnelle des Représentations et Structures</p>
+<p class="fs-4 text-white">Communauté Musulmane en République Démocratique du Congo - Gestion professionnelle des Madras (Écoles Islamiques)</p>
 </div>
 </div>
 
@@ -115,25 +115,25 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="row g-4 mb-4 no-print">
 <div class="col-md-4">
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
-<i class="fa fa-university fa-3x text-primary mb-3"></i>
-<h4 class="fw-bold">1. Créer une Structure / Représentation</h4>
-<p class="text-muted small">Enregistrer une nouvelle entité islamique avec son identité complète.</p>
+<i class="fa fa-school fa-3x text-primary mb-3"></i>
+<h4 class="fw-bold">1. Créer une Madras</h4>
+<p class="text-muted small">Enregistrer une nouvelle école islamique avec son identité complète.</p>
 <button onclick="openSchoolForm()" class="btn btn-outline-primary btn-sm mt-2 fw-bold">Accéder à la création</button>
 </div>
 </div>
 <div class="col-md-4">
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-user-plus fa-3x text-success mb-3"></i>
-<h4 class="fw-bold">2. Inscription Membres / Fidèles</h4>
-<p class="text-muted small">Inscrire directement un membre ou fidèle dans une structure active.</p>
+<h4 class="fw-bold">2. Inscription Élèves / Étudiants</h4>
+<p class="text-muted small">Inscrire directement un élève ou étudiant dans une Madras active.</p>
 <button onclick="openDirectRegistrationModal()" class="btn btn-outline-success btn-sm mt-2 fw-bold">Procéder à l'inscription</button>
 </div>
 </div>
 <div class="col-md-4">
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-briefcase fa-3x text-warning mb-3"></i>
-<h4 class="fw-bold">3. Demande de Mission / Poste</h4>
-<p class="text-muted small">Postuler à un poste cultuel, administratif ou de représentation.</p>
+<h4 class="fw-bold">3. Demande de Poste / Enseignant</h4>
+<p class="text-muted small">Postuler à un poste d'enseignant, maître coranique ou administratif.</p>
 <button onclick="openJobApplicationSection()" class="btn btn-outline-warning btn-sm mt-2 fw-bold">Soumettre candidature</button>
 </div>
 </div>
@@ -149,13 +149,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <div class="mt-2 p-3 bg-light border rounded">
     <div class="input-group input-group-sm" style="max-width: 450px;">
-        <input type="text" id="blockedSchoolSecretCodeInput" class="form-control" placeholder="Entrez votre code secret structure bloquée...">
+        <input type="text" id="blockedSchoolSecretCodeInput" class="form-control" placeholder="Entrez votre code secret Madras bloquée...">
         <button class="btn btn-outline-danger fw-bold" type="button" onclick="openBlockedSchoolChat()"><i class="fa fa-headset me-1"></i> Discuter avec Admin Central</button>
     </div>
     <div id="blockedSchoolChatArea" class="mt-3" style="display: none;">
         <div class="card border-danger shadow-sm">
             <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-2">
-                <span><i class="fa fa-comments me-2"></i>Canal de Discussion Direct - <span id="chatSchoolNameDisplay">Structure</span> & Admin Central</span>
+                <span><i class="fa fa-comments me-2"></i>Canal de Discussion Direct - <span id="chatSchoolNameDisplay">Madras</span> & Admin Central</span>
                 <button class="btn btn-sm btn-light text-danger fw-bold py-0" onclick="closeBlockedSchoolChat()"><i class="fa fa-times"></i></button>
             </div>
             <div class="card-body bg-white" style="max-height: 250px; overflow-y: auto;" id="blockedSchoolMessagesContainer"></div>
@@ -184,7 +184,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div class="text-center mt-4">
-<h1 class="mb-4">Liste des Structures & Représentations Enregistrées</h1>
+<h1 class="mb-4">Liste des Madras Enregistrées</h1>
 </div>
 <div id="schoolsListContainer" class="row g-3"></div>
 </div>
@@ -193,32 +193,32 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="view-create-school" class="view-section">
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
 <div class="card shadow-sm border-0">
-<div class="card-header bg-primary text-white"><h4 class="m-0 text-white" id="schoolFormTitle">Fiche d'Enregistrement Officiel d'une Entité (COMICO)</h4></div>
+<div class="card-header bg-primary text-white"><h4 class="m-0 text-white" id="schoolFormTitle">Fiche d'Enregistrement Officiel d'une Madras (COMICO)</h4></div>
 <div class="card-body p-4">
 <form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
 <input type="hidden" id="editSchoolId">
 
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-school me-2"></i>1. Identité de l'Entité / Représentation</h5>
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-school me-2"></i>1. Identité de la Madras</h5>
 <div class="row g-3 mb-4">
-<div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Structure : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Représentation Provinciale Islamique" required></div>
+<div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Madras : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required></div>
 <div class="col-md-6"><label class="form-label fw-bold">Logo / Emblem (Image optionnelle) :</label><input type="file" id="schoolLogoFile" class="form-control" accept="image/*"></div>
 <div class="col-md-4">
-<label class="form-label fw-bold">Type de Structure : *</label>
+<label class="form-label fw-bold">Type d'Établissement : *</label>
 <select id="schoolRegime" class="form-select" required>
-<option value="Représentation Nationale">Représentation Nationale</option>
-<option value="Représentation Provinciale">Représentation Provinciale</option>
-<option value="Comité Local / Mosquée">Comité Local / Mosquée</option>
-<option value="Entité Affiliée">Entité Affiliée</option>
+<option value="Madras Coranique">Madras Coranique</option>
+<option value="Institut Islamique">Institut Islamique</option>
+<option value="École Fondamentale Islamique">École Fondamentale Islamique</option>
+<option value="Centre d'Études Arabes">Centre d'Études Arabes</option>
 </select>
 </div>
-<div class="col-md-4"><label class="form-label fw-bold">Code / Matricule COMICO :</label><input type="text" id="schoolSecope" class="form-control" placeholder="Ex: COMICO-2026-001"></div>
+<div class="col-md-4"><label class="form-label fw-bold">Code / Matricule Madras :</label><input type="text" id="schoolSecope" class="form-control" placeholder="Ex: MAD-2026-001"></div>
 <div class="col-md-4"><label class="form-label fw-bold">Téléphone Officiel :</label><input type="text" id="schoolPhone" class="form-control" placeholder="+243 ..."></div>
 </div>
 
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-map-marker-alt me-2"></i>2. Localisation Administrative</h5>
 <div class="row g-3 mb-4">
 <div class="col-md-4">
-<label class="form-label fw-bold">Province : *</label>
+<label class="form-label fw-bold">Province Éducationnelle : *</label>
 <select id="schoolProvince" class="form-select" onchange="updateSubDivisions()" required>
 <option value="">-- Choisir une Province --</option>
 <option value="KINSHASA">KINSHASA</option>
@@ -229,7 +229,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <option value="KASAI CENTRAL">KASAI CENTRAL</option>
 </select>
 </div>
-<div class="col-md-4"><label class="form-label fw-bold">Direction Régionale :</label><input type="text" id="schoolDivision" class="form-control" placeholder="Ex: Kinshasa Centre"></div>
+<div class="col-md-4"><label class="form-label fw-bold">Sous-Division / Inspection :</label><input type="text" id="schoolDivision" class="form-control" placeholder="Ex: Kinshasa Centre"></div>
 <div class="col-md-4">
 <label class="form-label fw-bold">Antenne / District : *</label>
 <select id="schoolSubDivision" class="form-select" required>
@@ -237,7 +237,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </select>
 </div>
 <div class="col-md-4"><label class="form-label fw-bold">Commune : *</label><input type="text" id="schoolCommune" class="form-control" placeholder="Ex: Gombe" required></div>
-<div class="col-md-8"><label class="form-label fw-bold">Adresse Physique du Siège : *</label><input type="text" id="schoolAddress" class="form-control" placeholder="Ex: Grand Mosquée" required></div>
+<div class="col-md-8"><label class="form-label fw-bold">Adresse Physique de l'École : *</label><input type="text" id="schoolAddress" class="form-control" placeholder="Ex: Avenue de la Mosquée" required></div>
 </div>
 
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-balance-scale me-2"></i>3. Identification Fiscale & Juridique</h5>
@@ -245,11 +245,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4"><label class="form-label fw-bold">Numéro NIF :</label><input type="text" id="schoolNif" class="form-control" placeholder="Ex: A1234567B"></div>
 <div class="col-md-4"><label class="form-label fw-bold">Numéro RCCM :</label><input type="text" id="schoolRccm" class="form-control" placeholder="Ex: CD/KIN/RCCM/20-B-0012"></div>
 <div class="col-md-4"><label class="form-label fw-bold">ID National (ID Nat) :</label><input type="text" id="schoolIdNat" class="form-control" placeholder="Ex: 01-93-N12345P"></div>
-<div class="col-md-12"><label class="form-label fw-bold">Arrêté Ministériel / Agrément :</label><input type="text" id="schoolAgrement" class="form-control" placeholder="Ex: MININTER/CABMIN/001/2022"></div>
+<div class="col-md-12"><label class="form-label fw-bold">Arrêté Ministériel / Agrément Éducatif :</label><input type="text" id="schoolAgrement" class="form-control" placeholder="Ex: MINEP/CABMIN/001/2022"></div>
 </div>
 
 <div class="action-bar mt-4 no-print">
-<button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer la Structure</button>
+<button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer la Madras</button>
 <button type="button" class="btn btn-secondary fw-bold px-4" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
@@ -262,7 +262,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
 
 <div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
-<div class="card-header bg-danger text-white"><h4 class="m-0 text-white"><i class="fa fa-bell me-2"></i>Centre de Notifications - Messages des Structures Litigieuses</h4></div>
+<div class="card-header bg-danger text-white"><h4 class="m-0 text-white"><i class="fa fa-bell me-2"></i>Centre de Notifications - Messages des Madras Litigieuses</h4></div>
 <div class="card-body p-4">
     <div class="input-group mb-3" style="max-width: 400px;">
         <input type="password" id="adminCentralNotificationCodeInput" class="form-control form-control-sm" placeholder="Entrez le code Admin Central...">
@@ -275,10 +275,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
-<div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Représentations & Gestion COMICO</h4></div>
+<div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Madras & Gestion COMICO</h4></div>
 <div class="card-body p-4">
 <table class="table table-bordered align-middle">
-<thead><tr><th>Logo</th><th>Structure</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Secret</th><th>Actions Administration Centrale</th></tr></thead>
+<thead><tr><th>Logo</th><th>Madras</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Secret</th><th>Actions Administration Centrale</th></tr></thead>
 <tbody id="adminSchoolsTableBody"></tbody>
 </table>
 </div>
@@ -288,7 +288,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold"><i class="fa fa-envelope-open-text me-2"></i>Demandes d'Assistance & Codes Oubliés Reçues</h4></div>
 <div class="card-body p-4">
 <table class="table table-bordered align-middle">
-<thead><tr><th>Date</th><th>Type (Structure / Section)</th><th>Nom de l'Entité / Cible</th><th>Motif / Raison de la Demande</th><th>Action</th></tr></thead>
+<thead><tr><th>Date</th><th>Type (Madras / Section)</th><th>Nom de l'Établissement / Cible</th><th>Motif / Raison de la Demande</th><th>Action</th></tr></thead>
 <tbody id="adminRequestsTableBody"></tbody>
 </table>
 </div>
@@ -299,11 +299,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="view-job-application" class="view-section">
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
 <div class="card shadow-sm border-0">
-<div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold">Soumettre une Candidature / Mission</h4></div>
+<div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold">Soumettre une Candidature / Poste</h4></div>
 <div class="card-body p-4">
 <form onsubmit="handleSendJobApplication(event)">
 <div class="row g-3">
-<div class="col-md-6"><label>Structure / Représentation :</label><select id="jobSchoolSelect" class="form-select" required></select></div>
+<div class="col-md-6"><label>Madras / Établissement :</label><select id="jobSchoolSelect" class="form-select" required></select></div>
 <div class="col-md-6"><label>Nom Complet :</label><input type="text" id="jobApplicantName" class="form-control" required></div>
 <div class="col-md-6"><label>Poste Sollicité / Fonction :</label><input type="text" id="jobRole" class="form-control" required></div>
 <div class="col-12">
@@ -320,7 +320,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="view-check-candidate-reply" class="view-section">
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
 <div class="card p-4">
-<h4>Suivi de Candidature / Mission</h4>
+<h4>Suivi de Candidature / Poste</h4>
 <input type="text" id="candidateSecretCodeInput" class="form-control mb-2" placeholder="Saisir votre Code Candidat">
 <button class="btn btn-warning" onclick="verifyCandidateCodeAndDisplayReply()">Vérifier</button>
 <div id="candidateReplyResultArea" class="mt-3" style="display:none;"></div>
@@ -345,26 +345,26 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 <div id="paramsSubmenu" class="params-submenu">
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-direction', this)"><i class="fa fa-user-tie me-2"></i> Comité Directeur</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Départements / Cercles</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Imams & Cadres Religieux</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Fidèles & Membres</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-carte-eleve', this)"><i class="fa fa-id-card me-2"></i> Carte de Membre</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Enseignements & Règlements</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Suivi des Activités Cultuelles</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bilans d'Activités</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins-periodiques', this)"><i class="fa fa-file-alt me-2"></i> Rapports Périodiques</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Trésorerie & Zakat / Cotisations</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Classes / Niveaux</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Enseignants & Maîtres</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Élèves / Étudiants</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-carte-eleve', this)"><i class="fa fa-id-card me-2"></i> Carte d'Élève</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Cours & Matières</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Saisie des Notes</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bulletins Scolaires</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins-periodiques', this)"><i class="fa fa-file-alt me-2"></i> Bulletins Périodiques</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Frais & Trésorerie</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Rassemblements</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Orientations</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-armoiries', this)"><i class="fa fa-shield-alt me-2"></i> Emblèmes & Devise</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-palmares', this)"><i class="fa fa-trophy me-2"></i> Réalisations & Actions</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-palmares', this)"><i class="fa fa-trophy me-2"></i> Palmarès & Réussites</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Islamique</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Programme des Prières & Séances</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
@@ -375,13 +375,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <div class="card mb-4 border-0 shadow-sm bg-light p-3">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Saisons / Années d'Activités</h6>
+        <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Années Scolaires</h6>
         <div>
-            <button id="btnUnlockSchoolYears" class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="promptUnlockSchoolYears()"><i class="fa fa-key me-1"></i> Déverrouiller les Saisons</button>
+            <button id="btnUnlockSchoolYears" class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="promptUnlockSchoolYears()"><i class="fa fa-key me-1"></i> Déverrouiller les Années</button>
             <div id="schoolYearsSectionsContainer" class="d-flex align-items-center gap-2" style="display: none !important;">
-                <div style="font-size: 13px; font-weight: bold;">Saison :</div>
+                <div style="font-size: 13px; font-weight: bold;">Année :</div>
                 <select id="globalSchoolYearSelect" class="form-select form-select-sm" style="width: 140px;" onchange="switchSchoolYear(this.value)"></select>
-                <button class="btn btn-outline-success btn-sm fw-bold text-nowrap" onclick="openNewSchoolYearWizard()" title="Ouvrir une nouvelle saison et archiver la précédente"><i class="fa fa-plus-circle me-1"></i> Nouvelle Saison</button>
+                <button class="btn btn-outline-success btn-sm fw-bold text-nowrap" onclick="openNewSchoolYearWizard()" title="Ouvrir une nouvelle année et archiver la précédente"><i class="fa fa-plus-circle me-1"></i> Nouvelle Année</button>
                 <button class="btn btn-outline-secondary btn-sm" onclick="lockSchoolYears()" title="Verrouiller"><i class="fa fa-lock"></i></button>
             </div>
         </div>
@@ -389,22 +389,22 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div id="defaultWelcomeMessage" class="text-center py-5 text-muted">
-<h5>Cliquez sur <b>Paramètres</b> à gauche pour gérer votre structure COMICO.</h5>
+<h5>Cliquez sur <b>Paramètres</b> à gauche pour gérer votre Madras.</h5>
 </div>
 
 <!-- 1. DIRECTION -->
 <div class="tab-pane" id="tab-direction">
-<h5 class="text-primary fw-bold mb-3">Comité Directeur & Membres Exécutifs</h5>
+<h5 class="text-primary fw-bold mb-3">Comité de Gestion & Administration</h5>
 <form id="formDirection" onsubmit="handleSaveDirection(event)" class="row g-2 mb-3 no-print">
 <input type="hidden" id="dirEditIndex">
 <div class="col-md-4"><input type="text" id="dirName" class="form-control" placeholder="Nom et Prénom" required></div>
 <div class="col-md-4">
 <select id="dirRole" class="form-select" required>
-<option value="Représentant Légal">Représentant Légal</option>
-<option value="Secrétaire Général">Secrétaire Général</option>
-<option value="Trésorier Général">Trésorier Général</option>
-<option value="Chargé des Affaires Religieuses">Chargé des Affaires Religieuses</option>
-<option value="Membre Exécutif">Membre Exécutif</option>
+<option value="Directeur / Préfet">Directeur / Préfet</option>
+<option value="Préfet des Études">Préfet des Études</option>
+<option value="Secrétaire Administratif">Secrétaire Administratif</option>
+<option value="Économe / Trésorier">Économe / Trésorier</option>
+<option value="Membre de l'Administration">Membre de l'Administration</option>
 </select>
 </div>
 <div class="col-md-4"><input type="text" id="dirPhone" class="form-control" placeholder="Téléphone / Contact"></div>
@@ -421,9 +421,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- 2. CLASSES / DISCIPLINES -->
 <div class="tab-pane" id="tab-classes">
-<h5 class="text-primary fw-bold mb-3">Enregistrement des Départements & Cercles</h5>
+<h5 class="text-primary fw-bold mb-3">Enregistrement des Classes & Niveaux</h5>
 <form id="formClass" onsubmit="handleSaveClass(event)" class="row g-2 mb-3 no-print">
-<div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom du département / cercle (ex: Cercle d'Études Islamiques)" required></div>
+<div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom de la classe / niveau (ex: 1ère Année Coranique)" required></div>
 <div class="col-md-4">
 <div class="action-bar m-0">
 <button type="submit" class="btn btn-success btn-sm fw-bold flex-fill"><i class="fa fa-plus me-1"></i> Ajouter</button>
@@ -437,10 +437,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- 3. ENSEIGNANTS / ENTRAÎNEURS -->
 <div class="tab-pane" id="tab-profs">
-<h5 class="text-primary fw-bold mb-3">Imams & Cadres Religieux</h5>
+<h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
 <div id="teachersLockedContainer" class="text-center py-5">
-    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Cette section est sécurisée. Veuillez saisir le <b>code secret de la structure</b> pour afficher la gestion des imams et cadres religieux.</p>
-    <button class="btn btn-primary btn-sm fw-bold px-4" onclick="promptUnlockTeachers()"><i class="fa fa-key me-1"></i> Déverrouiller la section Imams</button>
+    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Cette section est sécurisée. Veuillez saisir le <b>code secret de la Madras</b> pour afficher la gestion des enseignants.</p>
+    <button class="btn btn-primary btn-sm fw-bold px-4" onclick="promptUnlockTeachers()"><i class="fa fa-key me-1"></i> Déverrouiller la section Enseignants</button>
 </div>
 <div id="teachersUnlockedContainer" style="display: none;">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -448,7 +448,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
     </div>
     <form id="formTeacher" onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 no-print">
-    <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'imam / cadre" required></div>
+    <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'enseignant" required></div>
     <div class="col-md-4"><select id="teacherClass" class="form-select"></select></div>
     <div class="col-md-4">
     <div class="action-bar m-0">
@@ -458,23 +458,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     </div>
     </form>
-    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Département / Cercle</th><th>Code Agent</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe / Niveau</th><th>Matricule Enseignant</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
 </div>
 </div>
 
 <!-- 4. ELEVES / MEMBRES -->
 <div class="tab-pane" id="tab-eleves-reg">
-<h5 class="text-primary fw-bold mb-3">Inscription des Fidèles & Membres</h5>
+<h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
 <div id="studentsContainerList"></div>
 </div>
 
 <!-- CARTE MEMBRE -->
 <div class="tab-pane" id="tab-carte-eleve">
-<h5 class="text-primary fw-bold mb-3">Carte de Membre / Fidèle COMICO</h5>
+<h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
 <div class="row mb-3 no-print">
-<div class="col-md-4"><label>Département / Cercle :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
-<div class="col-md-4"><label>Membre :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
-<div class="col-md-4"><label>Photo du Membre :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
+<div class="col-md-4"><label>Classe / Niveau :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
+<div class="col-md-4"><label>Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
+<div class="col-md-4"><label>Photo de l'Élève :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
 </div>
 
 <div class="student-card-container mb-3" id="studentCardPrintArea">
@@ -483,7 +483,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <div class="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
             <img id="cardSchoolLogo" src="" alt="Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
             <div class="text-center flex-grow-1 px-2">
-                <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">COMMUNAUTÉ MUSULMANES EN RDC</div>
+                <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">COMMUNAUTÉ MUSULMANE EN RDC</div>
                 <div id="cardSchoolName" class="text-primary fw-bold" style="font-size: 11px;">-</div>
             </div>
             <div style="width: 40px;"></div>
@@ -493,14 +493,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                 <div style="font-size: 11px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
                 <div style="font-size: 11px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
                 <div style="font-size: 11px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
-                <div style="font-size: 11px;"><b>Département :</b> <span id="cardClasseVal">-</span></div>
+                <div style="font-size: 11px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
             </div>
             <div class="col-4 text-end">
                 <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 65px; height: 75px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
             </div>
         </div>
         <div class="mt-2 pt-1 border-top text-center" style="font-size: 8px; font-weight: 700; color: #555;">
-            Carte officielle de membre accrédité par le COMICO-RDC.
+            Carte scolaire officielle accréditée par le COMICO-RDC.
         </div>
     </div>
 </div>
@@ -515,7 +515,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <h5 class="text-secondary fw-bold mb-3 no-print"><i class="fa fa-id-card-alt me-2"></i>Cartes Enregistrées / Archivées</h5>
 <div class="table-responsive no-print">
 <table class="table table-bordered align-middle">
-<thead><tr><th>Date</th><th>Matricule</th><th>Nom & Prénom</th><th>Département</th><th>Action</th></tr></thead>
+<thead><tr><th>Date</th><th>Matricule</th><th>Nom & Prénom</th><th>Classe</th><th>Action</th></tr></thead>
 <tbody id="savedCardsTableBody"></tbody>
 </table>
 </div>
@@ -523,10 +523,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- COURS / RÈGLEMENTS -->
 <div class="tab-pane" id="tab-cours">
-<h5 class="text-primary fw-bold mb-3">Enseignements, Modules & Règlements</h5>
+<h5 class="text-primary fw-bold mb-3">Cours, Matières & Règlements</h5>
 <form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
 <div class="col-md-4"><select id="courseClassSelect" class="form-select" required></select></div>
-<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé de l'enseignement / module" required></div>
+<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
 <div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
 <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
 <div class="col-12 action-bar mt-2">
@@ -534,19 +534,19 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Enseignement</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+<table class="table table-bordered"><thead><tr><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
 </div>
 
 <!-- NOTES / PERFORMANCES -->
 <div class="tab-pane" id="tab-notes">
-<h5 class="text-primary fw-bold mb-3">Suivi des Activités & Évaluations Cultuelles</h5>
+<h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations</h5>
 <div class="row g-2 mb-3 no-print">
 <div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
 <div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
 </div>
 <div id="notesSheetContainer" class="mb-3"></div>
 <div class="action-bar no-print">
-<button class="btn btn-success btn-sm fw-bold" onclick="alert('Activités enregistrées automatiquement')"><i class="fa fa-save me-1"></i> Enregistrer</button>
+<button class="btn btn-success btn-sm fw-bold" onclick="alert('Notes enregistrées automatiquement')"><i class="fa fa-save me-1"></i> Enregistrer</button>
 <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -554,13 +554,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- BULLETINS / RAPPORTS DE COMPÉTITION -->
 <div class="tab-pane" id="tab-bulletins">
-<h5 class="text-primary fw-bold mb-3 no-print">Bilan d'Activités</h5>
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire</h5>
 <div class="row g-2 mb-3 no-print">
 <div class="col-md-5"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
 <div class="col-md-5"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
 <div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
 </div>
-<div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un membre.</p></div></div>
+<div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un élève.</p></div></div>
 <div class="action-bar mt-3 no-print">
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -568,21 +568,21 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- RAPPORTS PÉRIODIQUES -->
 <div class="tab-pane" id="tab-bulletins-periodiques">
-<h5 class="text-primary fw-bold mb-3 no-print">Rapport Périodique</h5>
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Périodique</h5>
 <div class="row g-2 mb-3 no-print">
 <div class="col-md-4"><select id="bulletinPerClassSelect" class="form-select" onchange="loadStudentsForPeriodicBulletin()"></select></div>
 <div class="col-md-4"><select id="bulletinPerStudentSelect" class="form-select" onchange="renderPeriodicBulletin()"></select></div>
 <div class="col-md-2">
     <select id="bulletinPeriodSelect" class="form-select" onchange="renderPeriodicBulletin()">
-        <option value="p1">1ère Session</option>
-        <option value="p2">2ème Session</option>
-        <option value="p3">3ème Session</option>
-        <option value="p4">4ème Session</option>
+        <option value="p1">1ère Période</option>
+        <option value="p2">2ème Période</option>
+        <option value="p3">3ème Période</option>
+        <option value="p4">4ème Période</option>
     </select>
 </div>
 <div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
 </div>
-<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez un département et un membre.</p></div></div>
+<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
 <div class="action-bar mt-3 no-print">
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -590,13 +590,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- TRÉSORERIE & COTISATIONS -->
 <div class="tab-pane" id="tab-frais">
-<h5 class="text-primary fw-bold mb-3">Trésorerie & Zakat / Cotisations</h5>
+<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie</h5>
 <form id="formPaymentCustom" onsubmit="handleSaveCaissePaymentCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
   <select id="caisseCategorie" class="form-select form-select-sm" onchange="updateCaisseFieldsVisibility()" required>
-    <option value="Eleve">1. Fidèle / Membre</option>
-    <option value="Enseignant">2. Imam / Cadre Religieux</option>
+    <option value="Eleve">1. Élève / Étudiant</option>
+    <option value="Enseignant">2. Enseignant / Personnel</option>
     <option value="Administrateur">3. Dirigeant / Admin</option>
   </select>
 </div>
@@ -674,7 +674,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card p-4 bg-light border-0 shadow-sm mb-3">
 <form id="formMobileMoney" onsubmit="handleSimulateMobileMoney(event)" class="row g-3">
 <div class="col-md-4">
-  <label class="form-label fw-bold small">Membre concerné :</label>
+  <label class="form-label fw-bold small">Élève concerné :</label>
   <select id="momoStudentSelect" class="form-select form-select-sm" required></select>
 </div>
 <div class="col-md-3">
@@ -703,7 +703,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <thead>
   <tr class="table-primary">
     <th>Date / Heure</th>
-    <th>Membre</th>
+    <th>Élève</th>
     <th>Opérateur</th>
     <th>Téléphone</th>
     <th>Montant</th>
@@ -718,13 +718,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
-<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Rassemblements</h5>
+<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours</h5>
 <form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
   <select id="presCategorie" class="form-select form-select-sm" onchange="updatePresenceFieldsVisibility()" required>
-    <option value="Eleve">1. Fidèle / Membre</option>
-    <option value="Enseignant">2. Imam / Cadre Religieux</option>
+    <option value="Eleve">1. Élève / Étudiant</option>
+    <option value="Enseignant">2. Enseignant / Personnel</option>
     <option value="Administrateur">3. Dirigeant / Admin</option>
   </select>
 </div>
@@ -743,7 +743,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <select id="presStatutEleve" class="form-select form-select-sm">
     <option value="Présent">Présent(e)</option>
     <option value="Absent">Absent(e)</option>
-    <option value="Excusé">Excusé(e)</option>
+    <option value="Retard">Retard</option>
   </select>
 </div>
 
@@ -781,18 +781,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Orientations</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
 <form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print">
 <div class="col-md-4"><select id="discClassSelect" class="form-select" onchange="loadStudentsForDiscipline()" required></select></div>
 <div class="col-md-4"><select id="discStudentSelect" class="form-select" required></select></div>
-<div class="col-md-4"><input type="text" id="discobs" class="form-control" placeholder="Motif / Orientation" required></div>
+<div class="col-md-4"><input type="text" id="discobs" class="form-control" placeholder="Motif / Sanction" required></div>
 <div class="col-12 action-bar mt-2">
 <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button>
 <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Membre</th><th>Orientation / Sanction</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+<table class="table table-bordered"><thead><tr><th>Élève</th><th>Sanction</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
 </div>
 
 <!-- COMMUNICATION -->
@@ -809,8 +809,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- EMPLOI / MISSIONS -->
 <div class="tab-pane" id="tab-jobs-received">
-<h5 class="text-primary fw-bold mb-3">Demandes de Mission / Poste Reçues</h5>
-<table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Mission</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+<h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues</h5>
+<table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
 <div class="action-bar mt-3 no-print">
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -818,7 +818,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- EMBLÈMES -->
 <div class="tab-pane" id="tab-armoiries">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-shield-alt me-2"></i>Emblèmes & Devise de la Structure</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-shield-alt me-2"></i>Emblèmes & Devise de la Madras</h5>
   <div class="card p-3 shadow-sm mb-4">
     <form onsubmit="handleSaveArmoiries(event)" class="row g-3">
       <div class="col-md-6">
@@ -827,7 +827,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       </div>
       <div class="col-md-6">
         <label class="form-label fw-bold">Devise Officielle :</label>
-        <input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Paix - Fraternité - Travail">
+        <input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence">
       </div>
       <div class="col-12 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button>
@@ -843,13 +843,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PALMARÈS -->
 <div class="tab-pane" id="tab-palmares">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Réalisations & Actions</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Palmarès & Réussites</h5>
   <div class="row g-2 mb-3 no-print">
     <div class="col-md-6">
       <select id="palmaresClassSelect" class="form-select" onchange="renderPalmaresTable()"></select>
     </div>
     <div class="col-md-6">
-      <button class="btn btn-primary btn-sm fw-bold px-4" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer les Réalisations</button>
+      <button class="btn btn-primary btn-sm fw-bold px-4" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer le Palmarès</button>
     </div>
   </div>
   <div id="palmaresTableContainer"></div>
@@ -857,7 +857,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- COURRIERS -->
 <div class="tab-pane" id="tab-courriers">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-exchange-alt me-2"></i>Gestion des Correspondances (Secrétariat COMICO)</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-exchange-alt me-2"></i>Gestion des Correspondances (Secrétariat Madras)</h5>
   <form id="formCourrier" onsubmit="handleSaveCourrier(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-3">
       <label class="form-label fw-bold small">Type de Flux :</label>
@@ -872,15 +872,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Expéditeur / Destinataire :</label>
-      <input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Ex: Ministère de l'Intérieur" required>
+      <input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Ex: Inspection de l'Enseignement" required>
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">N° de Référence :</label>
-      <input type="text" id="courrierRef" class="form-control form-control-sm" placeholder="Ex: Réf: 012/COMICO">
+      <input type="text" id="courrierRef" class="form-control form-control-sm" placeholder="Ex: Réf: 012/MAD">
     </div>
     <div class="col-md-8 mt-2">
       <label class="form-label fw-bold small">Objet du Document :</label>
-      <input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Ex: Organisation de la fête de l'Aïd..." required>
+      <input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Ex: Demande de subvention..." required>
     </div>
     <div class="col-md-4 mt-2">
       <label class="form-label fw-bold small"><i class="fa fa-paperclip me-1"></i>Pièce Jointe :</label>
@@ -908,14 +908,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DOSSIERS & ARCHIVES -->
 <div class="tab-pane" id="tab-dossiers-archivage">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers des Membres</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers des Élèves</h5>
   <div class="card p-3 shadow-sm mb-4 border-0 bg-light no-print">
     <form id="formDossierStorage" onsubmit="handleSaveDocumentDossier(event)" class="row g-2">
       <div class="col-md-3">
         <label class="form-label fw-bold small">Catégorie du Dossier :</label>
         <select id="dossierCategory" class="form-select form-select-sm" onchange="updateDossierPersonOptions()" required>
-          <option value="Eleve">Fidèle / Membre</option>
-          <option value="Enseignant">Imam / Cadre Religieux</option>
+          <option value="Eleve">Élève / Étudiant</option>
+          <option value="Enseignant">Enseignant / Personnel</option>
           <option value="Administratif">Dirigeant / Admin</option>
         </select>
       </div>
@@ -925,7 +925,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       </div>
       <div class="col-md-5">
         <label class="form-label fw-bold small">Type de Pièce :</label>
-        <input type="text" id="dossierDocType" class="form-control form-control-sm" placeholder="Ex: Passeport, Attestation, Certificat..." required>
+        <input type="text" id="dossierDocType" class="form-control form-control-sm" placeholder="Ex: Extrait de naissance, Certificat..." required>
       </div>
       <div class="col-md-8 mt-2">
         <label class="form-label fw-bold small">Fichier Scanné :</label>
@@ -950,19 +950,19 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- CALENDRIER -->
 <div class="tab-pane" id="tab-calendrier-vacances">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Islamique & Événements</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire & Vacances</h5>
   <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-4">
       <label class="form-label fw-bold small">Intitulé de l'Événement :</label>
-      <input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Aïd el-Fitr / Conférence" required>
+      <input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Vacances de fin de trimestre / Examen" required>
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Type :</label>
       <select id="calType" class="form-select form-select-sm" required>
-        <option value="Fête Religieuse">Fête Religieuse</option>
-        <option value="Conférence">Conférence / Séminaire</option>
-        <option value="Assemblée">Assemblée Générale</option>
-        <option value="Clôture">Clôture Saison</option>
+        <option value="Vacances">Vacances Scolaires</option>
+        <option value="Examen">Période d'Examens</option>
+        <option value="Réunion">Réunion des Parents</option>
+        <option value="Clôture">Clôture Année</option>
       </select>
     </div>
     <div class="col-md-2">
@@ -992,10 +992,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- HORAIRES -->
 <div class="tab-pane" id="tab-horaires-cours">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Programme des Prières & Séances</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-3">
-      <label class="form-label fw-bold small">Département :</label>
+      <label class="form-label fw-bold small">Classe :</label>
       <select id="horaireClassSelect" class="form-select form-select-sm" required></select>
     </div>
     <div class="col-md-3">
@@ -1012,11 +1012,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div class="col-md-3">
       <label class="form-label fw-bold small">Plage Horaire :</label>
-      <input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="Ex: 12h00 - 14h00" required>
+      <input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="Ex: 08h00 - 10h00" required>
     </div>
     <div class="col-md-3">
-      <label class="form-label fw-bold small">Intitulé de la Séance :</label>
-      <input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Ex: Prêche du Vendredi / Cours coranique" required>
+      <label class="form-label fw-bold small">Intitulé du Cours :</label>
+      <input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Ex: Cours de Coran / Fiqh" required>
     </div>
     <div class="col-12 mt-3 d-flex justify-content-end gap-2">
       <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Ajouter</button>
@@ -1027,7 +1027,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <table class="table table-bordered table-sm align-middle">
       <thead>
         <tr class="table-primary">
-          <th>Département</th><th>Jour</th><th>Heure</th><th>Séance</th><th class="no-print">Action</th>
+          <th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th>
         </tr>
       </thead>
       <tbody id="horairesTableBody"></tbody>
@@ -1210,7 +1210,7 @@ function handleSaveSchool(e) {
     const secope = document.getElementById('schoolSecope').value.trim();
     const phone = document.getElementById('schoolPhone').value.trim();
     const agrement = document.getElementById('schoolAgrement').value.trim();
-    const secretCode = 'COM-' + Math.floor(1000 + Math.random() * 9000);
+    const secretCode = 'MAD-' + Math.floor(1000 + Math.random() * 9000);
     
     const fileInput = document.getElementById('schoolLogoFile');
     const file = (fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
@@ -1342,7 +1342,7 @@ function renderSchoolsList() {
     const container = document.getElementById('schoolsListContainer');
     if(!container) return;
     if(!appData.schools || !appData.schools.length) {
-        container.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">Aucune structure enregistrée.</div></div>';
+        container.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">Aucune Madras enregistrée.</div></div>';
         return;
     }
     container.innerHTML = appData.schools.map(s => `
@@ -1394,7 +1394,7 @@ function promptCentralDeleteSchool(id) {
         appData.schools = appData.schools.filter(x => x.id !== id);
         saveData();
         renderSchoolsList();
-        alert("Structure supprimée.");
+        alert("Madras supprimée.");
     }
 }
 
@@ -1425,12 +1425,12 @@ function switchSchoolYear(year) {
 
 function openNewSchoolYearWizard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const newYear = prompt("Nouvelle saison (ex: 2026-2027) :");
+    const newYear = prompt("Nouvelle année (ex: 2026-2027) :");
     if(newYear) {
         s.activeYear = newYear;
         s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, caisse: [], discipline: [] };
         saveData();
-        alert("Nouvelle saison ouverte !");
+        alert("Nouvelle année ouverte !");
     }
 }
 
