@@ -29,7 +29,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 .action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
 
 /* DESIGN CARTE MEMBRE COMICO AVANCÉ */
-.student-card-container { position: relative; width: 380px; min-height: 230px; margin: 0 auto; background: #fff; border: 2px solid #0d6efd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); overflow: hidden; font-family: 'Nunito', sans-serif; color: #000; text-align: left; }
+.student-card-container { position: relative; width: 380px; min-height: 250px; margin: 0 auto; background: #fff; border: 2px solid #0d6efd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); overflow: hidden; font-family: 'Nunito', sans-serif; color: #000; text-align: left; }
 .student-card-bg-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; opacity: 0.08; object-fit: contain; pointer-events: none; z-index: 0; }
 .student-card-content { position: relative; z-index: 1; }
 
@@ -125,7 +125,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
 <i class="fa fa-user-plus fa-3x text-success mb-3"></i>
 <h4 class="fw-bold">2. Inscription Élèves / Étudiants</h4>
-<p class="text-muted small">Inscrire directement un élève ou étudiant dans une Madras active.</p>
+<p class="text-muted small">Réservé au propriétaire de la Madras active.</p>
 <button onclick="openDirectRegistrationModal()" class="btn btn-outline-success btn-sm mt-2 fw-bold">Procéder à l'inscription</button>
 </div>
 </div>
@@ -163,12 +163,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                 <div class="input-group input-group-sm mb-2">
                     <input type="text" id="schoolChatMessageInput" class="form-control" placeholder="Écrire un message à l'Admin Central...">
                     <button class="btn btn-primary" type="button" onclick="sendSchoolChatMessage()"><i class="fa fa-paper-plane"></i></button>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-primary btn-sm flex-fill fw-bold" type="button" id="btnSchoolRecordVoice" onclick="toggleSchoolVoiceRecording()">
-                        <i class="fa fa-microphone me-1 text-danger fa-beat" id="schoolMicIcon" style="display:none;"></i> <span id="schoolRecordBtnText">🎙️ Enregistrer Voix</span>
-                    </button>
-                    <span id="schoolRecordTimer" class="small text-danger fw-bold" style="display:none;">00:00</span>
                 </div>
             </div>
         </div>
@@ -283,16 +277,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </table>
 </div>
 </div>
-
-<div class="card shadow-sm border-0 border-start border-4 border-warning">
-<div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold"><i class="fa fa-envelope-open-text me-2"></i>Demandes d'Assistance & Codes Oubliés Reçues</h4></div>
-<div class="card-body p-4">
-<table class="table table-bordered align-middle">
-<thead><tr><th>Date</th><th>Type (Madras / Section)</th><th>Nom de l'Établissement / Cible</th><th>Motif / Raison de la Demande</th><th>Action</th></tr></thead>
-<tbody id="adminRequestsTableBody"></tbody>
-</table>
-</div>
-</div>
 </div>
 
 <!-- DEMANDE EMPLOI / MISSION -->
@@ -313,17 +297,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </form>
 </div>
-</div>
-</div>
-
-<!-- SUIVI CANDIDAT -->
-<div id="view-check-candidate-reply" class="view-section">
-<button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
-<div class="card p-4">
-<h4>Suivi de Candidature / Poste</h4>
-<input type="text" id="candidateSecretCodeInput" class="form-control mb-2" placeholder="Saisir votre Code Candidat">
-<button class="btn btn-warning" onclick="verifyCandidateCodeAndDisplayReply()">Vérifier</button>
-<div id="candidateReplyResultArea" class="mt-3" style="display:none;"></div>
 </div>
 </div>
 
@@ -410,9 +383,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4"><input type="text" id="dirPhone" class="form-control" placeholder="Téléphone / Contact"></div>
 <div class="col-12 action-bar mt-2">
 <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-plus me-1"></i> Enregistrer / Ajouter</button>
-<button type="button" class="btn btn-warning btn-sm fw-bold" onclick="resetDirectionForm()"><i class="fa fa-edit me-1"></i> Modifier</button>
-<button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteSelectedDirection()"><i class="fa fa-trash me-1"></i> Supprimer</button>
-<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
@@ -427,7 +397,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4">
 <div class="action-bar m-0">
 <button type="submit" class="btn btn-success btn-sm fw-bold flex-fill"><i class="fa fa-plus me-1"></i> Ajouter</button>
-<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
@@ -439,33 +408,49 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-profs">
 <h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
 <div id="teachersLockedContainer" class="text-center py-5">
-    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Cette section est sécurisée. Veuillez saisir le <b>code secret de la Madras</b> pour afficher la gestion des enseignants.</p>
-    <button class="btn btn-primary btn-sm fw-bold px-4" onclick="promptUnlockTeachers()"><i class="fa fa-key me-1"></i> Déverrouiller la section Enseignants</button>
+    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Sécurisé : Saisissez le <b>Code Secret de Propriété</b> (Directeur/Préfet/Amir).</p>
+    <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
+        <input type="password" id="ownerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <button class="btn btn-primary fw-bold" onclick="promptUnlockTeachers()">Déverrouiller</button>
+    </div>
 </div>
 <div id="teachersUnlockedContainer" style="display: none;">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé</span>
+        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé (Propriétaire)</span>
         <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
     </div>
     <form id="formTeacher" onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 no-print">
-    <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'enseignant" required></div>
-    <div class="col-md-4"><select id="teacherClass" class="form-select"></select></div>
-    <div class="col-md-4">
-    <div class="action-bar m-0">
-    <button type="submit" class="btn btn-success btn-sm fw-bold flex-fill"><i class="fa fa-plus me-1"></i> Ajouter</button>
-    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
-    </div>
+    <div class="col-md-3"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'enseignant" required></div>
+    <div class="col-md-3"><select id="teacherClass" class="form-select" required></select></div>
+    <div class="col-md-3"><input type="text" id="teacherSecretCode" class="form-control" placeholder="Code Secret Enseignant (ex: ENS-123)" required></div>
+    <div class="col-md-3"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
     </form>
-    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe / Niveau</th><th>Matricule Enseignant</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe / Niveau</th><th>Code Secret Enseignant</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
 </div>
 </div>
 
 <!-- 4. ELEVES / MEMBRES -->
 <div class="tab-pane" id="tab-eleves-reg">
 <h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
-<div id="studentsContainerList"></div>
+<div id="studentsLockedContainer" class="text-center py-5">
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictement réservé au propriétaire de la Madras.</p>
+    <button class="btn btn-danger btn-sm fw-bold" onclick="openOwnerStudentRegistration()">Déverrouiller Inscription Élèves</button>
+</div>
+<div id="studentsUnlockedContainer" style="display:none;">
+    <form id="formStudent" onsubmit="handleSaveStudent(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
+        <div class="col-md-3"><input type="text" id="studentMatricule" class="form-control" placeholder="Matricule" required></div>
+        <div class="col-md-3"><input type="text" id="studentName" class="form-control" placeholder="Nom & Prénom" required></div>
+        <div class="col-md-2">
+            <select id="studentSex" class="form-select" required>
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+            </select>
+        </div>
+        <div class="col-md-2"><select id="studentClassSelect" class="form-select" required></select></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-save"></i> Inscrire</button></div>
+    </form>
+    <div id="studentsContainerList"></div>
+</div>
 </div>
 
 <!-- CARTE MEMBRE -->
@@ -480,27 +465,26 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="student-card-container mb-3" id="studentCardPrintArea">
     <img id="cardBgLogo" src="" class="student-card-bg-logo" alt="Logo Filigrane">
     <div class="student-card-content">
-        <div class="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-            <img id="cardSchoolLogo" src="" alt="Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
-            <div class="text-center flex-grow-1 px-2">
-                <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">COMMUNAUTÉ MUSULMANE EN RDC</div>
+        <div class="text-center mb-2 pb-2 border-bottom">
+            <div style="font-size: 9px; font-weight: 700;">République Démocratique du Congo</div>
+            <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">Communauté Islamique en République Démocratique du Congo en sigle "COMICO"</div>
+            <hr class="my-1" style="border-top: 1px solid #0d6efd;">
+            <div class="d-flex align-items-center justify-content-between">
+                <img id="cardSchoolLogo" src="" alt="Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;">
                 <div id="cardSchoolName" class="text-primary fw-bold" style="font-size: 11px;">-</div>
+                <div style="width: 35px;"></div>
             </div>
-            <div style="width: 40px;"></div>
         </div>
         <div class="row align-items-center">
             <div class="col-8">
-                <div style="font-size: 11px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
-                <div style="font-size: 11px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
-                <div style="font-size: 11px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
-                <div style="font-size: 11px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
+                <div style="font-size: 10px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
+                <div style="font-size: 10px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
+                <div style="font-size: 10px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
+                <div style="font-size: 10px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
             </div>
             <div class="col-4 text-end">
-                <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 65px; height: 75px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
+                <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
             </div>
-        </div>
-        <div class="mt-2 pt-1 border-top text-center" style="font-size: 8px; font-weight: 700; color: #555;">
-            Carte scolaire officielle accréditée par le COMICO-RDC.
         </div>
     </div>
 </div>
@@ -509,15 +493,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button class="btn btn-success btn-sm fw-bold" onclick="saveStudentCardData()"><i class="fa fa-save me-1"></i> Enregistrer la Carte</button>
 <button class="btn btn-primary btn-sm fw-bold" onclick="printStudentCard()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button>
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
-
-<hr class="my-4 no-print">
-<h5 class="text-secondary fw-bold mb-3 no-print"><i class="fa fa-id-card-alt me-2"></i>Cartes Enregistrées / Archivées</h5>
-<div class="table-responsive no-print">
-<table class="table table-bordered align-middle">
-<thead><tr><th>Date</th><th>Matricule</th><th>Nom & Prénom</th><th>Classe</th><th>Action</th></tr></thead>
-<tbody id="savedCardsTableBody"></tbody>
-</table>
 </div>
 </div>
 
@@ -529,40 +504,46 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
 <div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
 <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
-<div class="col-12 action-bar mt-2">
-<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+<table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
 </div>
 
 <!-- NOTES / PERFORMANCES -->
 <div class="tab-pane" id="tab-notes">
 <h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations</h5>
-<div class="row g-2 mb-3 no-print">
-<div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
-<div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
+<div id="teacherAccessCheckArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Accès enseignant (Saisir votre Code Secret Enseignant) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="teacherAuthCode" class="form-control" placeholder="Votre code secret enseignant...">
+        <button class="btn btn-primary" onclick="verifyTeacherAccess()">Valider l'Accès</button>
+    </div>
 </div>
-<div id="notesSheetContainer" class="mb-3"></div>
-<div class="action-bar no-print">
-<button class="btn btn-success btn-sm fw-bold" onclick="alert('Notes enregistrées automatiquement')"><i class="fa fa-save me-1"></i> Enregistrer</button>
-<button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+<div id="notesWorkspace" style="display:none;">
+    <div class="row g-2 mb-3 no-print">
+        <div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
+        <div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
+    </div>
+    <div id="notesSheetContainer" class="mb-3"></div>
 </div>
 </div>
 
-<!-- BULLETINS / RAPPORTS DE COMPÉTITION -->
+<!-- BULLETINS -->
 <div class="tab-pane" id="tab-bulletins">
-<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire</h5>
-<div class="row g-2 mb-3 no-print">
-<div class="col-md-5"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
-<div class="col-md-5"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
-<div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation</h5>
+<div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Authentification (Code Madras ou Code Enseignant) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="bulletinAuthCode" class="form-control" placeholder="Code d'accès...">
+        <button class="btn btn-primary" onclick="verifyBulletinAccess()">Accéder</button>
+    </div>
 </div>
-<div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un élève.</p></div></div>
-<div class="action-bar mt-3 no-print">
-<button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+<div id="bulletinWorkspace" style="display:none;">
+    <div class="row g-2 mb-3 no-print">
+        <div class="col-md-4"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
+        <div class="col-md-4"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
+        <div class="col-md-2" id="printBulletinBtnContainer"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+    </div>
+    <div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un élève.</p></div></div>
 </div>
 </div>
 
@@ -583,86 +564,34 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
 </div>
 <div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
-<div class="action-bar mt-3 no-print">
-<button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
 </div>
 
 <!-- TRÉSORERIE & COTISATIONS -->
 <div class="tab-pane" id="tab-frais">
-<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie</h5>
+<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Propriétaire Uniquement)</h5>
 <form id="formPaymentCustom" onsubmit="handleSaveCaissePaymentCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
   <select id="caisseCategorie" class="form-select form-select-sm" onchange="updateCaisseFieldsVisibility()" required>
     <option value="Eleve">1. Élève / Étudiant</option>
     <option value="Enseignant">2. Enseignant / Personnel</option>
-    <option value="Administrateur">3. Dirigeant / Admin</option>
   </select>
 </div>
-
 <div class="col-md-3">
   <label class="form-label fw-bold small">Bénéficiaire / Personne :</label>
   <select id="caissePersonSelect" class="form-select form-select-sm" required></select>
 </div>
-
 <div class="col-md-3">
-  <label class="form-label fw-bold small">Date & Heure :</label>
-  <input type="text" id="caisseDateTime" class="form-control form-control-sm" readonly>
+  <label class="form-label fw-bold small">Montant Payé / Perçu ($) :</label>
+  <input type="number" id="caisseMontant" class="form-control form-control-sm" placeholder="0" required>
 </div>
-
-<div class="col-md-3 caisse-fields-eleve">
-  <label class="form-label fw-bold small">Somme Totale ($) :</label>
-  <input type="number" id="caisseEleveTotal" class="form-control form-control-sm" placeholder="0">
-</div>
-<div class="col-md-3 caisse-fields-eleve">
-  <label class="form-label fw-bold small">Somme Payée ($) :</label>
-  <input type="number" id="caisseElevePaye" class="form-control form-control-sm" placeholder="0" oninput="calculateEleveReste()">
-</div>
-<div class="col-md-3 caisse-fields-eleve">
-  <label class="form-label fw-bold small">Reste ($) :</label>
-  <input type="number" id="caisseEleveReste" class="form-control form-control-sm" placeholder="0" readonly>
-</div>
-
-<div class="col-md-3 caisse-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Somme Totale ($) :</label>
-  <input type="number" id="caisseStaffTotal" class="form-control form-control-sm" placeholder="0" oninput="calculateStaffReste()">
-</div>
-<div class="col-md-3 caisse-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Indemnité ($) :</label>
-  <input type="number" id="caisseStaffPrime" class="form-control form-control-sm" placeholder="0" oninput="calculateStaffReste()">
-</div>
-<div class="col-md-3 caisse-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Avance ($) :</label>
-  <input type="number" id="caisseStaffEmprunt" class="form-control form-control-sm" placeholder="0" oninput="calculateStaffReste()">
-</div>
-<div class="col-md-3 caisse-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Remboursement ($) :</label>
-  <input type="number" id="caisseStaffRembourse" class="form-control form-control-sm" placeholder="0" oninput="calculateStaffReste()">
-</div>
-<div class="col-md-3 caisse-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Reste à Payer ($) :</label>
-  <input type="number" id="caisseStaffReste" class="form-control form-control-sm" placeholder="0" readonly>
-</div>
-
-<div class="col-12 mt-3 d-flex justify-content-end gap-2">
-  <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer</button>
-  <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Liste</button>
-  <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+<div class="col-md-3 d-flex align-items-end">
+  <button type="submit" class="btn btn-success btn-sm fw-bold w-100"><i class="fa fa-save me-1"></i> Enregistrer</button>
 </div>
 </form>
-
 <div class="table-responsive">
 <table class="table table-bordered table-sm align-middle">
-<thead>
-  <tr class="table-primary">
-    <th>Catégorie</th>
-    <th>Nom / Bénéficiaire</th>
-    <th>Détails Financiers</th>
-    <th>Date & Heure</th>
-    <th class="no-print">Action</th>
-  </tr>
-</thead>
+<thead><tr class="table-primary"><th>Catégorie</th><th>Nom / Bénéficiaire</th><th>Montant</th><th>Date</th><th class="no-print">Action</th></tr></thead>
 <tbody id="caisseCustomTableBody"></tbody>
 </table>
 </div>
@@ -673,124 +602,34 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-mobile-alt me-2"></i>Simulation Paiement Mobile Money (RDC)</h5>
 <div class="card p-4 bg-light border-0 shadow-sm mb-3">
 <form id="formMobileMoney" onsubmit="handleSimulateMobileMoney(event)" class="row g-3">
-<div class="col-md-4">
-  <label class="form-label fw-bold small">Élève concerné :</label>
-  <select id="momoStudentSelect" class="form-select form-select-sm" required></select>
-</div>
-<div class="col-md-3">
-  <label class="form-label fw-bold small">Opérateur Mobile :</label>
-  <select id="momoOperator" class="form-select form-select-sm" required>
-    <option value="M-Pesa (Vodacom)">M-Pesa (Vodacom)</option>
-    <option value="Orange Money">Orange Money</option>
-    <option value="Airtel Money">Airtel Money</option>
-  </select>
-</div>
-<div class="col-md-3">
-  <label class="form-label fw-bold small">Numéro de Téléphone :</label>
-  <input type="text" id="momoPhone" class="form-control form-control-sm" placeholder="Ex: +243 820000000" required>
-</div>
-<div class="col-md-2">
-  <label class="form-label fw-bold small">Montant ($) :</label>
-  <input type="number" id="momoAmount" class="form-control form-control-sm" placeholder="Ex: 50" required>
-</div>
-<div class="col-12 text-end">
-  <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-paper-plane me-1"></i> Simuler la Transaction</button>
-</div>
+<div class="col-md-4"><label class="form-label fw-bold small">Élève :</label><select id="momoStudentSelect" class="form-select form-select-sm" required></select></div>
+<div class="col-md-3"><label class="form-label fw-bold small">Opérateur :</label><select id="momoOperator" class="form-select form-select-sm" required><option value="M-Pesa">M-Pesa</option><option value="Orange Money">Orange Money</option><option value="Airtel Money">Airtel Money</option></select></div>
+<div class="col-md-3"><label class="form-label fw-bold small">Téléphone :</label><input type="text" id="momoPhone" class="form-control form-control-sm" placeholder="+243..." required></div>
+<div class="col-md-2"><label class="form-label fw-bold small">Montant ($) :</label><input type="number" id="momoAmount" class="form-control form-control-sm" placeholder="50" required></div>
+<div class="col-12 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Simuler</button></div>
 </form>
 </div>
-<div class="table-responsive">
-<table class="table table-bordered table-sm align-middle">
-<thead>
-  <tr class="table-primary">
-    <th>Date / Heure</th>
-    <th>Élève</th>
-    <th>Opérateur</th>
-    <th>Téléphone</th>
-    <th>Montant</th>
-    <th>Statut</th>
-    <th class="no-print">Action</th>
-  </tr>
-</thead>
-<tbody id="momoTableBody"></tbody>
-</table>
-</div>
+<table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Élève</th><th>Opérateur</th><th>Montant</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="momoTableBody"></tbody></table>
 </div>
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
 <h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours</h5>
 <form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
-<div class="col-md-3">
-  <label class="form-label fw-bold small">Catégorie :</label>
-  <select id="presCategorie" class="form-select form-select-sm" onchange="updatePresenceFieldsVisibility()" required>
-    <option value="Eleve">1. Élève / Étudiant</option>
-    <option value="Enseignant">2. Enseignant / Personnel</option>
-    <option value="Administrateur">3. Dirigeant / Admin</option>
-  </select>
-</div>
-
-<div class="col-md-4">
-  <label class="form-label fw-bold small">Nom & Personne :</label>
-  <select id="presPersonSelect" class="form-select form-select-sm" required></select>
-</div>
-
-<div class="col-md-3">
-  <label class="form-label fw-bold small">Date :</label>
-  <input type="text" id="presJourDate" class="form-control form-control-sm" readonly>
-</div>
-
-<div class="col-md-2 pres-fields-eleve d-flex align-items-end">
-  <select id="presStatutEleve" class="form-select form-select-sm">
-    <option value="Présent">Présent(e)</option>
-    <option value="Absent">Absent(e)</option>
-    <option value="Retard">Retard</option>
-  </select>
-</div>
-
-<div class="col-md-2 pres-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Arrivée :</label>
-  <input type="time" id="presHeureArrivee" class="form-control form-control-sm">
-</div>
-<div class="col-md-2 pres-fields-staff" style="display:none;">
-  <label class="form-label fw-bold small">Départ :</label>
-  <input type="time" id="presHeureDepart" class="form-control form-control-sm">
-</div>
-
-<div class="col-12 mt-3 d-flex justify-content-end gap-2">
-  <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer</button>
-  <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-  <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
+<div class="col-md-4"><label class="small fw-bold">Élève :</label><select id="presStudentSelect" class="form-select form-select-sm" required></select></div>
+<div class="col-md-4"><label class="small fw-bold">Statut :</label><select id="presStatutEleve" class="form-select form-select-sm"><option value="Présent">Présent(e)</option><option value="Absent">Absent(e)</option><option value="Retard">Retard</option></select></div>
+<div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Enregistrer</button></div>
 </form>
-
-<div class="table-responsive">
-<table class="table table-bordered table-sm align-middle">
-<thead>
-  <tr class="table-primary">
-    <th>Catégorie</th>
-    <th>Nom & Prénom</th>
-    <th>Date</th>
-    <th>Statut / Horaires</th>
-    <th class="no-print">Action</th>
-  </tr>
-</thead>
-<tbody id="presenceCustomTableBody"></tbody>
-</table>
-</div>
+<table class="table table-bordered table-sm align-middle"><thead><tr><th>Élève</th><th>Date</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="presenceCustomTableBody"></tbody></table>
 </div>
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
 <h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
 <form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print">
-<div class="col-md-4"><select id="discClassSelect" class="form-select" onchange="loadStudentsForDiscipline()" required></select></div>
-<div class="col-md-4"><select id="discStudentSelect" class="form-select" required></select></div>
+<div class="col-md-6"><select id="discStudentSelect" class="form-select" required></select></div>
 <div class="col-md-4"><input type="text" id="discobs" class="form-control" placeholder="Motif / Sanction" required></div>
-<div class="col-12 action-bar mt-2">
-<button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button>
-<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
+<div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
 </form>
 <table class="table table-bordered"><thead><tr><th>Élève</th><th>Sanction</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
 </div>
@@ -801,8 +640,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <textarea id="announcementText" class="form-control mb-2 no-print" rows="3" placeholder="Saisir une communication officielle..."></textarea>
 <div class="action-bar mb-3 no-print">
 <button class="btn btn-warning btn-sm fw-bold" onclick="handleSaveCommunication()"><i class="fa fa-bullhorn me-1"></i> Publier</button>
-<button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 <table class="table table-bordered mt-3"><thead><tr><th>Date</th><th>Annonce</th><th class="no-print">Action</th></tr></thead><tbody id="commTableBody"></tbody></table>
 </div>
@@ -811,9 +648,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-jobs-received">
 <h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues</h5>
 <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
-<div class="action-bar mt-3 no-print">
-<button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
 </div>
 
 <!-- EMBLÈMES -->
@@ -821,228 +655,67 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-shield-alt me-2"></i>Emblèmes & Devise de la Madras</h5>
   <div class="card p-3 shadow-sm mb-4">
     <form onsubmit="handleSaveArmoiries(event)" class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label fw-bold">Symbole / Emblème :</label>
-        <input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label fw-bold">Devise Officielle :</label>
-        <input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence">
-      </div>
-      <div class="col-12 action-bar">
-        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button>
-      </div>
+      <div class="col-md-6"><label class="form-label fw-bold">Symbole / Emblème :</label><input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*"></div>
+      <div class="col-md-6"><label class="form-label fw-bold">Devise Officielle :</label><input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence"></div>
+      <div class="col-12 action-bar"><button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button></div>
     </form>
-  </div>
-  <div class="text-center p-3 border rounded bg-light">
-    <h6>Aperçu du Filigrane / Symbole</h6>
-    <img id="armoiriesPreviewImg" src="https://via.placeholder.com/150" alt="Emblème" style="max-width:150px; max-height:150px; object-fit:contain;">
-    <p id="armoiriesDeviseText" class="fst-italic text-muted mt-2">- Devise non définie -</p>
   </div>
 </div>
 
 <!-- PALMARÈS -->
 <div class="tab-pane" id="tab-palmares">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Palmarès & Réussites</h5>
-  <div class="row g-2 mb-3 no-print">
-    <div class="col-md-6">
-      <select id="palmaresClassSelect" class="form-select" onchange="renderPalmaresTable()"></select>
-    </div>
-    <div class="col-md-6">
-      <button class="btn btn-primary btn-sm fw-bold px-4" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer le Palmarès</button>
-    </div>
-  </div>
   <div id="palmaresTableContainer"></div>
 </div>
 
 <!-- COURRIERS -->
 <div class="tab-pane" id="tab-courriers">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-exchange-alt me-2"></i>Gestion des Correspondances (Secrétariat Madras)</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-exchange-alt me-2"></i>Gestion des Correspondances</h5>
   <form id="formCourrier" onsubmit="handleSaveCourrier(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Type de Flux :</label>
-      <select id="courrierType" class="form-select form-select-sm" required>
-        <option value="Entrant">Courrier Entrant (Arrivée)</option>
-        <option value="Sortant">Courrier Sortant (Départ)</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Date :</label>
-      <input type="date" id="courrierDate" class="form-control form-control-sm" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Expéditeur / Destinataire :</label>
-      <input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Ex: Inspection de l'Enseignement" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">N° de Référence :</label>
-      <input type="text" id="courrierRef" class="form-control form-control-sm" placeholder="Ex: Réf: 012/MAD">
-    </div>
-    <div class="col-md-8 mt-2">
-      <label class="form-label fw-bold small">Objet du Document :</label>
-      <input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Ex: Demande de subvention..." required>
-    </div>
-    <div class="col-md-4 mt-2">
-      <label class="form-label fw-bold small"><i class="fa fa-paperclip me-1"></i>Pièce Jointe :</label>
-      <input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf">
-    </div>
-    <div class="col-12 mt-3 d-flex justify-content-end">
-      <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer le Courrier</button>
-    </div>
-    <div class="col-12 action-bar mt-2">
-      <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer le Registre</button>
-      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
+    <div class="col-md-3"><select id="courrierType" class="form-select form-select-sm" required><option value="Entrant">Entrant</option><option value="Sortant">Sortant</option></select></div>
+    <div class="col-md-3"><input type="date" id="courrierDate" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><input type="text" id="courrierTiers" class="form-control form-control-sm" placeholder="Tiers" required></div>
+    <div class="col-md-3"><input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Objet" required></div>
+    <div class="col-12 mt-2 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Enregistrer</button></div>
   </form>
-  <div class="table-responsive">
-    <table class="table table-bordered table-sm align-middle">
-      <thead>
-        <tr class="table-primary">
-          <th>Date</th><th>Type</th><th>Réf. / N°</th><th>Tiers</th><th>Objet</th><th class="text-center">Pièce Jointe</th><th class="no-print">Action</th>
-        </tr>
-      </thead>
-      <tbody id="courriersTableBody"></tbody>
-    </table>
-  </div>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>Tiers</th><th>Objet</th><th class="no-print">Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
 </div>
 
 <!-- DOSSIERS & ARCHIVES -->
 <div class="tab-pane" id="tab-dossiers-archivage">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers des Élèves</h5>
-  <div class="card p-3 shadow-sm mb-4 border-0 bg-light no-print">
-    <form id="formDossierStorage" onsubmit="handleSaveDocumentDossier(event)" class="row g-2">
-      <div class="col-md-3">
-        <label class="form-label fw-bold small">Catégorie du Dossier :</label>
-        <select id="dossierCategory" class="form-select form-select-sm" onchange="updateDossierPersonOptions()" required>
-          <option value="Eleve">Élève / Étudiant</option>
-          <option value="Enseignant">Enseignant / Personnel</option>
-          <option value="Administratif">Dirigeant / Admin</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold small">Sélectionner la Personne :</label>
-        <select id="dossierTargetPerson" class="form-select form-select-sm" required></select>
-      </div>
-      <div class="col-md-5">
-        <label class="form-label fw-bold small">Type de Pièce :</label>
-        <input type="text" id="dossierDocType" class="form-control form-control-sm" placeholder="Ex: Extrait de naissance, Certificat..." required>
-      </div>
-      <div class="col-md-8 mt-2">
-        <label class="form-label fw-bold small">Fichier Scanné :</label>
-        <input type="file" id="dossierFileInput" class="form-control form-control-sm" accept="image/*,.pdf" required>
-      </div>
-      <div class="col-md-4 mt-2 d-flex align-items-end">
-        <button type="submit" class="btn btn-success btn-sm fw-bold w-100"><i class="fa fa-upload me-1"></i> Archiver</button>
-      </div>
-    </form>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-bordered table-sm align-middle">
-      <thead>
-        <tr class="table-primary">
-          <th>Date</th><th>Catégorie</th><th>Nom & Prénom</th><th>Type de Document</th><th>Aperçu</th><th class="no-print">Action</th>
-        </tr>
-      </thead>
-      <tbody id="dossiersStorageTableBody"></tbody>
-    </table>
-  </div>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers</h5>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>Nom</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
 </div>
 
 <!-- CALENDRIER -->
 <div class="tab-pane" id="tab-calendrier-vacances">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire & Vacances</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire</h5>
   <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-4">
-      <label class="form-label fw-bold small">Intitulé de l'Événement :</label>
-      <input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Vacances de fin de trimestre / Examen" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Type :</label>
-      <select id="calType" class="form-select form-select-sm" required>
-        <option value="Vacances">Vacances Scolaires</option>
-        <option value="Examen">Période d'Examens</option>
-        <option value="Réunion">Réunion des Parents</option>
-        <option value="Clôture">Clôture Année</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label fw-bold small">Date Début :</label>
-      <input type="date" id="calDebut" class="form-control form-control-sm" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Date Fin :</label>
-      <input type="date" id="calFin" class="form-control form-control-sm" required>
-    </div>
-    <div class="col-12 mt-3 d-flex justify-content-end gap-2">
-      <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer</button>
-      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
+    <div class="col-md-4"><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Intitulé" required></div>
+    <div class="col-md-3"><input type="date" id="calDebut" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><input type="date" id="calFin" class="form-control form-control-sm" required></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
   </form>
-  <div class="table-responsive">
-    <table class="table table-bordered table-sm align-middle">
-      <thead>
-        <tr class="table-primary">
-          <th>Intitulé</th><th>Type</th><th>Début</th><th>Fin</th><th class="no-print">Action</th>
-        </tr>
-      </thead>
-      <tbody id="calendrierTableBody"></tbody>
-    </table>
-  </div>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
 </div>
 
 <!-- HORAIRES -->
 <div class="tab-pane" id="tab-horaires-cours">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Classe :</label>
-      <select id="horaireClassSelect" class="form-select form-select-sm" required></select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Jour :</label>
-      <select id="horaireJour" class="form-select form-select-sm" required>
-        <option value="Lundi">Lundi</option>
-        <option value="Mardi">Mardi</option>
-        <option value="Mercredi">Mercredi</option>
-        <option value="Jeudi">Jeudi</option>
-        <option value="Vendredi">Vendredi</option>
-        <option value="Samedi">Samedi</option>
-        <option value="Dimanche">Dimanche</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Plage Horaire :</label>
-      <input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="Ex: 08h00 - 10h00" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold small">Intitulé du Cours :</label>
-      <input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Ex: Cours de Coran / Fiqh" required>
-    </div>
-    <div class="col-12 mt-3 d-flex justify-content-end gap-2">
-      <button type="submit" class="btn btn-success btn-sm fw-bold px-4"><i class="fa fa-save me-1"></i> Ajouter</button>
-      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
+    <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
+    <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
+    <div class="col-md-3"><input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="08h00 - 10h00" required></div>
+    <div class="col-md-3"><input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Cours" required></div>
+    <div class="col-12 mt-2 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Ajouter</button></div>
   </form>
-  <div class="table-responsive">
-    <table class="table table-bordered table-sm align-middle">
-      <thead>
-        <tr class="table-primary">
-          <th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th>
-        </tr>
-      </thead>
-      <tbody id="horairesTableBody"></tbody>
-    </table>
-  </div>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
 </div>
 
 <!-- STATISTIQUES -->
 <div class="tab-pane" id="tab-statistiques">
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO</h5>
 <div class="row g-3" id="statsContainer"></div>
-<div class="action-bar mt-4 no-print">
-    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer les Statistiques</button>
-    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
 </div>
 
 </div>
@@ -1052,43 +725,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <!-- FOOTER -->
-<div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
-    <div class="container py-5">
-        <div class="row g-5">
-            <div class="col-lg-3 col-md-6">
-                <h4 class="text-white mb-3">Liens Rapides</h4>
-                <a class="btn btn-link" href="about.html">À propos de nous</a>
-                <a class="btn btn-link" href="contact.html">Contactez-nous</a>
-                <a class="btn btn-link" href="politique.html">Politique de Confidentialité</a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <h4 class="text-white mb-3">Contact</h4>
-                <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Kinshasa, RDC</p>
-                <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+243 90 681 99 93</p>
-                <p class="mb-2"><i class="fa fa-envelope me-3"></i>contact@comico-rdc.org</p>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="copyright">
-            <div class="row">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    &copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn">
+    <div class="container py-5"><div class="copyright text-center">&copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.</div></div>
 </div>
 
-<!-- JAVASCRIPT GLOBAL (SANS FIREBASE - LOCALSTORAGE) -->
+<!-- JAVASCRIPT GLOBAL -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
 let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
-let unlockedClasses = {}; 
 let teachersUnlocked = false; 
-let unlockedStudentClasses = {}; 
+let currentTeacherRole = null;
 
 const subDivisionsData = {
     "KINSHASA": ["Gombe", "Kalamu", "Kasa-Vubu", "Lingwala", "Ngaliema", "Masina"],
@@ -1143,7 +791,13 @@ function loadDataFromLocal() {
                     notes: s.notes || {},
                     caisse: s.caisse || [],
                     studentPayments: s.studentPayments || [],
-                    discipline: []
+                    discipline: [],
+                    presenceStudents: [],
+                    savedCards: [],
+                    courriers: [],
+                    dossiersArchive: [],
+                    calendrierVacances: [],
+                    horairesCours: []
                 }
             };
         }
@@ -1224,29 +878,26 @@ function finishSavingSchool(name, province, division, subDivision, commune, addr
     if(!appData.schools) appData.schools = [];
     
     const defaultYear = "2025-2026";
-    const defaultEcheance = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
-
     appData.schools.push({
         id: 'SCH-' + Date.now(),
         name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, logoUrl,
         activeYear: defaultYear,
         paiementStatut: "A jour",
-        dateEcheancePaiement: defaultEcheance,
         chatMessages: [],
         yearsData: {
             "2025-2026": {
                 classes: [], teachers: [], students: [], courses: {}, notes: {},
-                caisse: [], presenceStudents: {}, studentPayments: [], discipline: []
+                caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
             }
         },
-        direction: [], staff: [], communications: [], savedCards: [], armoiries: '', devise: '', courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [], momoPayments: []
+        direction: [], communications: [], armoiries: '', devise: ''
     });
     
     saveData();
     currentCreatedSecretCode = secretCode;
     document.getElementById('modalSecretCodeDisplay').innerText = secretCode;
     document.getElementById('secretCodeModal').style.display = 'flex';
-    document.getElementById('formCreateSchool').reset();
+    document.getElementById('formCreateSchool').reset(); // Vidage du formulaire
 }
 
 function closeSecretModal() {
@@ -1275,10 +926,6 @@ function openBlockedSchoolChat() {
 function closeBlockedSchoolChat() {
     document.getElementById('blockedSchoolChatArea').style.display = 'none';
     currentChatSchool = null;
-}
-
-function toggleSchoolVoiceRecording() {
-    alert("Simulation d'enregistrement vocal local.");
 }
 
 function sendSchoolChatMessage() {
@@ -1312,26 +959,6 @@ function openAdminNotificationsPanel() {
     const pass = document.getElementById('adminCentralNotificationCodeInput').value.trim();
     if(pass !== ADMIN_MASTER_PASSWORD) { alert("Code Admin Central incorrect."); return; }
     document.getElementById('adminNotificationsListArea').style.display = 'block';
-    renderAdminLitigiousSchoolsNotifications();
-}
-
-function renderAdminLitigiousSchoolsNotifications() {
-    const container = document.getElementById('adminLitigiousSchoolsMessagesContainer');
-    const schoolsWithMessages = (appData.schools || []).filter(s => s.chatMessages && s.chatMessages.length > 0);
-    container.innerHTML = schoolsWithMessages.map(s => `
-        <div class="card mb-3 border-danger">
-            <div class="card-header bg-light"><h6 class="m-0 text-danger fw-bold">${s.name}</h6></div>
-            <div class="card-body">
-                ${s.chatMessages.map(m => `<div class="small"><b>${m.sender}:</b> ${m.text}</div>`).join('')}
-            </div>
-        </div>
-    `).join('') || '<p class="text-muted small">Aucun message reçu.</p>';
-}
-
-function openFileViewerModal(fileUrl, fileType) {
-    const contentArea = document.getElementById('fileViewerContentArea');
-    contentArea.innerHTML = `<img src="${fileUrl}" alt="Document">`;
-    document.getElementById('fileViewerModal').style.display = 'flex';
 }
 
 function closeFileViewerModal() {
@@ -1405,7 +1032,19 @@ function openSchoolDashboard(id) {
     document.getElementById('dashSchoolTitle').innerText = s.name;
     document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
     document.getElementById('dashSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/70';
+    
+    // Initialisation des années scolaires
+    populateSchoolYearsSelect();
+    refreshAllDropdowns();
     showSection('view-school-dashboard');
+}
+
+function populateSchoolYearsSelect() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const select = document.getElementById('globalSchoolYearSelect');
+    if(!select || !s) return;
+    const years = Object.keys(s.yearsData || { "2025-2026": {} });
+    select.innerHTML = years.map(y => `<option value="${y}" ${y === s.activeYear ? 'selected' : ''}>${y}</option>`).join('');
 }
 
 function promptUnlockSchoolYears() {
@@ -1422,16 +1061,21 @@ function switchSchoolYear(year) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     s.activeYear = year;
     saveData();
+    refreshAllDropdowns();
 }
 
 function openNewSchoolYearWizard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const newYear = prompt("Nouvelle année (ex: 2026-2027) :");
-    if(newYear) {
+    if(newYear && !s.yearsData[newYear]) {
         s.activeYear = newYear;
-        s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, caisse: [], discipline: [] };
+        s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
         saveData();
-        alert("Nouvelle année ouverte !");
+        populateSchoolYearsSelect();
+        refreshAllDropdowns();
+        alert("Nouvelle année ouverte et initialisée avec succès !");
+    } else if(newYear) {
+        alert("Cette année existe déjà.");
     }
 }
 
@@ -1448,105 +1092,506 @@ function switchTab(tabId, element) {
     document.getElementById('defaultWelcomeMessage').style.display = 'none';
     document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
+    refreshAllDropdowns();
 }
 
+function refreshAllDropdowns() {
+    if(!activeSchoolId) return;
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    
+    // Classes
+    const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    ['teacherClass', 'studentClassSelect', 'cardClassSelect', 'courseClassSelect', 'notesClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = classOptions;
+    });
+
+    // Élèves
+    const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${st.matricule}">${st.matricule} - ${st.name} (${st.classe})</option>`).join('');
+    ['cardStudentSelect', 'notesStudentSelect', 'bulletinStudentSelect', 'bulletinPerStudentSelect', 'momoStudentSelect', 'presStudentSelect', 'discStudentSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = studentOptions;
+    });
+
+    // Caisse Personnes
+    const caisseSelect = document.getElementById('caissePersonSelect');
+    if(caisseSelect) {
+        let pOpts = '<option value="">-- Choisir --</option>';
+        (yData.students || []).forEach(st => pOpts += `<option value="${st.name}">Élève: ${st.name}</option>`);
+        (yData.teachers || []).forEach(t => pOpts += `<option value="${t.name}">Enseignant: ${t.name}</option>`);
+        caisseSelect.innerHTML = pOpts;
+    }
+
+    renderDirectionTable();
+    renderClassesTable();
+    renderTeachersTable();
+    renderStudentsTable();
+    renderCoursesTable();
+    renderCommTable();
+    renderCourriersTable();
+    renderCalendrierTable();
+    renderHorairesTable();
+}
+
+// 1. DIRECTION
 function handleSaveDirection(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const name = document.getElementById('dirName').value;
+    const name = document.getElementById('dirName').value.trim();
     const role = document.getElementById('dirRole').value;
-    const phone = document.getElementById('dirPhone').value;
+    const phone = document.getElementById('dirPhone').value.trim();
     s.direction.push({ name, role, phone });
     saveData();
     renderDirectionTable();
+    document.getElementById('formDirection').reset(); // Vidage
 }
 
 function renderDirectionTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('directionTableBody').innerHTML = (s.direction || []).map((d, i) => `
-        <tr><td>${d.name}</td><td><b>${d.role}</b></td><td>${d.phone}</td><td><button class="btn btn-sm btn-danger" onclick="s.direction.splice(${i},1);saveData();renderDirectionTable();"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('');
+    const tbody = document.getElementById('directionTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.direction || []).map((d, i) => `
+        <tr><td>${d.name}</td><td><b>${d.role}</b></td><td>${d.phone}</td><td><button class="btn btn-sm btn-danger" onclick="s.direction.splice(${i},1);saveData();renderDirectionTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun membre.</td></tr>';
 }
 
-function resetDirectionForm() { document.getElementById('formDirection').reset(); }
-function deleteSelectedDirection() {}
-
+// 2. CLASSES
 function handleSaveClass(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const year = s.activeYear;
-    const name = document.getElementById('className').value;
-    s.yearsData[year].classes.push({ name });
-    saveData();
-    renderClassesTable();
+    const yData = s.yearsData[s.activeYear];
+    const name = document.getElementById('className').value.trim();
+    if(name) {
+        yData.classes.push({ name });
+        saveData();
+        renderClassesTable();
+        refreshAllDropdowns();
+        document.getElementById('formClass').reset(); // Vidage
+    }
 }
 
 function renderClassesTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const year = s.activeYear;
-    document.getElementById('classesContainerList').innerHTML = (s.yearsData[year].classes || []).map(c => `
-        <div class="card p-3 mb-2"><h5>${c.name}</h5></div>
-    `).join('');
+    const yData = s.yearsData[s.activeYear];
+    const container = document.getElementById('classesContainerList');
+    if(!container) return;
+    container.innerHTML = (yData.classes || []).map((c, i) => `
+        <div class="card p-3 mb-2 d-flex flex-row justify-content-between align-items-center">
+            <h5>${c.name}</h5>
+            <button class="btn btn-sm btn-danger" onclick="deleteClass(${i})"><i class="fa fa-trash"></i> Supprimer</button>
+        </div>
+    `).join('') || '<p class="text-muted">Aucune classe enregistrée.</p>';
 }
 
-function renderTeachersSection() { document.getElementById('teachersUnlockedContainer').style.display = 'block'; document.getElementById('teachersLockedContainer').style.display = 'none'; }
-function promptUnlockTeachers() { teachersUnlocked = true; renderTeachersSection(); }
-function lockTeachers() { teachersUnlocked = false; }
-function refreshTeacherOptions() {}
-function handleSaveTeacher(e) { e.preventDefault(); }
-function renderTeachersTable() {}
+function deleteClass(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].classes.splice(index, 1);
+    saveData();
+    renderClassesTable();
+    refreshAllDropdowns();
+}
 
-function renderStudentsSection() {}
-function promptUnlockStudentClass() {}
-function lockStudentClass() {}
+// 3. ENSEIGNANTS (Sécurisé par Code Propriétaire)
+function promptUnlockTeachers() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const input = document.getElementById('ownerSecretInput').value.trim();
+    if(input.toUpperCase() === s.secretCode.toUpperCase()) {
+        teachersUnlocked = true;
+        document.getElementById('teachersUnlockedContainer').style.display = 'block';
+        document.getElementById('teachersLockedContainer').style.display = 'none';
+        document.getElementById('ownerSecretInput').value = '';
+    } else {
+        alert("Code secret de propriété incorrect.");
+    }
+}
 
-function refreshCourseOptions() {}
-function handleSaveCourse(e) { e.preventDefault(); }
-function renderCoursesTable() {}
+function lockTeachers() {
+    teachersUnlocked = false;
+    document.getElementById('teachersUnlockedContainer').style.display = 'none';
+    document.getElementById('teachersLockedContainer').style.display = 'block';
+}
 
-function refreshNotesOptions() {}
+function handleSaveTeacher(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const name = document.getElementById('teacherName').value.trim();
+    const classe = document.getElementById('teacherClass').value;
+    const secretCode = document.getElementById('teacherSecretCode').value.trim();
+    
+    yData.teachers.push({ name, classe, secretCode });
+    saveData();
+    renderTeachersTable();
+    document.getElementById('formTeacher').reset(); // Vidage
+}
+
+function renderTeachersTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const tbody = document.getElementById('teachersTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (yData.teachers || []).map((t, i) => `
+        <tr><td>${t.name}</td><td>${t.classe}</td><td><code>${t.secretCode}</code></td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].teachers.splice(${i},1);saveData();renderTeachersTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun enseignant.</td></tr>';
+}
+
+// 4. ÉLÈVES (Propriétaire uniquement)
+function openOwnerStudentRegistration() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = prompt("Veuillez saisir le Code Secret de la Madras pour déverrouiller l'inscription des élèves :");
+    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+        document.getElementById('studentsUnlockedContainer').style.display = 'block';
+        document.getElementById('studentsLockedContainer').style.display = 'none';
+        refreshAllDropdowns();
+    } else if(code !== null) {
+        alert("Code secret incorrect.");
+    }
+}
+
+function handleSaveStudent(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const matricule = document.getElementById('studentMatricule').value.trim();
+    const name = document.getElementById('studentName').value.trim();
+    const sex = document.getElementById('studentSex').value;
+    const classe = document.getElementById('studentClassSelect').value;
+
+    yData.students.push({ matricule, name, sex, classe });
+    saveData();
+    renderStudentsTable();
+    refreshAllDropdowns();
+    document.getElementById('formStudent').reset(); // Vidage
+}
+
+function renderStudentsTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const container = document.getElementById('studentsContainerList');
+    if(!container) return;
+    container.innerHTML = `
+        <table class="table table-bordered align-middle">
+            <thead><tr><th>Matricule</th><th>Nom & Prénom</th><th>Sexe</th><th>Classe</th><th>Action</th></tr></thead>
+            <tbody>
+                ${(yData.students || []).map((st, i) => `
+                    <tr><td>${st.matricule}</td><td>${st.name}</td><td>${st.sex}</td><td>${st.classe}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].students.splice(${i},1);saveData();renderStudentsTable();refreshAllDropdowns();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+                `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun élève inscrit.</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+// 6. ACCÈS ENSEIGNANT POUR NOTES ET BULLETINS
+function verifyTeacherAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('teacherAuthCode').value.trim();
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    if(teacher) {
+        currentTeacherRole = teacher;
+        document.getElementById('notesWorkspace').style.display = 'block';
+        document.getElementById('teacherAccessCheckArea').style.display = 'none';
+        alert("Accès autorisé pour l'enseignant : " + teacher.name + " (Classe : " + teacher.classe + ")");
+    } else {
+        alert("Code secret enseignant incorrect.");
+    }
+}
+
+function verifyBulletinAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('bulletinAuthCode').value.trim();
+    const isProprio = (code.toUpperCase() === s.secretCode.toUpperCase());
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    
+    if(isProprio || teacher) {
+        document.getElementById('bulletinWorkspace').style.display = 'block';
+        document.getElementById('bulletinAccessArea').style.display = 'none';
+        // Si c'est un enseignant, on masque le bouton imprimer/télécharger (interdit selon consigne 6)
+        if(teacher && !isProprio) {
+            document.getElementById('printBulletinBtnContainer').style.display = 'none';
+        } else {
+            document.getElementById('printBulletinBtnContainer').style.display = 'block';
+        }
+        alert("Accès validé.");
+    } else {
+        alert("Code d'accès incorrect.");
+    }
+}
+
+// CARTE ÉLÈVE
+function loadStudentsForCardSelect() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const cls = document.getElementById('cardClassSelect').value;
+    const students = (yData.students || []).filter(st => st.classe === cls);
+    document.getElementById('cardStudentSelect').innerHTML = '<option value="">-- Choisir un Élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
+}
+
+function populateCardFromSelectedStudent() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const mat = document.getElementById('cardStudentSelect').value;
+    const st = (yData.students || []).find(x => x.matricule === mat);
+    if(st) {
+        document.getElementById('cardMatVal').innerText = st.matricule;
+        document.getElementById('cardNomVal').innerText = st.name;
+        document.getElementById('cardSexeVal').innerText = st.sex;
+        document.getElementById('cardClasseVal').innerText = st.classe;
+        document.getElementById('cardSchoolName').innerText = s.name;
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
+        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/180';
+    }
+}
+
+function previewStudentCardPhoto(e) {
+    const file = e.target.files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { document.getElementById('cardPhotoPreview').src = evt.target.result; };
+        reader.readAsDataURL(file);
+    }
+}
+
+function saveStudentCardData() {
+    alert("Carte enregistrée avec succès !");
+}
+
+function printStudentCard() {
+    window.print();
+}
+
+// COURS
+function handleSaveCourse(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const classe = document.getElementById('courseClassSelect').value;
+    const name = document.getElementById('courseName').value.trim();
+    const max = document.getElementById('courseMax').value.trim();
+    
+    if(!yData.courses[classe]) yData.courses[classe] = [];
+    yData.courses[classe].push({ name, max });
+    saveData();
+    renderCoursesTable();
+    document.getElementById('formCourse').reset(); // Vidage
+}
+
+function renderCoursesTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const tbody = document.getElementById('coursesTableBody');
+    if(!tbody) return;
+    let html = '';
+    Object.keys(yData.courses || {}).forEach(cls => {
+        yData.courses[cls].forEach((crs, i) => {
+            html += `<tr><td>${cls}</td><td>${crs.name}</td><td>${crs.max}</td><td><button class="btn btn-sm btn-danger" onclick="deleteCourse('${cls}', ${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>`;
+        });
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" class="text-center text-muted">Aucun cours.</td></tr>';
+}
+
+function deleteCourse(cls, index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].courses[cls].splice(index, 1);
+    saveData();
+    renderCoursesTable();
+}
+
+// NOTES & BULLETINS STUBS
 function loadStudentsForNotes() {}
 function renderNotesSheet() {}
-
-function refreshBulletinOptions() {}
 function loadStudentsForBulletin() {}
 function renderBulletinFromSystem() {}
-
-function refreshPeriodicBulletinOptions() {}
 function loadStudentsForPeriodicBulletin() {}
 function renderPeriodicBulletin() {}
 
-function refreshPaymentOptionsCustom() {}
-function updateCaissePersonOptions() {}
-function updateCaisseFieldsVisibility() {}
-function calculateEleveReste() {}
-function calculateStaffReste() {}
-function handleSaveCaissePaymentCustom(e) { e.preventDefault(); }
+// AUTRES FONCTIONS DE GESTION AVEC SUPPRESSION ET VIDAGE
+function handleSaveCaissePaymentCustom(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].caisse.push({
+        cat: document.getElementById('caisseCategorie').value,
+        person: document.getElementById('caissePersonSelect').value,
+        montant: document.getElementById('caisseMontant').value,
+        date: new Date().toLocaleDateString()
+    });
+    saveData();
+    renderCaisseTable();
+    document.getElementById('formPaymentCustom').reset();
+}
 
-function refreshMobileMoneyOptions() {}
-function handleSimulateMobileMoney(e) { e.preventDefault(); renderMobileMoneyTable(); }
-function renderMobileMoneyTable() {}
+function renderCaisseTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('caisseCustomTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].caisse || []).map((c, i) => `
+        <tr><td>${c.cat}</td><td>${c.person}</td><td>$${c.montant}</td><td>${c.date}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].caisse.splice(${i},1);saveData();renderCaisseTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune transaction.</td></tr>';
+}
 
-function refreshPresenceOptionsCustom() {}
-function updatePresencePersonOptions() {}
-function updatePresenceFieldsVisibility() {}
-function handleSavePresenceCustom(e) { e.preventDefault(); }
+function handleSimulateMobileMoney(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].studentPayments.push({
+        date: new Date().toLocaleString(),
+        student: document.getElementById('momoStudentSelect').value,
+        operator: document.getElementById('momoOperator').value,
+        amount: document.getElementById('momoAmount').value,
+        status: 'Succès'
+    });
+    saveData();
+    renderMomoTable();
+    document.getElementById('formMobileMoney').reset();
+}
 
-function refreshDisciplineOptions() {}
-function loadStudentsForDiscipline() {}
-function handleSaveDiscipline(e) { e.preventDefault(); }
+function renderMomoTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('momoTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].studentPayments || []).map((m, i) => `
+        <tr><td>${m.date}</td><td>${m.student}</td><td>${m.operator}</td><td>$${m.amount}</td><td><span class="badge bg-success">${m.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].studentPayments.splice(${i},1);saveData();renderMomoTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun paiement.</td></tr>';
+}
+
+function handleSavePresenceCustom(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].presenceStudents.push({
+        student: document.getElementById('presStudentSelect').value,
+        date: new Date().toLocaleDateString(),
+        statut: document.getElementById('presStatutEleve').value
+    });
+    saveData();
+    renderPresenceTable();
+    document.getElementById('formPresenceCustom').reset();
+}
+
+function renderPresenceTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('presenceCustomTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].presenceStudents || []).map((p, i) => `
+        <tr><td>${p.student}</td><td>${p.date}</td><td>${p.statut}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].presenceStudents.splice(${i},1);saveData();renderPresenceTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune présence.</td></tr>';
+}
+
+function handleSaveDiscipline(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].discipline.push({
+        student: document.getElementById('discStudentSelect').value,
+        obs: document.getElementById('discobs').value
+    });
+    saveData();
+    renderDisciplineTable();
+    document.getElementById('formDiscipline').reset();
+}
+
+function renderDisciplineTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('disciplineTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].discipline || []).map((d, i) => `
+        <tr><td>${d.student}</td><td>${d.obs}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].discipline.splice(${i},1);saveData();renderDisciplineTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune sanction.</td></tr>';
+}
 
 function handleSaveCommunication() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    s.communications.push({ date: new Date().toLocaleDateString(), message: document.getElementById('announcementText').value });
-    saveData();
-    renderCommTable();
+    const text = document.getElementById('announcementText').value.trim();
+    if(text) {
+        s.communications.push({ date: new Date().toLocaleDateString(), message: text });
+        saveData();
+        renderCommTable();
+        document.getElementById('announcementText').value = '';
+    }
 }
-function renderCommTable() {}
 
-function openJobApplicationSection() { showSection('view-job-application'); }
-function handleSendJobApplication(e) { e.preventDefault(); alert("Candidature envoyée."); showSection('view-portal'); }
-function verifyCandidateCodeAndDisplayReply() {}
+function renderCommTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('commTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.communications || []).map((c, i) => `
+        <tr><td>${c.date}</td><td>${c.message}</td><td><button class="btn btn-sm btn-danger" onclick="s.communications.splice(${i},1);saveData();renderCommTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune annonce.</td></tr>';
+}
+
+function handleSaveArmoiries(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.devise = document.getElementById('schoolDeviseInput').value.trim();
+    saveData();
+    alert("Emblèmes et devise enregistrés.");
+    document.getElementById('schoolDeviseInput').value = '';
+}
+
+function handleSaveCourrier(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].courriers.push({
+        type: document.getElementById('courrierType').value,
+        date: document.getElementById('courrierDate').value,
+        tiers: document.getElementById('courrierTiers').value,
+        objet: document.getElementById('courrierObjet').value
+    });
+    saveData();
+    renderCourriersTable();
+    document.getElementById('formCourrier').reset();
+}
+
+function renderCourriersTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('courriersTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).map((c, i) => `
+        <tr><td>${c.date}</td><td>${c.type}</td><td>${c.tiers}</td><td>${c.objet}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun courrier.</td></tr>';
+}
+
+function handleSaveCalendrierScolaire(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].calendrierVacances.push({
+        titre: document.getElementById('calTitre').value,
+        debut: document.getElementById('calDebut').value,
+        fin: document.getElementById('calFin').value
+    });
+    saveData();
+    renderCalendrierTable();
+    document.getElementById('formCalendrierScolaire').reset();
+}
+
+function renderCalendrierTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('calendrierTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].calendrierVacances || []).map((c, i) => `
+        <tr><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun événement.</td></tr>';
+}
+
+function handleSaveHoraireCours(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].horairesCours.push({
+        classe: document.getElementById('horaireClassSelect').value,
+        jour: document.getElementById('horaireJour').value,
+        plage: document.getElementById('horairePlage').value,
+        cours: document.getElementById('horaireCoursNom').value
+    });
+    saveData();
+    renderHorairesTable();
+    document.getElementById('formHoraireCours').reset();
+}
+
+function renderHorairesTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('horairesTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].horairesCours || []).map((h, i) => `
+        <tr><td>${h.classe}</td><td>${h.jour}</td><td>${h.plage}</td><td>${h.cours}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].horairesCours.splice(${i},1);saveData();renderHorairesTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+}
 
 function openAdminCentralPanel() {
     const pass = prompt("Mot de passe Admin Central :");
@@ -1576,44 +1621,9 @@ function renderAdminCentralTable() {
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id) {}
-function updateSchoolEcheanceDate(id) {}
-function regenerateSchoolCode(id) {}
-
-function refreshCardOptions() {}
-function loadStudentsForCardSelect() {}
-function populateCardFromSelectedStudent() {}
-function previewStudentCardPhoto(e) {}
-function saveStudentCardData() { alert("Carte enregistrée."); }
-function renderSavedCardsTable() {}
-function printSpecificSavedCard() { window.print(); }
-function deleteSavedCard() {}
-function printStudentCard() { window.print(); }
-function openDirectRegistrationModal() {}
-
-function refreshArmoiriesOptions() {}
-function handleSaveArmoiries(e) { e.preventDefault(); }
-
-function refreshPalmaresOptions() {}
-function renderPalmaresTable() {}
-
-function refreshCourrierOptions() {}
-function handleSaveCourrier(e) { e.preventDefault(); }
-function renderCourriersTable() {}
-
-function refreshDossiersStorageOptions() {}
-function updateDossierPersonOptions() {}
-function handleSaveDocumentDossier(e) { e.preventDefault(); }
-function renderDossiersStorageTable() {}
-
-function handleSaveCalendrierScolaire(e) { e.preventDefault(); }
-function renderCalendrierTable() {}
-
-function refreshHoraireOptions() {}
-function handleSaveHoraireCours(e) { e.preventDefault(); }
-function renderHorairesTable() {}
-
-function renderStatistiquesDashboard() {}
+function openJobApplicationSection() { showSection('view-job-application'); }
+function handleSendJobApplication(e) { e.preventDefault(); alert("Candidature envoyée."); showSection('view-portal'); document.querySelector('#view-job-application form').reset(); }
+function openDirectRegistrationModal() { alert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret, puis utiliser la section Inscription Élèves."); }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 </script>
