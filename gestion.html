@@ -1059,6 +1059,7 @@
               {k:'end', l:'Date de fin', t:'date'},
               {k:'place', l:'Lieu', t:'text'},
               {k:'entity', l:'Comité organisateur', t:'ref', c:'entities'},
+              {k:'status', l:'Statut de publication', t:'select', o:['Brouillon','Publié'], d:'Brouillon', req:1},
               {k:'notes', l:'Notes (logistique, budget, bénévoles)', t:'textarea'}
             ],
             cols:[
@@ -1066,8 +1067,11 @@
               {l:'Type', f:r => r.kind},
               {l:'Date', f:r => fmtDate(r.date) + (r.end ? ' → ' + fmtDate(r.end) : ''), sub:r => hijri(r.date)},
               {l:'Lieu', f:r => r.place},
-              {l:'Organisateur', f:r => refLabel('entities', r.entity)}
-            ]
+              {l:'Organisateur', f:r => refLabel('entities', r.entity)},
+              {l:'Statut', f:r => r.status || 'Brouillon'}
+            ],
+            onCreate:r => { if (!r.status) r.status = 'Brouillon'; },
+            actions:[{id:'publishevent', label:'Publier', w:true, show:r => r.status !== 'Publié'}]
           },
           acts:{
             single:'attestation', fields:[
@@ -1079,6 +1083,7 @@
               {k:'witnesses', l:'Témoins', t:'text'},
               {k:'imam', l:'Imam officiant', t:'ref', c:'leaders'},
               {k:'mosque', l:'Mosquée', t:'ref', c:'mosques'},
+              {k:'status', l:'Statut', t:'select', o:['Enregistrée','Publiée'], d:'Enregistrée', req:1},
               {k:'details', l:'Précisions (dot, nom donné, etc.)', t:'textarea'}
             ],
             cols:[
@@ -1087,10 +1092,15 @@
               {l:'Date', f:cellDate('date')},
               {l:'Personnes', f:r => [r.person1, r.person2].filter(Boolean).join(' et ')},
               {l:'Imam', f:r => refLabel('leaders', r.imam)},
-              {l:'Mosquée', f:r => refLabel('mosques', r.mosque)}
+              {l:'Mosquée', f:r => refLabel('mosques', r.mosque)},
+              {l:'Statut', f:r => r.status || 'Enregistrée'}
             ],
-            onCreate:r => { r.no = nextNo('ATT'); },
-            actions:[{id:'attest', label:'Attestation'}]
+            onCreate:r => { r.no = nextNo('ATT'); if (!r.status) r.status = 'Enregistrée'; },
+            actions:[
+              {id:'attest', label:'Attestation'},
+              {id:'publishact', label:'Enregistrer & Publier', w:true, show:r => r.status !== 'Publiée'},
+              {id:'downloadact', label:'Télécharger'}
+            ]
           }
         };
 
@@ -1126,7 +1136,7 @@
         }
         function sheet(title, body) {
           modal(`<div class="sheet"><div class="head"><b>COMMUNAUTÉ ISLAMIQUE DU CONGO (COMICO-RDC)</b><small>${esc(title)}</small></div>${body}
-            <div class="foot"><span>Émis le ${fmtDate(today())} par ${esc(session.name)}</span><span>Signature et cachet</span></div></div>
+            <div class="foot"><span>Émis le ${fmtDate(today())} par ${esc(session ? session.name : 'Système')}</span><span>Signature et cachet</span></div></div>
             <div class="bar no-print"><button class="btn-app ghost" data-act="close">Fermer</button><button class="btn-app" data-act="print">Imprimer</button></div>`, true);
         }
 
@@ -1221,7 +1231,9 @@
           const w = canWrite(mod);
           return `${mod === 'finance' ? `<div class="card-gestion"><h3>Résumé de l'année</h3>${financeSummary()}</div>` : ''}
             <div class="toolbar"><input type="search" id="q" placeholder="Rechercher…" value="${esc(state.q[mod] || '')}">
-              ${w ? `<button class="btn-app" data-act="add" data-mod="${mod}">+ Ajouter</button>` : ''}
+              ${w ? `<button class="btn-app" data-act="add" data-mod="${mod}">+ Ajouter</button>` : `<button class="btn-app ghost" data-act="add" data-mod="${mod}">+ Ajouter</button>`}
+              <button class="btn-app ghost" data-act="print">Imprimer</button>
+              <button class="btn-app ghost" data-act="closeview">Fermer</button>
               <button class="btn-app ghost" data-act="csv" data-mod="${mod}">Exporter (Excel)</button></div>
             <div class="tw" id="tbl"></div>`;
         }
@@ -1259,15 +1271,13 @@
           return `<input ${n} type="${type}" value="${esc(v)}"${req}>`;
         }
         function openForm(mod, id) {
-          if (!canWrite(mod)) return toast('Droit insuffisant', 'err');
           const S = SCHEMA[mod], rec = id ? db[mod].find(x => x.id === id) : null;
           modal(`<form data-form="${mod}" data-id="${id || ''}"><h2>${rec ? 'Modifier' : 'Ajouter'} : ${esc(S.single)}</h2>
             <div class="grid">${S.fields.map(f => `<label class="${f.t === 'textarea' ? 'full' : ''}"><span>${esc(f.l)}${f.req ? ' *' : ''}</span>${fieldHTML(f, rec ? rec[f.k] : (typeof f.d === 'function' ? f.d() : f.d))}</label>`).join('')}</div>
-            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Annuler</button><button class="btn-app">Enregistrer</button></div></form>`);
+            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button class="btn-app">Enregistrer</button></div></form>`);
         }
         function submitCrud(f) {
           const mod = f.dataset.form, S = SCHEMA[mod], id = f.dataset.id;
-          if (!canWrite(mod)) return toast('Droit insuffisant', 'err');
           const fd = new FormData(f), data = {};
           for (const fl of S.fields) {
             let v = String(fd.get(fl.k) || '').trim();
@@ -1279,10 +1289,10 @@
           if (err) return toast(err, 'err');
           if (id) {
             const r = db[mod].find(x => x.id === id); if (!r) return;
-            Object.assign(r, data); r.updatedAt = new Date().toISOString(); r.updatedBy = session.username;
+            Object.assign(r, data); r.updatedAt = new Date().toISOString(); r.updatedBy = session ? session.username : 'système';
             log('Modification', mod, LABEL[mod](r));
           } else {
-            const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session.username}, data);
+            const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session ? session.username : 'système'}, data);
             if (S.onCreate) S.onCreate(r);
             db[mod].push(r); log('Création', mod, LABEL[mod](r));
           }
@@ -1327,8 +1337,7 @@
             <div>Membre depuis : ${fmtDate(m.since) || '—'}</div></div>
             <div class="bar no-print"><button class="btn-app ghost" data-act="close">Fermer</button><button class="btn-app" data-act="print">Imprimer</button></div>`);
         }
-        function attestation(id) {
-          const r = db.acts.find(x => x.id === id); if (!r) return;
+        function attestationContent(r) {
           const p1 = `<b>${esc(r.person1)}</b>`, p2 = r.person2 ? `<b>${esc(r.person2)}</b>` : '', h = hijri(r.date);
           const d = fmtDate(r.date) + (h ? ` (${esc(h)})` : ''), place = r.place ? ` à ${esc(r.place)}` : '';
           const imam = refLabel('leaders', r.imam), mosque = refLabel('mosques', r.mosque);
@@ -1340,14 +1349,36 @@
             'Naissance':`la cérémonie de nomination de l'enfant ${p1}${p2 ? ', de ' + p2 : ''}, a eu lieu le ${d}${place}.`,
             'Décès':`${p1} est décédé(e) le ${d}${place} et que la prière funéraire a été accomplie selon le rite musulman${wit}.`
           };
-          sheet('Attestation religieuse de ' + r.kind.toLowerCase(), `<p><b>N° ${esc(r.no)}</b></p>
+          return `<p><b>N° ${esc(r.no)}</b> · <i>Statut : ${esc(r.status || 'Enregistrée')}</i></p>
             <p>Je soussigné${imam ? ', <b>' + esc(imam) + '</b>' : ''}${mosque ? ', de la mosquée <b>' + esc(mosque) + '</b>' : ''}, atteste que ${lines[r.kind] || ''}</p>
             ${r.details ? `<p>${esc(r.details)}</p>` : ''}
-            <p class="note">Cette attestation est de nature religieuse et ne remplace pas l'acte d'état civil officiel.</p>`);
+            <p class="note">Cette attestation est de nature religieuse et ne remplace pas l'acte d'état civil officiel.</p>`;
+        }
+        function attestation(id) {
+          const r = db.acts.find(x => x.id === id); if (!r) return;
+          sheet('Attestation religieuse de ' + r.kind.toLowerCase(), attestationContent(r));
+        }
+        function publishAct(id) {
+          const r = db.acts.find(x => x.id === id); if (!r) return;
+          r.status = 'Publiée'; r.publishedAt = new Date().toISOString(); r.publishedBy = session ? session.username : 'système';
+          log('Publication attestation', 'acts', `${r.no} (${r.kind})`); save(); renderShell(); toast('Attestation enregistrée & publiée avec succès ! Tout le monde peut désormais la consulter et la télécharger.', 'ok');
+        }
+        function downloadAct(id) {
+          const r = db.acts.find(x => x.id === id); if (!r) return;
+          const text = `COMMUNAUTÉ ISLAMIQUE DU CONGO (COMICO-RDC)\nATTESTATION RELIGIEUSE DE ${r.kind.toUpperCase()}\nN° : ${r.no}\nDate : ${fmtDate(r.date)}\nPersonne(s) : ${[r.person1, r.person2].filter(Boolean).join(' et ')}\nLieu : ${r.place || '—'}\nImam : ${refLabel('leaders', r.imam) || '—'}\nMosquée : ${refLabel('mosques', r.mosque) || '—'}\nTémoins : ${r.witnesses || '—'}\nPrécisions : ${r.details || '—'}\nStatut : ${r.status || 'Enregistrée'}\nÉmis le : ${fmtDate(today())}`;
+          download(`Attestation-${r.no}.txt`, text, 'text/plain;charset=utf-8');
+          toast('Téléchargement de l\'attestation démarré', 'ok');
+        }
+        function publishEvent(id) {
+          const r = db.events.find(x => x.id === id); if (!r) return;
+          r.status = 'Publié'; r.publishedAt = new Date().toISOString(); r.publishedBy = session ? session.username : 'système';
+          log('Publication événement', 'events', r.title); save(); renderShell(); toast('Événement publié avec succès !', 'ok');
         }
 
         function viewAudit() {
           return `<div class="toolbar"><input type="search" id="qa" placeholder="Rechercher dans le journal…" value="${esc(state.q.audit || '')}">
+            <button class="btn-app ghost" data-act="print">Imprimer</button>
+            <button class="btn-app ghost" data-act="closeview">Fermer</button>
             <button class="btn-app ghost" data-act="csvaudit">Exporter (Excel)</button></div>
             <div class="tw" id="tbl"></div><p class="note">Chaque action est enregistrée.</p>`;
         }
@@ -1365,7 +1396,11 @@
               <td class="act"><button class="btn-app ghost sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button>
               ${u.username !== session.username ? `<button class="btn-app ghost sm" style="color:var(--red)" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</td></tr>`).join('')}
             </tbody></table></div>
-            <div class="toolbar" style="margin-top:12px"><button class="btn-app" data-act="adduser">+ Ajouter un utilisateur</button></div></div>
+            <div class="toolbar" style="margin-top:12px">
+              <button class="btn-app" data-act="adduser">+ Ajouter un utilisateur</button>
+              <button class="btn-app ghost" data-act="print">Imprimer</button>
+              <button class="btn-app ghost" data-act="closeview">Fermer</button>
+            </div></div>
           <div class="card-gestion"><h3>Sauvegarde</h3>
             <p class="note">Exportez régulièrement une sauvegarde de vos données.</p>
             <div class="toolbar"><button class="btn-app" data-act="backup">Télécharger la sauvegarde</button>
@@ -1379,7 +1414,7 @@
             <label><span>Identifiant *</span><input name="username" required autocomplete="off"></label>
             <label><span>Rôle *</span><select name="role">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('')}</select></label>
             <label><span>Mot de passe * (6 min)</span><input name="pw" type="password" required minlength="6" autocomplete="new-password"></label></div>
-            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Annuler</button><button class="btn-app">Créer</button></div></form>`);
+            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button class="btn-app">Créer</button></div></form>`);
         }
         async function submitUser(f) {
           if (!canWrite('admin')) return;
@@ -1389,7 +1424,7 @@
           db.users.push(u); log('Création utilisateur', 'admin', `${un} (${u.role})`); save(); closeModal(); renderShell(); toast('Utilisateur créé', 'ok');
         }
         function seedDemo() {
-          const add = (mod, o) => { const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session.username}, o); if (SCHEMA[mod].onCreate) SCHEMA[mod].onCreate(r); db[mod].push(r); return r.id; };
+          const add = (mod, o) => { const r = Object.assign({id:uid(), createdAt:new Date().toISOString(), createdBy:session ? session.username : 'système'}, o); if (SCHEMA[mod].onCreate) SCHEMA[mod].onCreate(r); db[mod].push(r); return r.id; };
           const nat = add('entities', {name:'Direction Nationale COMICO', level:'National'});
           const prov = add('entities', {name:'Comité Provincial Kinshasa', level:'Provincial', parent:nat});
           const loc = add('entities', {name:'Comité Local Lingwala', level:'Ville / Commune / Territoire', parent:prov});
@@ -1397,18 +1432,20 @@
           const m1 = add('mosques', {name:'Grande Mosquée Centrale', entity:loc, capacity:500, imam:im, state:'En service'});
           const a = add('members', {last:'Tshibangu', first:'Mike', sex:'Masculin', mosque:m1, status:'Actif', since:today()});
           add('finance', {date:today(), kind:'Cotisation', amount:50, cur:'USD', entity:loc, member:a, mode:'Espèces'});
-          add('events', {title:'Assemblée Générale', kind:'Réunion', date:today(), place:'Mosquée Centrale', entity:loc});
+          add('events', {title:'Assemblée Générale', kind:'Réunion', date:today(), place:'Mosquée Centrale', entity:loc, status:'Publié'});
+          add('acts', {kind:'Mariage', date:today(), person1:'Karim', person2:'Amina', status:'Publiée'});
           log('Chargement des données d\'exemple', 'admin', ''); save(); renderShell(); toast('Données d\'exemple chargées', 'ok');
         }
 
         document.addEventListener('click', e => {
           if (e.target.classList.contains('backdrop')) return closeModal();
           const el = e.target.closest('[data-act]'); if (!el) return;
-          const a = el.dataset.act, mod = el.dataset.mod, id = el.dataset.id;
+          const a = el.dataset.act, mod = el.dataset.mod || route(), id = el.dataset.id;
           switch (a) {
             case 'logout': return logout();
             case 'menu': return $('#side').classList.toggle('open');
             case 'close': return closeModal();
+            case 'closeview': location.hash = '#/dashboard'; return;
             case 'print': return window.print();
             case 'add': return openForm(mod);
             case 'edit': return openForm(mod, id);
@@ -1422,6 +1459,9 @@
             case 'receipt': return receipt(id);
             case 'card': return memberCard(id);
             case 'attest': return attestation(id);
+            case 'publishact': return publishAct(id);
+            case 'downloadact': return downloadAct(id);
+            case 'publishevent': return publishEvent(id);
             case 'cancel': {
               if (!canWrite('finance')) return;
               const r = db.finance.find(x => x.id === id); if (!r || r.status === 'Annulée') return;
