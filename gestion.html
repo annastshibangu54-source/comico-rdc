@@ -72,8 +72,9 @@
             td.act .btn-app{margin-left:4px}
             .empty{padding:28px;text-align:center;color:var(--mut)}
             .sub{display:block;font-size:11px;color:var(--mut)}
-            .backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:20000}
-            .modal{position:relative;z-index:20001;background:#fff;border-radius:14px;padding:20px;width:100%;max-width:560px;box-shadow:0 10px 40px rgba(0,0,0,0.3);margin-top:40px}
+            #modal-root{position:relative;z-index:20000}
+            .backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:20000}
+            .modal{position:relative;z-index:20001;background:#fff;border-radius:14px;padding:20px;width:100%;max-width:560px;box-shadow:0 10px 40px rgba(0,0,0,0.3);margin-top:40px;display:block!important}
             .modal.wide{max-width:760px}
             .modal h2{margin:0 0 14px;font-size:18px}
             .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1137,7 +1138,7 @@
         function sheet(title, body) {
           modal(`<div class="sheet"><div class="head"><b>COMMUNAUTÉ ISLAMIQUE DU CONGO (COMICO-RDC)</b><small>${esc(title)}</small></div>${body}
             <div class="foot"><span>Émis le ${fmtDate(today())} par ${esc(session ? session.name : 'Système')}</span><span>Signature et cachet</span></div></div>
-            <div class="bar no-print"><button class="btn-app ghost" data-act="close">Fermer</button><button class="btn-app" data-act="print">Imprimer</button></div>`, true);
+            <div class="bar no-print"><button type="button" class="btn-app ghost" data-act="close">Fermer</button><button type="button" class="btn-app" data-act="print">Imprimer</button></div>`, true);
         }
 
         function renderAuth() {
@@ -1148,7 +1149,7 @@
             ${first ? '<label>Nom complet<input name="name" required></label>' : ''}
             <label>Identifiant<input name="username" required autocomplete="username"></label>
             <label>Mot de passe${first ? ' (6 caractères minimum)' : ''}<input name="pw" type="password" required minlength="${first ? 6 : 1}" autocomplete="${first ? 'new-password' : 'current-password'}"></label>
-            <button class="btn-app">${first ? 'Créer et entrer' : 'Se connecter'}</button>
+            <button type="submit" class="btn-app">${first ? 'Créer et entrer' : 'Se connecter'}</button>
             <p class="note" style="margin-top:14px">Données sécurisées dans ce navigateur.</p>
           </form>`;
         }
@@ -1185,8 +1186,8 @@
             <aside id="side"><div class="brand">COMICO-RDC<small>Gestion Administrative</small></div>
               <nav>${nav}</nav>
               <div class="me"><b>${esc(session.name)}</b><small>${esc(ROLES[session.role].label)}</small>
-                <button class="btn-app ghost sm" style="color:#fff;border-color:#fff5" data-act="logout">Déconnexion</button></div></aside>
-            <main><div class="gheader"><button class="burger" data-act="menu" aria-label="Menu">☰</button><h2>${esc(TITLES[mod])}</h2>
+                <button type="button" class="btn-app ghost sm" style="color:#fff;border-color:#fff5" data-act="logout">Déconnexion</button></div></aside>
+            <main><div class="gheader"><button type="button" class="burger" data-act="menu" aria-label="Menu">☰</button><h2>${esc(TITLES[mod])}</h2>
               <span class="hij">${esc(hijri(today()))}<br>${fmtDate(today())}</span></div>
               <section id="view"></section></main></div>`;
           const v = $('#view');
@@ -1215,7 +1216,7 @@
           const up = db.events.filter(e => (e.end || e.date) >= today()).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
           const empty = !db.entities.length && !db.members.length && !db.mosques.length;
           return `${empty && canWrite('entities') ? `<div class="card-gestion"><h3>Pour commencer</h3><p>Créez d'abord la structure (national, province, comités), puis les mosquées et les membres. Vous pouvez charger des données d'exemple pour tester.</p>
-              <button class="btn-app" data-act="seed">Charger des données d'exemple</button></div>` : ''}
+              <button type="button" class="btn-app" data-act="seed">Charger des données d'exemple</button></div>` : ''}
             <div class="cards-grid">
               <div class="stat-box"><b>${db.entities.length}</b><span>Entités (comités)</span></div>
               <div class="stat-box"><b>${db.mosques.length}</b><span>Mosquées</span></div>
@@ -1231,10 +1232,10 @@
           const w = canWrite(mod);
           return `${mod === 'finance' ? `<div class="card-gestion"><h3>Résumé de l'année</h3>${financeSummary()}</div>` : ''}
             <div class="toolbar"><input type="search" id="q" placeholder="Rechercher…" value="${esc(state.q[mod] || '')}">
-              ${w ? `<button class="btn-app" data-act="add" data-mod="${mod}">+ Ajouter</button>` : `<button class="btn-app ghost" data-act="add" data-mod="${mod}">+ Ajouter</button>`}
-              <button class="btn-app ghost" data-act="print">Imprimer</button>
-              <button class="btn-app ghost" data-act="closeview">Fermer</button>
-              <button class="btn-app ghost" data-act="csv" data-mod="${mod}">Exporter (Excel)</button></div>
+              ${w ? `<button type="button" class="btn-app" data-act="add" data-mod="${mod}">+ Ajouter</button>` : `<button type="button" class="btn-app ghost" data-act="add" data-mod="${mod}">+ Ajouter</button>`}
+              <button type="button" class="btn-app ghost" data-act="print">Imprimer</button>
+              <button type="button" class="btn-app ghost" data-act="closeview">Fermer</button>
+              <button type="button" class="btn-app ghost" data-act="csv" data-mod="${mod}">Exporter (Excel)</button></div>
             <div class="tw" id="tbl"></div>`;
         }
         function drawTable(mod) {
@@ -1246,9 +1247,9 @@
           if (!rows.length) { box.innerHTML = `<div class="empty">${q ? 'Aucun résultat.' : 'Aucun enregistrement pour le moment.'}</div>`; return; }
           const acts = r => {
             const out = [];
-            for (const a of (S.actions || [])) if ((!a.w || canWrite(mod)) && (!a.show || a.show(r))) out.push(`<button class="btn-app ghost sm" data-act="${a.id}" data-mod="${mod}" data-id="${r.id}">${a.label}</button>`);
-            if (canWrite(mod) && !S.noEdit) out.push(`<button class="btn-app ghost sm" data-act="edit" data-mod="${mod}" data-id="${r.id}">Modifier</button>`);
-            if (canWrite(mod) && !S.noDelete) out.push(`<button class="btn-app ghost sm" style="color:var(--red)" data-act="del" data-mod="${mod}" data-id="${r.id}">Supprimer</button>`);
+            for (const a of (S.actions || [])) if ((!a.w || canWrite(mod)) && (!a.show || a.show(r))) out.push(`<button type="button" class="btn-app ghost sm" data-act="${a.id}" data-mod="${mod}" data-id="${r.id}">${a.label}</button>`);
+            if (canWrite(mod) && !S.noEdit) out.push(`<button type="button" class="btn-app ghost sm" data-act="edit" data-mod="${mod}" data-id="${r.id}">Modifier</button>`);
+            if (canWrite(mod) && !S.noDelete) out.push(`<button type="button" class="btn-app ghost sm" style="color:var(--red)" data-act="del" data-mod="${mod}" data-id="${r.id}">Supprimer</button>`);
             return out.join('');
           };
           box.innerHTML = `<table><thead><tr>${S.cols.map(c => `<th>${esc(c.l)}</th>`).join('')}<th></th></tr></thead><tbody>
@@ -1271,10 +1272,13 @@
           return `<input ${n} type="${type}" value="${esc(v)}"${req}>`;
         }
         function openForm(mod, id) {
-          const S = SCHEMA[mod], rec = id ? db[mod].find(x => x.id === id) : null;
-          modal(`<form data-form="${mod}" data-id="${id || ''}"><h2>${rec ? 'Modifier' : 'Ajouter'} : ${esc(S.single)}</h2>
+          const targetMod = mod || route();
+          const S = SCHEMA[targetMod];
+          if (!S) return;
+          const rec = id ? db[targetMod].find(x => x.id === id) : null;
+          modal(`<form data-form="${targetMod}" data-id="${id || ''}"><h2>${rec ? 'Modifier' : 'Ajouter'} : ${esc(S.single)}</h2>
             <div class="grid">${S.fields.map(f => `<label class="${f.t === 'textarea' ? 'full' : ''}"><span>${esc(f.l)}${f.req ? ' *' : ''}</span>${fieldHTML(f, rec ? rec[f.k] : (typeof f.d === 'function' ? f.d() : f.d))}</label>`).join('')}</div>
-            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button class="btn-app">Enregistrer</button></div></form>`);
+            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button type="submit" class="btn-app">Enregistrer</button></div></form>`);
         }
         function submitCrud(f) {
           const mod = f.dataset.form, S = SCHEMA[mod], id = f.dataset.id;
@@ -1335,7 +1339,7 @@
             <p style="font-size:18px;margin:10px 0 4px"><b>${esc(LABEL.members(m))}</b></p>
             <div>N° ${esc(m.card)}</div><div>Mosquée : ${esc(refLabel('mosques', m.mosque) || '—')}</div>
             <div>Membre depuis : ${fmtDate(m.since) || '—'}</div></div>
-            <div class="bar no-print"><button class="btn-app ghost" data-act="close">Fermer</button><button class="btn-app" data-act="print">Imprimer</button></div>`);
+            <div class="bar no-print"><button type="button" class="btn-app ghost" data-act="close">Fermer</button><button type="button" class="btn-app" data-act="print">Imprimer</button></div>`);
         }
         function attestationContent(r) {
           const p1 = `<b>${esc(r.person1)}</b>`, p2 = r.person2 ? `<b>${esc(r.person2)}</b>` : '', h = hijri(r.date);
@@ -1377,9 +1381,9 @@
 
         function viewAudit() {
           return `<div class="toolbar"><input type="search" id="qa" placeholder="Rechercher dans le journal…" value="${esc(state.q.audit || '')}">
-            <button class="btn-app ghost" data-act="print">Imprimer</button>
-            <button class="btn-app ghost" data-act="closeview">Fermer</button>
-            <button class="btn-app ghost" data-act="csvaudit">Exporter (Excel)</button></div>
+            <button type="button" class="btn-app ghost" data-act="print">Imprimer</button>
+            <button type="button" class="btn-app ghost" data-act="closeview">Fermer</button>
+            <button type="button" class="btn-app ghost" data-act="csvaudit">Exporter (Excel)</button></div>
             <div class="tw" id="tbl"></div><p class="note">Chaque action est enregistrée.</p>`;
         }
         function drawAudit() {
@@ -1393,20 +1397,20 @@
           return `<div class="card-gestion"><h3>Utilisateurs</h3>
             <div class="tw"><table><thead><tr><th>Identifiant</th><th>Nom</th><th>Rôle</th><th></th></tr></thead><tbody>
             ${db.users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.name)}</td><td>${esc(ROLES[u.role] ? ROLES[u.role].label : u.role)}</td>
-              <td class="act"><button class="btn-app ghost sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button>
-              ${u.username !== session.username ? `<button class="btn-app ghost sm" style="color:var(--red)" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</td></tr>`).join('')}
+              <td class="act"><button type="button" class="btn-app ghost sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button>
+              ${u.username !== session.username ? `<button type="button" class="btn-app ghost sm" style="color:var(--red)" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</td></tr>`).join('')}
             </tbody></table></div>
             <div class="toolbar" style="margin-top:12px">
-              <button class="btn-app" data-act="adduser">+ Ajouter un utilisateur</button>
-              <button class="btn-app ghost" data-act="print">Imprimer</button>
-              <button class="btn-app ghost" data-act="closeview">Fermer</button>
+              <button type="button" class="btn-app" data-act="adduser">+ Ajouter un utilisateur</button>
+              <button type="button" class="btn-app ghost" data-act="print">Imprimer</button>
+              <button type="button" class="btn-app ghost" data-act="closeview">Fermer</button>
             </div></div>
           <div class="card-gestion"><h3>Sauvegarde</h3>
             <p class="note">Exportez régulièrement une sauvegarde de vos données.</p>
-            <div class="toolbar"><button class="btn-app" data-act="backup">Télécharger la sauvegarde</button>
-              <button class="btn-app ghost" data-act="restore">Restaurer</button>
+            <div class="toolbar"><button type="button" class="btn-app" data-act="backup">Télécharger la sauvegarde</button>
+              <button type="button" class="btn-app ghost" data-act="restore">Restaurer</button>
               <input type="file" id="rf" accept="application/json,.json" hidden></div></div>
-          <div class="card-gestion"><h3>Zone dangereuse</h3><button class="btn-app red" data-act="wipe">Effacer toutes les données</button></div>`;
+          <div class="card-gestion"><h3>Zone dangereuse</h3><button type="button" class="btn-app red" data-act="wipe">Effacer toutes les données</button></div>`;
         }
         function openUserForm() {
           modal(`<form data-form="user"><h2>Nouvel utilisateur</h2><div class="grid">
@@ -1414,7 +1418,7 @@
             <label><span>Identifiant *</span><input name="username" required autocomplete="off"></label>
             <label><span>Rôle *</span><select name="role">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('')}</select></label>
             <label><span>Mot de passe * (6 min)</span><input name="pw" type="password" required minlength="6" autocomplete="new-password"></label></div>
-            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button class="btn-app">Créer</button></div></form>`);
+            <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer / Annuler</button><button type="button" class="btn-app ghost" data-act="print">Imprimer</button><button type="submit" class="btn-app">Créer</button></div></form>`);
         }
         async function submitUser(f) {
           if (!canWrite('admin')) return;
