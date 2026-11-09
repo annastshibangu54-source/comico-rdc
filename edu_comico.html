@@ -427,16 +427,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </form>
     <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe / Niveau</th><th>Code Secret Enseignant</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
 </div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- 4. ELEVES / MEMBRES -->
 <div class="tab-pane" id="tab-eleves-reg">
 <h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
 <div id="studentsLockedContainer" class="text-center py-5">
-    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictly réservé au propriétaire de la Madras.</p>
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictement réservé au propriétaire de la Madras.</p>
     <button class="btn btn-danger btn-sm fw-bold" onclick="openOwnerStudentRegistration()">Déverrouiller Inscription Élèves</button>
 </div>
 <div id="studentsUnlockedContainer" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé</span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="lockStudents()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
+    </div>
     <form id="formStudent" onsubmit="handleSaveStudent(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
         <div class="col-md-3"><input type="text" id="studentMatricule" class="form-control" placeholder="Matricule" required></div>
         <div class="col-md-3"><input type="text" id="studentName" class="form-control" placeholder="Nom & Prénom" required></div>
@@ -451,11 +458,22 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </form>
     <div id="studentsContainerList"></div>
 </div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- CARTE MEMBRE -->
 <div class="tab-pane" id="tab-carte-eleve">
 <h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
+<div id="cardLockedContainer" class="text-center py-5">
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès sécurisé par le Code Secret du Propriétaire.</p>
+    <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
+        <input type="password" id="cardOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <button class="btn btn-primary fw-bold" onclick="promptUnlockCard()">Déverrouiller</button>
+    </div>
+</div>
+<div id="cardUnlockedContainer" style="display:none;">
 <div class="row mb-3 no-print">
 <div class="col-md-4"><label>Classe / Niveau :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
 <div class="col-md-4"><label>Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
@@ -488,6 +506,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         </div>
     </div>
 </div>
+</div>
 
 <div class="action-bar justify-content-center mt-3 no-print">
 <button class="btn btn-success btn-sm fw-bold" onclick="saveStudentCardData()"><i class="fa fa-save me-1"></i> Enregistrer la Carte</button>
@@ -506,6 +525,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
 </form>
 <table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- NOTES / PERFORMANCES -->
@@ -525,6 +547,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
     <div id="notesSheetContainer" class="mb-3"></div>
 </div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- BULLETINS -->
@@ -540,10 +565,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="bulletinWorkspace" style="display:none;">
     <div class="row g-2 mb-3 no-print">
         <div class="col-md-4"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
-        <div class="col-md-4"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
-        <div class="col-md-2" id="printBulletinBtnContainer"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+        <div class="col-md-4"><select id="bulletinStudentSelect" class="form-select" onchange="askBulletinType()"></select></div>
+        <div class="col-md-2" id="printBulletinBtnContainer"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button></div>
     </div>
     <div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un élève.</p></div></div>
+</div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
 
@@ -561,9 +589,12 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <option value="p4">4ème Période</option>
     </select>
 </div>
-<div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+<div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button></div>
 </div>
 <div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- TRÉSORERIE & COTISATIONS -->
@@ -572,7 +603,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <form id="formPaymentCustom" onsubmit="handleSaveCaissePaymentCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-3">
   <label class="form-label fw-bold small">Catégorie :</label>
-  <select id="caisseCategorie" class="form-select form-select-sm" onchange="updateCaisseFieldsVisibility()" required>
+  <select id="caisseCategorie" class="form-select form-select-sm" required>
     <option value="Eleve">1. Élève / Étudiant</option>
     <option value="Enseignant">2. Enseignant / Personnel</option>
   </select>
@@ -595,6 +626,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <tbody id="caisseCustomTableBody"></tbody>
 </table>
 </div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- MOBILE MONEY -->
@@ -610,31 +644,44 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </form>
 </div>
 <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Élève</th><th>Opérateur</th><th>Montant</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="momoTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
 <h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours</h5>
 <form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
-<div class="col-md-3"><label class="small fw-bold">Classe :</label><select id="presClassSelect" class="form-select form-select-sm" onchange="loadStudentsForPresence()" required></select></div>
+<div class="col-md-2"><label class="small fw-bold">Classe :</label><select id="presClassSelect" class="form-select form-select-sm" onchange="loadStudentsForPresence()" required></select></div>
 <div class="col-md-3"><label class="small fw-bold">Élève :</label><select id="presStudentSelect" class="form-select form-select-sm" required></select></div>
-<div class="col-md-3"><label class="small fw-bold">Statut :</label><select id="presStatutEleve" class="form-select form-select-sm"><option value="Présent">Présent(e)</option><option value="Absent">Absent(e)</option><option value="Retard">Retard</option></select></div>
-<div class="col-md-3 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Enregistrer</button></div>
+<div class="col-md-2"><label class="small fw-bold">Statut :</label><select id="presStatutEleve" class="form-select form-select-sm"><option value="Présent">Présent(e)</option><option value="Absent">Absent(e)</option><option value="Retard">Retard</option></select></div>
+<div class="col-md-3"><label class="small fw-bold">Nom (Responsable/Contrôleur) :</label><input type="text" id="presNomControleur" class="form-control form-control-sm" placeholder="Votre nom" required></div>
+<div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Enregistrer</button></div>
 </form>
-<table class="table table-bordered table-sm align-middle"><thead><tr><th>Élève</th><th>Classe</th><th>Date</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="presenceCustomTableBody"></tbody></table>
+<table class="table table-bordered table-sm align-middle"><thead><tr><th>Élève</th><th>Classe</th><th>Statut</th><th>Date</th><th>Heure</th><th>Jour</th><th>Nom</th><th class="no-print">Action</th></tr></thead><tbody id="presenceCustomTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
 <h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
 <form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
-<div class="col-md-3"><select id="discClassSelect" class="form-select form-select-sm" onchange="loadStudentsForDiscipline()" required></select></div>
+<div class="col-md-2"><select id="discClassSelect" class="form-select form-select-sm" onchange="loadStudentsForDiscipline()" required></select></div>
 <div class="col-md-3"><select id="discStudentSelect" class="form-select form-select-sm" required></select></div>
 <div class="col-md-3"><input type="text" id="discobs" class="form-control form-control-sm" placeholder="Motif / Sanction" required></div>
 <div class="col-md-2"><input type="text" id="discDuree" class="form-control form-control-sm" placeholder="Durée (ex: 3 jours)" required></div>
-<div class="col-md-1 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus"></i></button></div>
+<div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
 </form>
-<table class="table table-bordered"><thead><tr><th>Élève</th><th>Sanction</th><th>Durée</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+<div class="action-bar no-print mb-2">
+    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button>
+</div>
+<table class="table table-bordered"><thead><tr><th>Classe</th><th>Élève</th><th>Motif / Sanction</th><th>Durée</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- COMMUNICATION -->
@@ -646,12 +693,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button class="btn btn-warning btn-sm fw-bold" onclick="handleSaveCommunication()"><i class="fa fa-bullhorn me-1"></i> Publier</button>
 </div>
 <table class="table table-bordered mt-3"><thead><tr><th>Date</th><th>Annonce</th><th>Images</th><th class="no-print">Action</th></tr></thead><tbody id="commTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- EMPLOI / MISSIONS -->
 <div class="tab-pane" id="tab-jobs-received">
 <h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues</h5>
 <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- EMBLÈMES -->
@@ -661,10 +714,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <form onsubmit="handleSaveArmoiries(event)" class="row g-3">
       <div class="col-md-6"><label class="form-label fw-bold">Symbole / Emblème :</label><input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*"></div>
       <div class="col-md-6"><label class="form-label fw-bold">Devise Officielle :</label><input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence"></div>
-      <div class="col-12 action-bar"><button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button></div>
+      <div class="col-12 action-bar"><button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button></div>
     </form>
   </div>
   <div id="armoiriesDisplayContainer" class="p-3 bg-light rounded text-center"></div>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- PALMARÈS -->
@@ -674,6 +730,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button>
   </div>
   <div id="palmaresTableContainer"></div>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- COURRIERS -->
@@ -692,7 +751,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <div class="input-group input-group-sm mb-3 no-print" style="max-width: 300px;">
       <input type="text" id="courrierSearchInput" class="form-control" placeholder="Rechercher un courrier..." onkeyup="renderCourriersTable()">
   </div>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>N° Doc</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Document</th><th class="no-print">Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>N° Doc</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Heure / Jour</th><th>Document</th><th class="no-print">Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- DOSSIERS & ARCHIVES -->
@@ -706,7 +768,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Image / Fichier Scanné :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
     <div class="col-md-4 mt-2 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Archiver Document</button></div>
   </form>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- CALENDRIER -->
@@ -719,7 +784,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-2"><input type="date" id="calFin" class="form-control form-control-sm" required></div>
     <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
   </form>
+  <div class="action-bar no-print mb-2">
+      <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Publier</button>
+  </div>
   <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- HORAIRES -->
@@ -732,13 +803,22 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-3"><input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Cours" required></div>
     <div class="col-12 mt-2 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Ajouter</button></div>
   </form>
+  <div class="action-bar no-print mb-2">
+      <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Publier</button>
+  </div>
   <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- STATISTIQUES -->
 <div class="tab-pane" id="tab-statistiques">
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO</h5>
 <div class="row g-3" id="statsContainer"></div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 </div>
@@ -1118,7 +1198,7 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* VERIFICATION DU CODE PROPRIÉTAIRE POUR LES SECTIONS SÉCURISÉES */
+/* SÉCURISATION DES SECTIONS PAR CODE SECRET PROPRIÉTAIRE */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -1127,6 +1207,18 @@ function promptSecureTabAccess(tabId, element) {
         if(tabId === 'tab-profs') teachersUnlocked = true;
         switchTab(tabId, element);
     } else if(code !== null) {
+        alert("Code secret propriétaire incorrect.");
+    }
+}
+
+function promptUnlockCard() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('cardOwnerSecretInput').value.trim();
+    if(code.toUpperCase() === s.secretCode.toUpperCase()) {
+        document.getElementById('cardUnlockedContainer').style.display = 'block';
+        document.getElementById('cardLockedContainer').style.display = 'none';
+        document.getElementById('cardOwnerSecretInput').value = '';
+    } else {
         alert("Code secret propriétaire incorrect.");
     }
 }
@@ -1302,6 +1394,11 @@ function openOwnerStudentRegistration() {
     }
 }
 
+function lockStudents() {
+    document.getElementById('studentsUnlockedContainer').style.display = 'none';
+    document.getElementById('studentsLockedContainer').style.display = 'block';
+}
+
 function handleSaveStudent(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1409,7 +1506,7 @@ function deleteCourse(cls, index) {
     renderCoursesTable();
 }
 
-// 6. ACCÈS ENSEIGNANT NOTES ET BULLETINS
+// 6. NOTES ET BULLETINS
 function verifyTeacherAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('teacherAuthCode').value.trim();
@@ -1419,10 +1516,8 @@ function verifyTeacherAccess() {
         document.getElementById('notesWorkspace').style.display = 'block';
         document.getElementById('teacherAccessCheckArea').style.display = 'none';
         
-        // Charger les classes dans la rubrique note
         const classOpts = '<option value="">-- Choisir une classe --</option>' + (s.yearsData[s.activeYear].classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         document.getElementById('notesClassSelect').innerHTML = classOpts;
-        
         alert("Accès autorisé pour l'enseignant : " + teacher.name);
     } else {
         alert("Code secret enseignant incorrect.");
@@ -1451,7 +1546,6 @@ function renderNotesSheet() {
     }
 
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
-
     let html = `
         <div class="card p-3 bg-light">
             <h6 class="fw-bold text-primary mb-3">Formulaire de Saisie des Cotes</h6>
@@ -1459,7 +1553,7 @@ function renderNotesSheet() {
                 <div class="row g-2">
     `;
     courses.forEach(c => {
-        const val = notesObj[c.name] !== undefined ? notesObj[c.name] : '';
+        let val = notesObj[c.name] !== undefined ? notesObj[c.name] : '';
         html += `
             <div class="col-md-6 mb-2">
                 <label class="form-label small fw-bold">${c.name} (Max : ${c.max}) :</label>
@@ -1524,6 +1618,17 @@ function loadStudentsForBulletin() {
     document.getElementById('bulletinStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
 }
 
+function askBulletinType() {
+    const mat = document.getElementById('bulletinStudentSelect').value;
+    if(!mat) return;
+    const choice = prompt("Que voulez-vous générer ?\nTapez 1 : Bulletin Scolaire\nTapez 2 : Attestation");
+    if(choice === "2") {
+        renderAttestation();
+    } else {
+        renderBulletinFromSystem();
+    }
+}
+
 function renderBulletinFromSystem() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const mat = document.getElementById('bulletinStudentSelect').value;
@@ -1531,18 +1636,11 @@ function renderBulletinFromSystem() {
     const page = document.getElementById('page');
     if(!mat) { page.innerHTML = '<p class="text-center text-muted">Sélectionnez un élève.</p>'; return; }
 
-    const choice = prompt("Que voulez-vous générer ?\n1 : Bulletin Scolaire\n2 : Attestation de Réussite");
-    if(choice === "2") {
-        renderAttestation(s, mat);
-        return;
-    }
-
     const yData = s.yearsData[s.activeYear];
     const student = (yData.students || []).find(x => x.matricule === mat);
     const classStudents = (yData.students || []).filter(x => x.classe === cls);
     const courses = yData.courses[cls] || [];
 
-    // Calculs de classement
     let studentTotals = classStudents.map(st => {
         let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
         let tot = 0, maxTot = 0;
@@ -1561,7 +1659,7 @@ function renderBulletinFromSystem() {
         <div class="text-center border-bottom pb-2 mb-3">
             <h4 class="fw-bold text-primary mb-0">${s.name}</h4>
             <div class="small text-muted">${s.province} | ${s.commune}</div>
-            <h5 class="fw-bold mt-2">BULLETIN SCOLAIRE - ANNEÉ ${s.activeYear}</h5>
+            <h5 class="fw-bold mt-2">BULLETIN SCOLAIRE - ANNÉE ${s.activeYear}</h5>
         </div>
         <div class="row mb-3 small">
             <div class="col-6"><b>Matricule :</b> ${student.matricule}<br><b>Nom & Prénom :</b> ${student.name}</div>
@@ -1573,7 +1671,7 @@ function renderBulletinFromSystem() {
     `;
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     courses.forEach(c => {
-        const score = notesObj[c.name] !== undefined ? notesObj[c.name] : 0;
+        let score = notesObj[c.name] !== undefined ? notesObj[c.name] : 0;
         html += `<tr><td>${c.name}</td><td>${c.max}</td><td><b>${score}</b></td></tr>`;
     });
     html += `
@@ -1591,7 +1689,9 @@ function renderBulletinFromSystem() {
     page.innerHTML = html;
 }
 
-function renderAttestation(s, mat) {
+function renderAttestation() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const mat = document.getElementById('bulletinStudentSelect').value;
     const yData = s.yearsData[s.activeYear];
     const student = (yData.students || []).find(x => x.matricule === mat);
     const page = document.getElementById('page');
@@ -1640,9 +1740,7 @@ function renderPeriodicBulletin() {
     `;
 }
 
-// FRAIS SCOLAIRES AVEC FACTURE ET IMPRESSION
-function updateCaisseFieldsVisibility() {}
-
+// FRAIS & TRÉSORERIE AVEC FACTURE
 function handleSaveCaissePaymentCustom(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1670,7 +1768,7 @@ function renderCaisseTable() {
             <td>$${c.montant}</td>
             <td>${c.date}</td>
             <td class="no-print">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="printFacture('${c.id}')"><i class="fa fa-print"></i> Facture</button>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="printFacture('${c.id}')"><i class="fa fa-print"></i> Facture / Imprimer</button>
                 <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].caisse.splice(${i},1);saveData();renderCaisseTable();"><i class="fa fa-trash"></i></button>
             </td>
         </tr>
@@ -1684,7 +1782,7 @@ function printFacture(facId) {
 
     const win = window.open('', '_blank');
     win.document.write(`
-        <html><head><title>Facture / Reçu de Caisse</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+        <html><head><title>Facture de Caisse</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
         <body class="p-4" onload="window.print()">
             <div class="border p-4 rounded text-center">
                 <h3 class="fw-bold text-primary">${s.name}</h3>
@@ -1723,43 +1821,11 @@ function renderMomoTable() {
     const tbody = document.getElementById('momoTableBody');
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].studentPayments || []).map((m, i) => `
-        <tr>
-            <td>${m.date}</td><td>${m.student}</td><td>${m.operator}</td><td>$${m.amount}</td><td><span class="badge bg-success">${m.status}</span></td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="printFactureMomo('${m.id}')"><i class="fa fa-print"></i> Reçu</button>
-                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].studentPayments.splice(${i},1);saveData();renderMomoTable();"><i class="fa fa-trash"></i></button>
-            </td>
-        </tr>
+        <tr><td>${m.date}</td><td>${m.student}</td><td>${m.operator}</td><td>$${m.amount}</td><td><span class="badge bg-success">${m.status}</span></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].studentPayments.splice(${i},1);saveData();renderMomoTable();"><i class="fa fa-trash"></i></button></td></tr>
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun paiement.</td></tr>';
 }
 
-function printFactureMomo(momoId) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const item = (s.yearsData[s.activeYear].studentPayments || []).find(x => x.id === momoId);
-    if(!item) return;
-
-    const win = window.open('', '_blank');
-    win.document.write(`
-        <html><head><title>Reçu Mobile Money</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-        <body class="p-4" onload="window.print()">
-            <div class="border p-4 rounded text-center">
-                <h3 class="fw-bold text-primary">${s.name}</h3>
-                <h5 class="fw-bold my-3">REÇU PAIEMENT MOBILE MONEY (${item.operator})</h5>
-                <hr>
-                <div class="text-start my-3">
-                    <p><b>Date :</b> ${item.date}</p>
-                    <p><b>Élève :</b> ${item.student}</p>
-                    <p><b>Montant :</b> $${item.amount}</p>
-                    <p><b>Statut :</b> ${item.status}</p>
-                </div>
-                <hr>
-                <p class="small text-muted">Validation Électronique COMICO</p>
-            </div>
-        </body></html>
-    `);
-}
-
-// PRÉSENCES DE LA CLASSE
+// PRÉSENCES
 function loadStudentsForPresence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const cls = document.getElementById('presClassSelect').value;
@@ -1770,11 +1836,14 @@ function loadStudentsForPresence() {
 function handleSavePresenceCustom(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    const now = new Date();
     s.yearsData[s.activeYear].presenceStudents.push({
         student: document.getElementById('presStudentSelect').value,
         classe: document.getElementById('presClassSelect').value,
-        date: new Date().toLocaleDateString(),
-        heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        date: now.toLocaleDateString(),
+        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+        nomControleur: document.getElementById('presNomControleur').value.trim(),
         statut: document.getElementById('presStatutEleve').value
     });
     saveData();
@@ -1787,11 +1856,11 @@ function renderPresenceTable() {
     const tbody = document.getElementById('presenceCustomTableBody');
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].presenceStudents || []).map((p, i) => `
-        <tr><td>${p.student}</td><td>${p.classe || '-'}</td><td>${p.date} à ${p.heure || ''}</td><td>${p.statut}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].presenceStudents.splice(${i},1);saveData();renderPresenceTable();"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune présence.</td></tr>';
+        <tr><td>${p.student}</td><td>${p.classe || '-'}</td><td>${p.statut}</td><td>${p.date}</td><td>${p.heure || ''}</td><td>${p.jour || ''}</td><td>${p.nomControleur || '-'}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].presenceStudents.splice(${i},1);saveData();renderMomoTable();renderPresenceTable();"><i class="fa fa-trash"></i></button></td></tr>
+    `).join('') || '<tr><td colspan="8" class="text-center text-muted">Aucune présence.</td></tr>';
 }
 
-// DISCIPLINE ET SANCTIONS
+// DISCIPLINE
 function loadStudentsForDiscipline() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const cls = document.getElementById('discClassSelect').value;
@@ -1818,16 +1887,15 @@ function renderDisciplineTable() {
     const tbody = document.getElementById('disciplineTableBody');
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].discipline || []).map((d, i) => `
-        <tr><td>${d.student} (${d.classe || ''})</td><td>${d.obs}</td><td>${d.duree}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].discipline.splice(${i},1);saveData();renderDisciplineTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune sanction.</td></tr>';
+        <tr><td>${d.classe || '-'}</td><td>${d.student}</td><td>${d.obs}</td><td>${d.duree}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].discipline.splice(${i},1);saveData();renderDisciplineTable();"><i class="fa fa-trash"></i></button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune sanction.</td></tr>';
 }
 
-// COMMUNICATION AVEC GESTION D'IMAGES
+// COMMUNICATION
 function handleSaveCommunication() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const text = document.getElementById('announcementText').value.trim();
     const files = document.getElementById('commImageInput').files;
-    
     let images = [];
     let processed = 0;
     if(files && files.length > 0) {
@@ -1837,9 +1905,7 @@ function handleSaveCommunication() {
             reader.onload = function(e) {
                 images.push(e.target.result);
                 processed++;
-                if(processed === count) {
-                    finishCommSave(s, text, images);
-                }
+                if(processed === count) { finishCommSave(s, text, images); }
             };
             reader.readAsDataURL(files[i]);
         }
@@ -1868,7 +1934,7 @@ function renderCommTable() {
             <td>${c.date}</td>
             <td>${c.message}</td>
             <td>${c.images && c.images.length ? c.images.map(img => `<img src="${img}" style="height:40px; border-radius:4px; margin-right:4px;">`).join('') : 'Aucune'}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="s.communications.splice(${i},1);saveData();renderCommTable();renderPortalAnnouncements();"><i class="fa fa-trash"></i> Supprimer</button></td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.communications.splice(${i},1);saveData();renderCommTable();renderPortalAnnouncements();"><i class="fa fa-trash"></i></button></td>
         </tr>
     `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
 }
@@ -1889,8 +1955,7 @@ function handleSendJobApplication(e) {
         s.jobApplications.push({
             id: 'JOB-' + Date.now(),
             name: document.getElementById('jobApplicantName').value.trim(),
-            role: document.getElementById('jobRole').value.trim(),
-            status: 'En attente'
+            role: document.getElementById('jobRole').value.trim()
         });
         saveData();
         alert("Candidature transmise à la Madras !");
@@ -1916,7 +1981,7 @@ function renderSchoolJobsTable() {
 
 function replyJob(id) {
     const rep = prompt("Saisir votre réponse au candidat :");
-    if(rep) alert("Réponse envoyée au candidat !");
+    if(rep) alert("Réponse envoyée avec succès au candidat !");
 }
 
 // EMBLÈMES ET DEVISE
@@ -1924,7 +1989,6 @@ function handleSaveArmoiries(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     s.devise = document.getElementById('schoolDeviseInput').value.trim();
-    
     const file = document.getElementById('schoolArmoiriesFile').files[0];
     if(file) {
         const reader = new FileReader();
@@ -1932,7 +1996,7 @@ function handleSaveArmoiries(e) {
             s.armoiries = evt.target.result;
             saveData();
             renderArmoiriesDisplay();
-            alert("Emblèmes enregistrés !");
+            alert("Emblèmes et devise enregistrés !");
         };
         reader.readAsDataURL(file);
     } else {
@@ -1949,7 +2013,7 @@ function renderArmoiriesDisplay() {
     container.innerHTML = `
         ${s.armoiries ? `<img src="${s.armoiries}" style="max-height:120px;" class="mb-3"><br>` : ''}
         <h4 class="fw-bold text-primary">" ${s.devise || 'Aucune devise renseignée'} "</h4>
-        ${s.armoiries || s.devise ? `<button class="btn btn-sm btn-danger mt-2" onclick="deleteArmoiries()"><i class="fa fa-trash"></i> Supprimer Emblèmes</button>` : ''}
+        ${s.armoiries || s.devise ? `<button class="btn btn-sm btn-danger mt-2" onclick="deleteArmoiries()"><i class="fa fa-trash"></i> Supprimer</button>` : ''}
     `;
 }
 
@@ -1959,12 +2023,11 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
-// PALMARÈS ET RÉUSSITES
+// PALMARÈS
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
     if(!container) return;
-
     const yData = s.yearsData[s.activeYear];
     let html = `
         <table class="table table-bordered table-sm align-middle">
@@ -1985,16 +2048,18 @@ function renderPalmaresTable() {
     container.innerHTML = html;
 }
 
-// CORRESPONDANCES ET DOSSIERS SCANNÉS
+// CORRESPONDANCES
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const file = document.getElementById('courrierFileInput').files[0];
-
+    const now = new Date();
     const saveObj = {
         type: document.getElementById('courrierType').value,
         numDoc: document.getElementById('courrierNumDoc').value.trim(),
         date: document.getElementById('courrierDate').value,
+        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
         exp: document.getElementById('courrierExp').value.trim(),
         dest: document.getElementById('courrierDest').value.trim(),
         objet: document.getElementById('courrierObjet').value.trim(),
@@ -2025,23 +2090,25 @@ function renderCourriersTable() {
 
     tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).filter(c => c.objet.toLowerCase().includes(filter) || c.exp.toLowerCase().includes(filter)).map((c, i) => `
         <tr>
-            <td>${c.date}</td><td>${c.type}</td><td><code>${c.numDoc || '-'}</code></td><td>${c.exp}</td><td>${c.dest || '-'}</td><td>${c.objet}</td>
+            <td>${c.date}</td><td>${c.type}</td><td><code>${c.numDoc || '-'}</code></td><td>${c.exp}</td><td>${c.dest || '-'}</td><td>${c.objet}</td><td>${c.heure || ''} (${c.jour || ''})</td>
             <td>${c.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${c.fileUrl}', '${c.objet}')"><i class="fa fa-eye"></i> Aperçu</button>` : 'Aucun'}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i></button></td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i></button></td>
         </tr>
-    `).join('') || '<tr><td colspan="8" class="text-center text-muted">Aucune correspondance.</td></tr>';
+    `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-// ARCHIVES ET DOSSIERS SCANNÉS
+// ARCHIVES
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const file = document.getElementById('archiveFileInput').files[0];
-
+    const now = new Date();
     const saveObj = {
         classeur: document.getElementById('archiveClasseur').value,
         numDoc: document.getElementById('archiveNumDoc').value.trim(),
         date: document.getElementById('archiveDate').value,
+        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        annee: s.activeYear,
         nomDoc: document.getElementById('archiveNomDoc').value.trim(),
         fileUrl: ''
     };
@@ -2068,9 +2135,9 @@ function renderDossiersTable() {
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
         <tr>
-            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
+            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''} (Année: ${d.annee || '-'})</td><td>${d.nomDoc}</td>
             <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i></button></td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i></button></td>
         </tr>
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
 }
@@ -2094,7 +2161,7 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].calendrierVacances || []).map((c, i) => `
-        <tr><td><b>${c.type || 'Solaire'}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i></button></td></tr>
+        <tr><td><b>${c.type || 'Solaire'}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i></button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement.</td></tr>';
 }
 
@@ -2117,7 +2184,7 @@ function renderHorairesTable() {
     const tbody = document.getElementById('horairesTableBody');
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].horairesCours || []).map((h, i) => `
-        <tr><td>${h.classe}</td><td>${h.jour}</td><td>${h.plage}</td><td>${h.cours}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].horairesCours.splice(${i},1);saveData();renderHorairesTable();"><i class="fa fa-trash"></i></button></td></tr>
+        <tr><td>${h.classe}</td><td>${h.jour}</td><td>${h.plage}</td><td>${h.cours}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].horairesCours.splice(${i},1);saveData();renderHorairesTable();"><i class="fa fa-trash"></i></button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
@@ -2126,7 +2193,6 @@ function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
     if(!container) return;
-
     const yData = s.yearsData[s.activeYear];
     const totalStudents = (yData.students || []).length;
     const totalTeachers = (yData.teachers || []).length;
