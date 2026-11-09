@@ -1058,12 +1058,12 @@ function promptLoginCode(id) {
     
     // CORRECTION ROBUSTE : Comparaison insensible à la casse et nettoyage des espaces superflus
     let realCode = String(s.secretCode || '').trim().toUpperCase();
-    let code = prompt("Entrez le code secret de \"" + s.name + "\" :\n(Exemple : MAD-3046)");
+    let code = prompt("Entrez le code secret de \"" + s.name + "\" :\n(Exemple : MAD-XXXX)");
     
     if (code && code.trim().toUpperCase() === realCode) {
         openSchoolDashboard(id);
     } else if (code !== null) {
-        alert("Code incorrect. (Vérifiez l'exactitude de votre code secret)");
+        alert("Code incorrect. (Vérifiez l'exactitude de votre code secret : " + realCode + ")");
     }
 }
 
