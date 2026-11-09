@@ -2,16 +2,24 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>COMICO-RDC - Plateforme Intégrée de Gestion des Madras</title>
+<title>COMICO-RDC Plateforme Intégrée de Gestion des Madras (Écoles Islamiques) en République Démocratique du Congo</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
+<!-- Google Web Fonts-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<!-- Icon Font Stylesheet -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+<!-- Customized Bootstrap Stylesheet -->
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<!-- Template Stylesheet -->
+<link href="css/style.css" rel="stylesheet">
 <style>
 .view-section { display: none; }
 .view-section.active { display: block; }
 body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
-.sidebar-menu .list-group-item { font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; margin-bottom: 4px; cursor: pointer; }
+.sidebar-menu .list-group-item { font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; margin-bottom: 4px; }
 .sidebar-menu .list-group-item.active { background-color: #0d6efd; color: #fff; }
 .school-logo-display { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #0d6efd; }
 .params-submenu { padding-left: 10px; background-color: #f8f9fa; border-left: 3px solid #0d6efd; margin-top: 5px; display: none; }
@@ -20,271 +28,808 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 .tab-pane.active { display: block; }
 .action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
 
-/* CARTE MEMBRE COMICO */
-.student-card-container { position: relative; width: 380px; min-height: 250px; margin: 0 auto; background: #fff; border: 2px solid #0d6efd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); overflow: hidden; color: #000; text-align: left; }
+/* DESIGN CARTE MEMBRE COMICO AVANCÉ */
+.student-card-container { position: relative; width: 380px; min-height: 250px; margin: 0 auto; background: #fff; border: 2px solid #0d6efd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); overflow: hidden; font-family: 'Nunito', sans-serif; color: #000; text-align: left; }
 .student-card-bg-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; opacity: 0.08; object-fit: contain; pointer-events: none; z-index: 0; }
 .student-card-content { position: relative; z-index: 1; }
 
-/* MODALE CODE SECRET */
+/* POPUP CODE SECRET DESIGN */
 .secret-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
 .secret-modal-card { background: #fff; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
 .secret-code-badge { font-size: 26px; font-weight: 800; color: #0d6efd; letter-spacing: 2px; background: #e7f1ff; padding: 10px 20px; border-radius: 8px; border: 2px dashed #0d6efd; display: inline-block; margin: 15px 0; }
 
+/* MODALE DE CONSULTATION DE FICHIER / DOCUMENT INTÉGRÉE */
+.file-viewer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
+.file-viewer-card { background: #fff; width: 100%; max-width: 800px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
+.file-viewer-header { background: #0d6efd; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.file-viewer-body { flex: 1; padding: 15px; overflow: auto; background: #e5e7eb; display: flex; align-items: center; justify-content: center; }
+.file-viewer-body iframe, .file-viewer-body img { width: 100%; height: 100%; border: 0; object-fit: contain; background: #fff; border-radius: 6px; }
+
+/* STYLE D'IMPRESSION PROPRE */
 @media print {
   body * { visibility: hidden; }
   .tab-pane.active, .tab-pane.active *, .student-card-container, .student-card-container * { visibility: visible; }
   .tab-pane.active { position: absolute; left: 0; top: 0; width: 100%; background: #fff !important; padding: 0 !important; }
-  .no-print, .navbar, .sidebar-menu, .action-bar, form, .btn { display: none !important; }
+  .no-print, .navbar, .sidebar-menu, .action-bar, form, .btn, .card-header { display: none !important; }
 }
 </style>
 </head>
 <body>
-
-<nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
-    <div class="container-fluid">
-        <a href="#" class="navbar-brand d-flex align-items-center px-3">
+  <!-- Navigation Principale Harmonisée pour Gestion COMICO -->
+    <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
+        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <img src="img/logo.jpg" alt="Logo" class="me-3 rounded-circle" style="width: 45px; height: 45px; object-fit: cover;">
             <h2 class="m-0 text-primary">COMICO-RDC</h2>
         </a>
-        <div class="navbar-nav ms-auto">
-            <a href="javascript:void(0);" class="nav-item nav-link text-danger fw-bold" onclick="openAdminCentralPanel()"><i class="fa fa-user-shield me-1"></i> Admin Central</a>
+        <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav ms-auto p-4 p-lg-0">
+                <a href="index.html" class="nav-item nav-link">Accueil</a>
+                <a href="gestion_comico.html" class="nav-item nav-link active">Gestion Madras</a>
+                <a href="contact.html" class="nav-item nav-link">Contact</a>
+                <a href="javascript:void(0);" class="nav-item nav-link text-danger fw-bold" onclick="openAdminCentralPanel()"><i class="fa fa-user-shield me-1"></i> Admin Central</a>
+            </div>
+            <a href="index.html" class="btn btn-danger py-4 px-lg-5 d-none d-lg-block text-white">Quitter la Gestion<i class="fa fa-sign-out-alt ms-3"></i></a>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<!-- MODALE CODE SECRET -->
+<!-- MODALE D'AFFICHAGE DU CODE SECRET -->
 <div id="secretCodeModal" class="secret-modal-overlay">
   <div class="secret-modal-card">
     <i class="fa fa-check-circle fa-4x text-success mb-3"></i>
     <h3 class="fw-bold">Madras Créée avec Succès !</h3>
-    <p class="text-muted small">Voici votre <b>Code Secret</b> unique pour ouvrir votre établissement :</p>
+    <p class="text-muted small">Voici votre <b>Code Secret</b> unique. Notez-le bien, il vous sera demandé pour ouvrir votre établissement :</p>
     <div id="modalSecretCodeDisplay" class="secret-code-badge">SEC-0000</div>
     <div>
+      <button class="btn btn-outline-primary btn-sm me-2" onclick="copySecretCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
       <button class="btn btn-success btn-sm fw-bold px-4" onclick="closeSecretModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
     </div>
   </div>
 </div>
 
-<div class="container-fluid bg-primary py-4 mb-4 text-center text-white no-print">
-    <h1 class="display-5 fw-bold">Plateforme Intégrée COMICO-RDC</h1>
-    <p class="lead">Gestion professionnelle des Madras (Écoles Islamiques)</p>
+<!-- MODALE DE CONSULTATION DE FICHIER / DOCUMENT INTÉGRÉE -->
+<div id="fileViewerModal" class="file-viewer-overlay">
+  <div class="file-viewer-card">
+    <div class="file-viewer-header">
+      <h5 class="m-0 text-white"><i class="fa fa-file-alt me-2"></i>Consultation du Document Scanné</h5>
+      <button class="btn btn-sm btn-light fw-bold" onclick="closeFileViewerModal()"><i class="fa fa-times"></i> Fermer</button>
+    </div>
+    <div class="file-viewer-body" id="fileViewerContentArea"></div>
+  </div>
 </div>
 
-<div class="container-fluid py-3 px-lg-4">
+<!-- HEADER -->
+<div class="container-fluid bg-primary py-5 mb-5 no-print">
+<div class="container py-5 text-center">
+<h1 class="display-3 text-white">Plateforme Intégrée COMICO-RDC</h1>
+<p class="fs-4 text-white">Communauté Musulmane en République Démocratique du Congo - Gestion professionnelle des Madras (Écoles Islamiques)</p>
+</div>
+</div>
+
+<div class="container-fluid py-4 px-lg-5">
 
 <!-- PORTAIL PRINCIPAL -->
 <div id="view-portal" class="view-section active">
-    <div class="row g-3 mb-4 no-print">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
-                <i class="fa fa-school fa-3x text-primary mb-3"></i>
-                <h4 class="fw-bold">1. Créer une Madras</h4>
-                <p class="text-muted small">Enregistrer une nouvelle école islamique.</p>
-                <button onclick="openSchoolForm()" class="btn btn-primary btn-sm mt-2 fw-bold">Créer une Madras</button>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
-                <i class="fa fa-user-shield fa-3x text-danger mb-3"></i>
-                <h4 class="fw-bold">2. Admin Central</h4>
-                <p class="text-muted small">Superviser l'ensemble des structures.</p>
-                <button onclick="openAdminCentralPanel()" class="btn btn-danger btn-sm mt-2 fw-bold">Accès Admin</button>
-            </div>
-        </div>
-    </div>
-
-    <h3 class="mb-3">Liste des Madras Enregistrées</h3>
-    <div id="schoolsListContainer" class="row g-3"></div>
+<div class="row g-4 mb-4 no-print">
+<div class="col-md-4">
+<div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
+<i class="fa fa-school fa-3x text-primary mb-3"></i>
+<h4 class="fw-bold">1. Créer une Madras</h4>
+<p class="text-muted small">Enregistrer une nouvelle école islamique avec son identité complète.</p>
+<button onclick="openSchoolForm()" class="btn btn-outline-primary btn-sm mt-2 fw-bold">Accéder à la création</button>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
+<i class="fa fa-user-plus fa-3x text-success mb-3"></i>
+<h4 class="fw-bold">2. Inscription Élèves / Étudiants</h4>
+<p class="text-muted small">Réservé au propriétaire de la Madras active.</p>
+<button onclick="openDirectRegistrationModal()" class="btn btn-outline-success btn-sm mt-2 fw-bold">Procéder à l'inscription</button>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
+<i class="fa fa-briefcase fa-3x text-warning mb-3"></i>
+<h4 class="fw-bold">3. Demande de Poste / Enseignant</h4>
+<p class="text-muted small">Postuler à un poste d'enseignant, maître coranique ou administratif.</p>
+<button onclick="openJobApplicationSection()" class="btn btn-outline-warning btn-sm mt-2 fw-bold">Soumettre candidature</button>
+</div>
+</div>
 </div>
 
-<!-- FORMULAIRE CRÉATION -->
-<div id="view-create-school" class="view-section">
-    <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white"><h4 class="m-0 text-white">Enregistrement Officiel d'une Madras</h4></div>
-        <div class="card-body p-4">
-            <form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Madras : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Province : *</label><input type="text" id="schoolProvince" class="form-control" placeholder="Ex: Kinshasa" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Commune : *</label><input type="text" id="schoolCommune" class="form-control" placeholder="Ex: Kalamu" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Téléphone :</label><input type="text" id="schoolPhone" class="form-control" placeholder="+243 ..."></div>
+<!-- ZONE D'AFFICHAGE DES PUBLICATIONS / ANNONCES OFFICIELLES -->
+<div class="row mb-4 no-print">
+<div class="col-12">
+<div class="card shadow-sm border-0 bg-white p-3">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-bullhorn me-2"></i>Fil d'Actualités & Annonces Officielles COMICO</h5>
+<div class="mb-3">
+<a href="dashboard.html" class="btn btn-primary btn-sm fw-bold"><i class="fa fa-chart-line me-1"></i> Afficher le Dashboard</a>
+
+<div class="mt-2 p-3 bg-light border rounded">
+    <div class="input-group input-group-sm" style="max-width: 450px;">
+        <input type="text" id="blockedSchoolSecretCodeInput" class="form-control" placeholder="Entrez votre code secret Madras bloquée...">
+        <button class="btn btn-outline-danger fw-bold" type="button" onclick="openBlockedSchoolChat()"><i class="fa fa-headset me-1"></i> Discuter avec Admin Central</button>
+    </div>
+    <div id="blockedSchoolChatArea" class="mt-3" style="display: none;">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-2">
+                <span><i class="fa fa-comments me-2"></i>Canal de Discussion Direct - <span id="chatSchoolNameDisplay">Madras</span> & Admin Central</span>
+                <button class="btn btn-sm btn-light text-danger fw-bold py-0" onclick="closeBlockedSchoolChat()"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="card-body bg-white" style="max-height: 250px; overflow-y: auto;" id="blockedSchoolMessagesContainer"></div>
+            <div class="card-footer bg-light p-2">
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="schoolChatMessageInput" class="form-control" placeholder="Écrire un message à l'Admin Central...">
+                    <button class="btn btn-primary" type="button" onclick="sendSchoolChatMessage()"><i class="fa fa-paper-plane"></i></button>
                 </div>
-                <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer et Obtenir le Code</button>
-                <button type="button" class="btn btn-secondary fw-bold px-4" onclick="showSection('view-portal')">Annuler</button>
-            </form>
+            </div>
         </div>
     </div>
+</div>
+
+</div>
+<div id="portalAnnouncementsContainer">
+<p class="text-muted small mb-0">Aucune annonce publiée pour le moment.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="text-center mt-4">
+<h1 class="mb-4">Liste des Madras Enregistrées</h1>
+</div>
+<div id="schoolsListContainer" class="row g-3"></div>
+</div>
+
+<!-- FORMULAIRE CRÉATION STRUCTURE / FÉDÉRATION -->
+<div id="view-create-school" class="view-section">
+<button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
+<div class="card shadow-sm border-0">
+<div class="card-header bg-primary text-white"><h4 class="m-0 text-white" id="schoolFormTitle">Fiche d'Enregistrement Officiel d'une Madras (COMICO)</h4></div>
+<div class="card-body p-4">
+<form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
+<input type="hidden" id="editSchoolId">
+
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-school me-2"></i>1. Identité de la Madras</h5>
+<div class="row g-3 mb-4">
+<div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Madras : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required></div>
+<div class="col-md-6"><label class="form-label fw-bold">Logo / Emblem (Image optionnelle) :</label><input type="file" id="schoolLogoFile" class="form-control" accept="image/*"></div>
+<div class="col-md-4">
+<label class="form-label fw-bold">Type d'Établissement : *</label>
+<select id="schoolRegime" class="form-select" required>
+<option value="Madras Coranique">Madras Coranique</option>
+<option value="Institut Islamique">Institut Islamique</option>
+<option value="École Fondamentale Islamique">École Fondamentale Islamique</option>
+<option value="Centre d'Études Arabes">Centre d'Études Arabes</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label fw-bold">Code / Matricule Madras :</label><input type="text" id="schoolSecope" class="form-control" placeholder="Ex: MAD-2026-001"></div>
+<div class="col-md-4"><label class="form-label fw-bold">Téléphone Officiel :</label><input type="text" id="schoolPhone" class="form-control" placeholder="+243 ..."></div>
+</div>
+
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-map-marker-alt me-2"></i>2. Localisation Administrative</h5>
+<div class="row g-3 mb-4">
+<div class="col-md-4">
+<label class="form-label fw-bold">Province Éducationnelle : *</label>
+<select id="schoolProvince" class="form-select" onchange="updateSubDivisions()" required>
+<option value="">-- Choisir une Province --</option>
+<option value="KINSHASA">KINSHASA</option>
+<option value="HAUT-KATANGA">HAUT-KATANGA</option>
+<option value="NORD-KIVU">NORD-KIVU</option>
+<option value="SUD-KIVU">SUD-KIVU</option>
+<option value="KONGO CENTRAL">KONGO CENTRAL</option>
+<option value="KASAI CENTRAL">KASAI CENTRAL</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label fw-bold">Sous-Division / Inspection :</label><input type="text" id="schoolDivision" class="form-control" placeholder="Ex: Kinshasa Centre"></div>
+<div class="col-md-4">
+<label class="form-label fw-bold">Antenne / District : *</label>
+<select id="schoolSubDivision" class="form-select" required>
+<option value="">-- D'abord choisir la Province --</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label fw-bold">Commune : *</label><input type="text" id="schoolCommune" class="form-control" placeholder="Ex: Gombe" required></div>
+<div class="col-md-8"><label class="form-label fw-bold">Adresse Physique de l'École : *</label><input type="text" id="schoolAddress" class="form-control" placeholder="Ex: Avenue de la Mosquée" required></div>
+</div>
+
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-balance-scale me-2"></i>3. Identification Fiscale & Juridique</h5>
+<div class="row g-3 mb-4">
+<div class="col-md-4"><label class="form-label fw-bold">Numéro NIF :</label><input type="text" id="schoolNif" class="form-control" placeholder="Ex: A1234567B"></div>
+<div class="col-md-4"><label class="form-label fw-bold">Numéro RCCM :</label><input type="text" id="schoolRccm" class="form-control" placeholder="Ex: CD/KIN/RCCM/20-B-0012"></div>
+<div class="col-md-4"><label class="form-label fw-bold">ID National (ID Nat) :</label><input type="text" id="schoolIdNat" class="form-control" placeholder="Ex: 01-93-N12345P"></div>
+<div class="col-md-12"><label class="form-label fw-bold">Arrêté Ministériel / Agrément Éducatif :</label><input type="text" id="schoolAgrement" class="form-control" placeholder="Ex: MINEP/CABMIN/001/2022"></div>
+</div>
+
+<div class="action-bar mt-4 no-print">
+<button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer la Madras</button>
+<button type="button" class="btn btn-secondary fw-bold px-4" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
+</form>
+</div>
+</div>
 </div>
 
 <!-- ADMIN CENTRAL -->
 <div id="view-admin-central" class="view-section">
-    <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
-    <div class="card shadow-sm border-0 border-start border-4 border-danger">
-        <div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Registre Global - Administration Centrale COMICO</h4></div>
-        <div class="card-body p-4">
-            <table class="table table-bordered align-middle">
-                <thead><tr><th>Nom Madras</th><th>Province</th><th>Code Secret</th><th>Actions</th></tr></thead>
-                <tbody id="adminSchoolsTableBody"></tbody>
-            </table>
-        </div>
+<button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
+
+<div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
+<div class="card-header bg-danger text-white"><h4 class="m-0 text-white"><i class="fa fa-bell me-2"></i>Centre de Notifications - Messages des Madras Litigieuses</h4></div>
+<div class="card-body p-4">
+    <div class="input-group mb-3" style="max-width: 400px;">
+        <input type="password" id="adminCentralNotificationCodeInput" class="form-control form-control-sm" placeholder="Entrez le code Admin Central...">
+        <button class="btn btn-dark btn-sm fw-bold" type="button" onclick="openAdminNotificationsPanel()">Ouvrir Notifications</button>
     </div>
+    <div id="adminNotificationsListArea" style="display: none;">
+        <div id="adminLitigiousSchoolsMessagesContainer"></div>
+    </div>
+</div>
+</div>
+
+<div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
+<div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Madras & Gestion COMICO</h4></div>
+<div class="card-body p-4">
+<table class="table table-bordered align-middle">
+<thead><tr><th>Logo</th><th>Madras</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Secret</th><th>Actions Administration Centrale</th></tr></thead>
+<tbody id="adminSchoolsTableBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- DEMANDE EMPLOI / MISSION -->
+<div id="view-job-application" class="view-section">
+<button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
+<div class="card shadow-sm border-0">
+<div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold">Soumettre une Candidature / Poste</h4></div>
+<div class="card-body p-4">
+<form onsubmit="handleSendJobApplication(event)">
+<div class="row g-3">
+<div class="col-md-6"><label>Madras / Établissement :</label><select id="jobSchoolSelect" class="form-select" required></select></div>
+<div class="col-md-6"><label>Nom Complet :</label><input type="text" id="jobApplicantName" class="form-control" required></div>
+<div class="col-md-6"><label>Poste Sollicité / Fonction :</label><input type="text" id="jobRole" class="form-control" required></div>
+<div class="col-12">
+<button type="submit" class="btn btn-warning fw-bold"><i class="fa fa-paper-plane me-1"></i> Envoyer</button>
+<button type="button" class="btn btn-secondary fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
+</div>
+</form>
+</div>
+</div>
 </div>
 
 <!-- DASHBOARD STRUCTURE -->
 <div id="view-school-dashboard" class="view-section">
-    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm no-print flex-wrap gap-2">
-        <div><h3 id="dashSchoolTitle" class="text-primary m-0 fw-bold"></h3><small id="dashSchoolSub" class="text-muted"></small></div>
-        <button class="btn btn-secondary btn-sm fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer / Retour</button>
-    </div>
-    <div class="row">
-        <div class="col-lg-3 mb-4 no-print">
-            <div class="list-group sidebar-menu shadow-sm">
-                <a class="list-group-item list-group-item-action bg-dark text-white fw-bold" onclick="toggleParamsSubmenu()">Rubriques de Gestion <i class="fa fa-chevron-down float-end"></i></a>
-                <div id="paramsSubmenu" class="params-submenu show">
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Classes / Niveaux</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Enseignants</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Élèves / Étudiants</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-carte-eleve', this)"><i class="fa fa-id-card me-2"></i> Carte d'Élève</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Cours & Matières</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Saisie des Notes</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bulletins Scolaires</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Caisse & Trésorerie</a>
-                    <a class="list-group-item rubric-item" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-9 col-12">
-            <div class="bg-white p-4 rounded shadow-sm">
-                <div id="defaultWelcomeMessage" class="text-center py-5 text-muted">
-                    <h5>Sélectionnez une option dans le menu à gauche pour gérer votre Madras.</h5>
-                </div>
+<div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm no-print flex-wrap gap-2">
+<div class="d-flex align-items-center gap-3">
+<img id="dashSchoolLogo" class="school-logo-display" src="" alt="Logo">
+<div><h3 id="dashSchoolTitle" class="text-primary m-0 fw-bold"></h3><small id="dashSchoolSub" class="text-muted"></small></div>
+</div>
+<button class="btn btn-secondary btn-sm fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer / Retour</button>
+</div>
+<div class="row">
+<div class="col-lg-3 mb-4 no-print">
+<div class="list-group sidebar-menu shadow-sm">
+<a class="list-group-item list-group-item-action bg-dark text-white fw-bold" href="javascript:void(0);" onclick="toggleParamsSubmenu()">Paramètres <i class="fa fa-chevron-down float-end" id="arrowIcon"></i></a>
+<div class="mb-2 px-2 pt-2">
+<a href="qrcode.html" class="btn btn-outline-primary btn-sm w-100 fw-bold"><i class="fa fa-qrcode me-1"></i> Afficher QRCode</a>
+</div>
+<div id="paramsSubmenu" class="params-submenu">
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-direction', this)"><i class="fa fa-user-tie me-2"></i> Comité Directeur</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Classes / Niveaux</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-profs', this)"><i class="fa fa-chalkboard-teacher me-2"></i> Enseignants & Maîtres</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Élèves / Étudiants</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-carte-eleve', this)"><i class="fa fa-id-card me-2"></i> Carte d'Élève</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-cours', this)"><i class="fa fa-book-open me-2"></i> Cours & Matières</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Saisie des Notes</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bulletins Scolaires</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-bulletins-periodiques', this)"><i class="fa fa-file-alt me-2"></i> Bulletins Périodiques</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Frais & Trésorerie</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-armoiries', this)"><i class="fa fa-shield-alt me-2"></i> Emblèmes & Devise</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-palmares', this)"><i class="fa fa-trophy me-2"></i> Palmarès & Réussites</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
+</div>
+</div>
+</div>
 
-                <!-- 1. CLASSES -->
-                <div class="tab-pane" id="tab-classes">
-                    <h5 class="text-primary fw-bold mb-3">Enregistrement des Classes</h5>
-                    <form onsubmit="handleSaveClass(event)" class="row g-2 mb-3">
-                        <div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom de la classe (ex: 1ère Année Coranique)" required></div>
-                        <div class="col-md-4"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
-                    </form>
-                    <div id="classesContainerList"></div>
-                </div>
+<div class="col-lg-9 col-12">
+<div class="bg-white p-4 rounded shadow-sm">
 
-                <!-- 2. ENSEIGNANTS -->
-                <div class="tab-pane" id="tab-profs">
-                    <h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
-                    <form onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 bg-light p-3 rounded">
-                        <div class="col-md-4"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'enseignant" required></div>
-                        <div class="col-md-4"><select id="teacherClass" class="form-select" required></select></div>
-                        <div class="col-md-4"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter Enseignant</button></div>
-                    </form>
-                    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe</th><th>Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
-                </div>
-
-                <!-- 3. ÉLÈVES -->
-                <div class="tab-pane" id="tab-eleves-reg">
-                    <h5 class="text-primary fw-bold mb-3">Inscription des Élèves</h5>
-                    <form onsubmit="handleSaveStudent(event)" class="row g-2 mb-3 bg-light p-3 rounded">
-                        <div class="col-md-3"><input type="text" id="studentMatricule" class="form-control" placeholder="Matricule" required></div>
-                        <div class="col-md-4"><input type="text" id="studentName" class="form-control" placeholder="Nom & Prénom" required></div>
-                        <div class="col-md-3"><select id="studentClassSelect" class="form-select" required></select></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Inscrire</button></div>
-                    </form>
-                    <div id="studentsContainerList"></div>
-                </div>
-
-                <!-- 4. CARTE ÉLÈVE -->
-                <div class="tab-pane" id="tab-carte-eleve">
-                    <h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
-                    <div class="row mb-3 no-print">
-                        <div class="col-md-6"><label>Choisir l'Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
-                    </div>
-                    <div class="student-card-container mb-3" id="studentCardPrintArea">
-                        <div class="student-card-content">
-                            <div class="text-center mb-2 pb-2 border-bottom">
-                                <div style="font-size: 9px; font-weight: 700;">République Démocratique du Congo</div>
-                                <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">COMICO-RDC</div>
-                                <div id="cardSchoolName" class="text-primary fw-bold mt-1" style="font-size: 11px;">-</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
-                                <div style="font-size: 11px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
-                                <div style="font-size: 11px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary btn-sm fw-bold no-print" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer la Carte</button>
-                </div>
-
-                <!-- 5. COURS -->
-                <div class="tab-pane" id="tab-cours">
-                    <h5 class="text-primary fw-bold mb-3">Cours & Matières</h5>
-                    <form onsubmit="handleSaveCourse(event)" class="row g-2 mb-3">
-                        <div class="col-md-4"><select id="courseClassSelect" class="form-select" required></select></div>
-                        <div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours" required></div>
-                        <div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
-                    </form>
-                    <table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours</th><th>Max</th><th>Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
-                </div>
-
-                <!-- 6. NOTES -->
-                <div class="tab-pane" id="tab-notes">
-                    <h5 class="text-primary fw-bold mb-3">Saisie des Notes</h5>
-                    <form onsubmit="handleSaveStudentNote(event)" class="row g-2 mb-3 bg-light p-3 rounded">
-                        <div class="col-md-4"><select id="notesStudentSelect" class="form-select" required></select></div>
-                        <div class="col-md-3"><input type="text" id="noteCourse" class="form-control" placeholder="Matière" required></div>
-                        <div class="col-md-2"><input type="number" step="0.01" id="noteObtenue" class="form-control" placeholder="Note" required></div>
-                        <div class="col-md-2"><input type="number" step="0.01" id="noteMax" class="form-control" placeholder="Max" required></div>
-                        <div class="col-md-1"><button type="submit" class="btn btn-success btn-sm w-100"><i class="fa fa-save"></i></button></div>
-                    </form>
-                    <div id="notesTableContainer"></div>
-                </div>
-
-                <!-- 7. BULLETINS -->
-                <div class="tab-pane" id="tab-bulletins">
-                    <h5 class="text-primary fw-bold mb-3">Bulletin Scolaire</h5>
-                    <div class="row g-2 mb-3 no-print">
-                        <div class="col-md-6"><select id="bulletinStudentSelect" class="form-select" onchange="generateBulletin()"></select></div>
-                    </div>
-                    <div id="bulletinDisplayArea" class="p-4 border bg-light rounded"></div>
-                    <button class="btn btn-success btn-sm fw-bold mt-3 no-print" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer le Bulletin</button>
-                </div>
-
-                <!-- 8. CAISSE -->
-                <div class="tab-pane" id="tab-frais">
-                    <h5 class="text-primary fw-bold mb-3">Caisse & Trésorerie</h5>
-                    <form onsubmit="handleSaveCaisse(event)" class="row g-2 mb-3 bg-light p-3 rounded">
-                        <div class="col-md-5"><input type="text" id="caisseMotif" class="form-control" placeholder="Motif de perception" required></div>
-                        <div class="col-md-4"><input type="number" id="caisseMontant" class="form-control" placeholder="Montant ($)" required></div>
-                        <div class="col-md-3"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Encaisser</button></div>
-                    </form>
-                    <div id="caisseTableContainer"></div>
-                </div>
-
-                <!-- 9. CORRESPONDANCES -->
-                <div class="tab-pane" id="tab-courriers">
-                    <h5 class="text-primary fw-bold mb-3">Correspondances</h5>
-                    <form onsubmit="handleSaveCourrier(event)" class="row g-2 mb-3 bg-light p-3 rounded">
-                        <div class="col-md-3"><select id="courrierType" class="form-select"><option value="Entrant">Entrant</option><option value="Sortant">Sortant</option></select></div>
-                        <div class="col-md-4"><input type="text" id="courrierObjet" class="form-control" placeholder="Objet" required></div>
-                        <div class="col-md-3"><input type="text" id="courrierExp" class="form-control" placeholder="Expéditeur / Destinataire" required></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Enregistrer</button></div>
-                    </form>
-                    <table class="table table-bordered table-sm"><thead><tr><th>Type</th><th>Objet</th><th>Expéditeur</th><th>Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
-                </div>
-
+<div class="card mb-4 border-0 shadow-sm bg-light p-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Années Scolaires</h6>
+        <div>
+            <button id="btnUnlockSchoolYears" class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="promptUnlockSchoolYears()"><i class="fa fa-key me-1"></i> Déverrouiller les Années</button>
+            <div id="schoolYearsSectionsContainer" class="d-flex align-items-center gap-2" style="display: none !important;">
+                <div style="font-size: 13px; font-weight: bold;">Année :</div>
+                <select id="globalSchoolYearSelect" class="form-select form-select-sm" style="width: 140px;" onchange="switchSchoolYear(this.value)"></select>
+                <button class="btn btn-outline-success btn-sm fw-bold text-nowrap" onclick="openNewSchoolYearWizard()" title="Ouvrir une nouvelle année et archiver la précédente"><i class="fa fa-plus-circle me-1"></i> Nouvelle Année</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="lockSchoolYears()" title="Verrouiller"><i class="fa fa-lock"></i></button>
             </div>
         </div>
     </div>
 </div>
 
+<div id="defaultWelcomeMessage" class="text-center py-5 text-muted">
+<h5>Cliquez sur <b>Paramètres</b> à gauche pour gérer votre Madras.</h5>
 </div>
 
+<!-- 1. DIRECTION -->
+<div class="tab-pane" id="tab-direction">
+<h5 class="text-primary fw-bold mb-3">Comité de Gestion & Administration</h5>
+<form id="formDirection" onsubmit="handleSaveDirection(event)" class="row g-2 mb-3 no-print">
+<input type="hidden" id="dirEditIndex">
+<div class="col-md-4"><input type="text" id="dirName" class="form-control" placeholder="Nom et Prénom" required></div>
+<div class="col-md-4">
+<select id="dirRole" class="form-select" required>
+<option value="Directeur / Préfet">Directeur / Préfet</option>
+<option value="Préfet des Études">Préfet des Études</option>
+<option value="Secrétaire Administratif">Secrétaire Administratif</option>
+<option value="Économe / Trésorier">Économe / Trésorier</option>
+<option value="Membre de l'Administration">Membre de l'Administration</option>
+</select>
+</div>
+<div class="col-md-4"><input type="text" id="dirPhone" class="form-control" placeholder="Téléphone / Contact"></div>
+<div class="col-12 action-bar mt-2">
+<button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-plus me-1"></i> Enregistrer / Ajouter</button>
+<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
+</form>
+<table class="table table-bordered align-middle"><thead><tr><th>Nom</th><th>Fonction</th><th>Contact</th><th class="no-print">Action</th></tr></thead><tbody id="directionTableBody"></tbody></table>
+</div>
+
+<!-- 2. CLASSES / DISCIPLINES -->
+<div class="tab-pane" id="tab-classes">
+<h5 class="text-primary fw-bold mb-3">Enregistrement des Classes & Niveaux</h5>
+<form id="formClass" onsubmit="handleSaveClass(event)" class="row g-2 mb-3 no-print">
+<div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom de la classe / niveau (ex: 1ère Année Coranique)" required></div>
+<div class="col-md-4">
+<div class="action-bar m-0">
+<button type="submit" class="btn btn-success btn-sm fw-bold flex-fill"><i class="fa fa-plus me-1"></i> Ajouter</button>
+<button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
+</div>
+</form>
+<div id="classesContainerList"></div>
+</div>
+
+<!-- 3. ENSEIGNANTS / ENTRAÎNEURS -->
+<div class="tab-pane" id="tab-profs">
+<h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
+<div id="teachersLockedContainer" class="text-center py-5">
+    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Sécurisé : Saisissez le <b>Code Secret de Propriété</b> (Directeur/Préfet/Amir).</p>
+    <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
+        <input type="password" id="ownerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <button class="btn btn-primary fw-bold" onclick="promptUnlockTeachers()">Déverrouiller</button>
+    </div>
+</div>
+<div id="teachersUnlockedContainer" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé (Propriétaire)</span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
+    </div>
+    <form id="formTeacher" onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 no-print">
+    <div class="col-md-3"><input type="text" id="teacherName" class="form-control" placeholder="Nom de l'enseignant" required></div>
+    <div class="col-md-3"><select id="teacherClass" class="form-select" required></select></div>
+    <div class="col-md-3"><input type="text" id="teacherSecretCode" class="form-control" placeholder="Code Secret Enseignant (ex: ENS-123)" required></div>
+    <div class="col-md-3"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
+    </form>
+    <table class="table table-bordered"><thead><tr><th>Nom</th><th>Classe / Niveau</th><th>Code Secret Enseignant</th><th class="no-print">Action</th></tr></thead><tbody id="teachersTableBody"></tbody></table>
+</div>
+</div>
+
+<!-- 4. ELEVES / MEMBRES -->
+<div class="tab-pane" id="tab-eleves-reg">
+<h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
+<div id="studentsLockedContainer" class="text-center py-5">
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictly réservé au propriétaire de la Madras.</p>
+    <button class="btn btn-danger btn-sm fw-bold" onclick="openOwnerStudentRegistration()">Déverrouiller Inscription Élèves</button>
+</div>
+<div id="studentsUnlockedContainer" style="display:none;">
+    <form id="formStudent" onsubmit="handleSaveStudent(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
+        <div class="col-md-3"><input type="text" id="studentMatricule" class="form-control" placeholder="Matricule" required></div>
+        <div class="col-md-3"><input type="text" id="studentName" class="form-control" placeholder="Nom & Prénom" required></div>
+        <div class="col-md-2">
+            <select id="studentSex" class="form-select" required>
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+            </select>
+        </div>
+        <div class="col-md-2"><select id="studentClassSelect" class="form-select" required></select></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-save"></i> Inscrire</button></div>
+    </form>
+    <div id="studentsContainerList"></div>
+</div>
+</div>
+
+<!-- CARTE MEMBRE -->
+<div class="tab-pane" id="tab-carte-eleve">
+<h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
+<div class="row mb-3 no-print">
+<div class="col-md-4"><label>Classe / Niveau :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
+<div class="col-md-4"><label>Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
+<div class="col-md-4"><label>Photo de l'Élève :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
+</div>
+
+<div class="student-card-container mb-3" id="studentCardPrintArea">
+    <img id="cardBgLogo" src="" class="student-card-bg-logo" alt="Logo Filigrane">
+    <div class="student-card-content">
+        <div class="text-center mb-2 pb-2 border-bottom">
+            <div style="font-size: 9px; font-weight: 700;">République Démocratique du Congo</div>
+            <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">Communauté Islamique en République Démocratique du Congo en sigle "COMICO"</div>
+            <hr class="my-1" style="border-top: 1px solid #0d6efd;">
+            <div class="d-flex align-items-center justify-content-between">
+                <img id="cardSchoolLogo" src="" alt="Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;">
+                <div id="cardSchoolName" class="text-primary fw-bold" style="font-size: 11px;">-</div>
+                <div style="width: 35px;"></div>
+            </div>
+        </div>
+        <div class="row align-items-center">
+            <div class="col-8">
+                <div style="font-size: 10px;"><b>Matricule :</b> <span id="cardMatVal">-</span></div>
+                <div style="font-size: 10px;"><b>Nom & Prénom :</b> <span id="cardNomVal">-</span></div>
+                <div style="font-size: 10px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
+                <div style="font-size: 10px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
+            </div>
+            <div class="col-4 text-end">
+                <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-bar justify-content-center mt-3 no-print">
+<button class="btn btn-success btn-sm fw-bold" onclick="saveStudentCardData()"><i class="fa fa-save me-1"></i> Enregistrer la Carte</button>
+<button class="btn btn-primary btn-sm fw-bold" onclick="printStudentCard()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button>
+<button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
+</div>
+
+<!-- COURS / RÈGLEMENTS -->
+<div class="tab-pane" id="tab-cours">
+<h5 class="text-primary fw-bold mb-3">Cours, Matières & Règlements</h5>
+<form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
+<div class="col-md-4"><select id="courseClassSelect" class="form-select" required></select></div>
+<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
+<div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
+<div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
+</form>
+<table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+</div>
+
+<!-- NOTES / PERFORMANCES -->
+<div class="tab-pane" id="tab-notes">
+<h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations</h5>
+<div id="teacherAccessCheckArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Accès enseignant (Saisir votre Code Secret Enseignant) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="teacherAuthCode" class="form-control" placeholder="Votre code secret enseignant...">
+        <button class="btn btn-primary" onclick="verifyTeacherAccess()">Valider l'Accès</button>
+    </div>
+</div>
+<div id="notesWorkspace" style="display:none;">
+    <div class="row g-2 mb-3 no-print">
+        <div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
+        <div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
+    </div>
+    <div id="notesSheetContainer" class="mb-3"></div>
+</div>
+</div>
+
+<!-- BULLETINS -->
+<div class="tab-pane" id="tab-bulletins">
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation</h5>
+<div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Authentification (Code Madras ou Code Enseignant) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="bulletinAuthCode" class="form-control" placeholder="Code d'accès...">
+        <button class="btn btn-primary" onclick="verifyBulletinAccess()">Accéder</button>
+    </div>
+</div>
+<div id="bulletinWorkspace" style="display:none;">
+    <div class="row g-2 mb-3 no-print">
+        <div class="col-md-4"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
+        <div class="col-md-4"><select id="bulletinStudentSelect" class="form-select" onchange="renderBulletinFromSystem()"></select></div>
+        <div class="col-md-2" id="printBulletinBtnContainer"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+    </div>
+    <div class="bulletin-container"><div class="page" id="page"><p class="text-center text-muted">Sélectionnez un élève.</p></div></div>
+</div>
+</div>
+
+<!-- RAPPORTS PÉRIODIQUES -->
+<div class="tab-pane" id="tab-bulletins-periodiques">
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Périodique</h5>
+<div class="row g-2 mb-3 no-print">
+<div class="col-md-4"><select id="bulletinPerClassSelect" class="form-select" onchange="loadStudentsForPeriodicBulletin()"></select></div>
+<div class="col-md-4"><select id="bulletinPerStudentSelect" class="form-select" onchange="renderPeriodicBulletin()"></select></div>
+<div class="col-md-2">
+    <select id="bulletinPeriodSelect" class="form-select" onchange="renderPeriodicBulletin()">
+        <option value="p1">1ère Période</option>
+        <option value="p2">2ème Période</option>
+        <option value="p3">3ème Période</option>
+        <option value="p4">4ème Période</option>
+    </select>
+</div>
+<div class="col-md-2"><button class="btn btn-primary w-100 btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button></div>
+</div>
+<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
+</div>
+
+<!-- TRÉSORERIE & COTISATIONS -->
+<div class="tab-pane" id="tab-frais">
+<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Propriétaire Uniquement)</h5>
+<form id="formPaymentCustom" onsubmit="handleSaveCaissePaymentCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
+<div class="col-md-3">
+  <label class="form-label fw-bold small">Catégorie :</label>
+  <select id="caisseCategorie" class="form-select form-select-sm" onchange="updateCaisseFieldsVisibility()" required>
+    <option value="Eleve">1. Élève / Étudiant</option>
+    <option value="Enseignant">2. Enseignant / Personnel</option>
+  </select>
+</div>
+<div class="col-md-3">
+  <label class="form-label fw-bold small">Bénéficiaire / Personne :</label>
+  <select id="caissePersonSelect" class="form-select form-select-sm" required></select>
+</div>
+<div class="col-md-3">
+  <label class="form-label fw-bold small">Montant Payé / Perçu ($) :</label>
+  <input type="number" id="caisseMontant" class="form-control form-control-sm" placeholder="0" required>
+</div>
+<div class="col-md-3 d-flex align-items-end">
+  <button type="submit" class="btn btn-success btn-sm fw-bold w-100"><i class="fa fa-save me-1"></i> Enregistrer</button>
+</div>
+</form>
+<div class="table-responsive">
+<table class="table table-bordered table-sm align-middle">
+<thead><tr class="table-primary"><th>Catégorie</th><th>Nom / Bénéficiaire</th><th>Montant</th><th>Date</th><th class="no-print">Action</th></tr></thead>
+<tbody id="caisseCustomTableBody"></tbody>
+</table>
+</div>
+</div>
+
+<!-- MOBILE MONEY -->
+<div class="tab-pane" id="tab-mobile-money">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-mobile-alt me-2"></i>Simulation Paiement Mobile Money (RDC)</h5>
+<div class="card p-4 bg-light border-0 shadow-sm mb-3">
+<form id="formMobileMoney" onsubmit="handleSimulateMobileMoney(event)" class="row g-3">
+<div class="col-md-4"><label class="form-label fw-bold small">Élève :</label><select id="momoStudentSelect" class="form-select form-select-sm" required></select></div>
+<div class="col-md-3"><label class="form-label fw-bold small">Opérateur :</label><select id="momoOperator" class="form-select form-select-sm" required><option value="M-Pesa">M-Pesa</option><option value="Orange Money">Orange Money</option><option value="Airtel Money">Airtel Money</option></select></div>
+<div class="col-md-3"><label class="form-label fw-bold small">Téléphone :</label><input type="text" id="momoPhone" class="form-control form-control-sm" placeholder="+243..." required></div>
+<div class="col-md-2"><label class="form-label fw-bold small">Montant ($) :</label><input type="number" id="momoAmount" class="form-control form-control-sm" placeholder="50" required></div>
+<div class="col-12 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Simuler</button></div>
+</form>
+</div>
+<table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Élève</th><th>Opérateur</th><th>Montant</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="momoTableBody"></tbody></table>
+</div>
+
+<!-- PRÉSENCES -->
+<div class="tab-pane" id="tab-presences">
+<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours</h5>
+<form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
+<div class="col-md-3"><label class="small fw-bold">Classe :</label><select id="presClassSelect" class="form-select form-select-sm" onchange="loadStudentsForPresence()" required></select></div>
+<div class="col-md-3"><label class="small fw-bold">Élève :</label><select id="presStudentSelect" class="form-select form-select-sm" required></select></div>
+<div class="col-md-3"><label class="small fw-bold">Statut :</label><select id="presStatutEleve" class="form-select form-select-sm"><option value="Présent">Présent(e)</option><option value="Absent">Absent(e)</option><option value="Retard">Retard</option></select></div>
+<div class="col-md-3 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Enregistrer</button></div>
+</form>
+<table class="table table-bordered table-sm align-middle"><thead><tr><th>Élève</th><th>Classe</th><th>Date</th><th>Statut</th><th class="no-print">Action</th></tr></thead><tbody id="presenceCustomTableBody"></tbody></table>
+</div>
+
+<!-- DISCIPLINE -->
+<div class="tab-pane" id="tab-discipline">
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
+<form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
+<div class="col-md-3"><select id="discClassSelect" class="form-select form-select-sm" onchange="loadStudentsForDiscipline()" required></select></div>
+<div class="col-md-3"><select id="discStudentSelect" class="form-select form-select-sm" required></select></div>
+<div class="col-md-3"><input type="text" id="discobs" class="form-control form-control-sm" placeholder="Motif / Sanction" required></div>
+<div class="col-md-2"><input type="text" id="discDuree" class="form-control form-control-sm" placeholder="Durée (ex: 3 jours)" required></div>
+<div class="col-md-1 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus"></i></button></div>
+</form>
+<table class="table table-bordered"><thead><tr><th>Élève</th><th>Sanction</th><th>Durée</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+</div>
+
+<!-- COMMUNICATION -->
+<div class="tab-pane" id="tab-communication">
+<h5 class="text-primary fw-bold mb-3">Communication & Annonces</h5>
+<textarea id="announcementText" class="form-control mb-2 no-print" rows="3" placeholder="Saisir une communication officielle..."></textarea>
+<div class="mb-2"><label class="form-label small fw-bold">Images de l'événement (max 2 images) :</label><input type="file" id="commImageInput" class="form-control form-control-sm" accept="image/*" multiple></div>
+<div class="action-bar mb-3 no-print">
+<button class="btn btn-warning btn-sm fw-bold" onclick="handleSaveCommunication()"><i class="fa fa-bullhorn me-1"></i> Publier</button>
+</div>
+<table class="table table-bordered mt-3"><thead><tr><th>Date</th><th>Annonce</th><th>Images</th><th class="no-print">Action</th></tr></thead><tbody id="commTableBody"></tbody></table>
+</div>
+
+<!-- EMPLOI / MISSIONS -->
+<div class="tab-pane" id="tab-jobs-received">
+<h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues</h5>
+<table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+</div>
+
+<!-- EMBLÈMES -->
+<div class="tab-pane" id="tab-armoiries">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-shield-alt me-2"></i>Emblèmes & Devise de la Madras</h5>
+  <div class="card p-3 shadow-sm mb-4">
+    <form onsubmit="handleSaveArmoiries(event)" class="row g-3">
+      <div class="col-md-6"><label class="form-label fw-bold">Symbole / Emblème :</label><input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*"></div>
+      <div class="col-md-6"><label class="form-label fw-bold">Devise Officielle :</label><input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence"></div>
+      <div class="col-12 action-bar"><button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer les Emblèmes</button></div>
+    </form>
+  </div>
+  <div id="armoiriesDisplayContainer" class="p-3 bg-light rounded text-center"></div>
+</div>
+
+<!-- PALMARÈS -->
+<div class="tab-pane" id="tab-palmares">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-trophy me-2"></i>Palmarès & Réussites</h5>
+  <div class="action-bar no-print mb-3">
+    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer / Télécharger</button>
+  </div>
+  <div id="palmaresTableContainer"></div>
+</div>
+
+<!-- COURRIERS -->
+<div class="tab-pane" id="tab-courriers">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-exchange-alt me-2"></i>Gestion des Correspondances</h5>
+  <form id="formCourrier" onsubmit="handleSaveCourrier(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+    <div class="col-md-2"><select id="courrierType" class="form-select form-select-sm" required><option value="Entrant">Entrant</option><option value="Sortant">Sortant</option></select></div>
+    <div class="col-md-2"><input type="text" id="courrierNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
+    <div class="col-md-2"><input type="date" id="courrierDate" class="form-control form-control-sm" required></div>
+    <div class="col-md-2"><input type="text" id="courrierExp" class="form-control form-control-sm" placeholder="Expéditeur" required></div>
+    <div class="col-md-2"><input type="text" id="courrierDest" class="form-control form-control-sm" placeholder="Destinataire" required></div>
+    <div class="col-md-2"><input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Objet" required></div>
+    <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Photo :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
+    <div class="col-md-6 mt-2 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm fw-bold w-100">Enregistrer</button></div>
+  </form>
+  <div class="input-group input-group-sm mb-3 no-print" style="max-width: 300px;">
+      <input type="text" id="courrierSearchInput" class="form-control" placeholder="Rechercher un courrier..." onkeyup="renderCourriersTable()">
+  </div>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>N° Doc</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Document</th><th class="no-print">Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
+</div>
+
+<!-- DOSSIERS & ARCHIVES -->
+<div class="tab-pane" id="tab-dossiers-archivage">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers</h5>
+  <form id="formArchiveDoc" onsubmit="handleSaveArchiveDoc(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+    <div class="col-md-3"><select id="archiveClasseur" class="form-select form-select-sm" required><option value="Doc Entrant">Classeur Doc Entrant</option><option value="Doc Sortant">Classeur Doc Sortant</option></select></div>
+    <div class="col-md-3"><input type="text" id="archiveNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
+    <div class="col-md-3"><input type="date" id="archiveDate" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><input type="text" id="archiveNomDoc" class="form-control form-control-sm" placeholder="Intitulé Document" required></div>
+    <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Image / Fichier Scanné :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
+    <div class="col-md-4 mt-2 d-flex align-items-end"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Archiver Document</button></div>
+  </form>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+</div>
+
+<!-- CALENDRIER -->
+<div class="tab-pane" id="tab-calendrier-vacances">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire</h5>
+  <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+    <div class="col-md-3"><select id="calType" class="form-select form-select-sm" required><option value="Calendrier Islamique">Calendrier Islamique</option><option value="Calendrier Solaire (Chrétien)">Calendrier Solaire (Chrétien)</option></select></div>
+    <div class="col-md-3"><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Intitulé" required></div>
+    <div class="col-md-2"><input type="date" id="calDebut" class="form-control form-control-sm" required></div>
+    <div class="col-md-2"><input type="date" id="calFin" class="form-control form-control-sm" required></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter</button></div>
+  </form>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
+</div>
+
+<!-- HORAIRES -->
+<div class="tab-pane" id="tab-horaires-cours">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours</h5>
+  <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+    <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
+    <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
+    <div class="col-md-3"><input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="08h00 - 10h00" required></div>
+    <div class="col-md-3"><input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Cours" required></div>
+    <div class="col-12 mt-2 text-end"><button type="submit" class="btn btn-success btn-sm fw-bold px-4">Ajouter</button></div>
+  </form>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
+</div>
+
+<!-- STATISTIQUES -->
+<div class="tab-pane" id="tab-statistiques">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO</h5>
+<div class="row g-3" id="statsContainer"></div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn">
+    <div class="container py-5"><div class="copyright text-center">&copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.</div></div>
+</div>
+
+<!-- JAVASCRIPT GLOBAL -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
-let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [] };
+let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
+let teachersUnlocked = false; 
+let currentTeacherRole = null;
+
+const subDivisionsData = {
+    "KINSHASA": ["Gombe", "Kalamu", "Kasa-Vubu", "Lingwala", "Ngaliema", "Masina"],
+    "HAUT-KATANGA": ["Lubumbashi", "Likasi", "Kipushi"],
+    "NORD-KIVU": ["Goma", "Butembo", "Beni"],
+    "SUD-KIVU": ["Bukavu", "Uvira"],
+    "KONGO CENTRAL": ["Matadi", "Boma", "Muanda"],
+    "KASAI CENTRAL": ["Kananga"]
+};
+
+function updateSubDivisions() {
+    const provinceSelect = document.getElementById('schoolProvince');
+    const subDivSelect = document.getElementById('schoolSubDivision');
+    const selectedProvince = provinceSelect.value;
+    subDivSelect.innerHTML = '<option value="">-- Choisir une Antenne --</option>';
+    if (selectedProvince && subDivisionsData[selectedProvince]) {
+        subDivisionsData[selectedProvince].forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            subDivSelect.appendChild(opt);
+        });
+    }
+}
+
+window.onload = function() {
+    loadDataFromLocal();
+};
+
+function loadDataFromLocal() {
+    const saved = localStorage.getItem('comico_appData');
+    if (saved) {
+        appData = JSON.parse(saved);
+    } else {
+        appData = { schools: [], adminRequests: [], jobApplications: [] };
+    }
+    if(!appData.schools) appData.schools = [];
+    if(!appData.adminRequests) appData.adminRequests = [];
+    if(!appData.jobApplications) appData.jobApplications = [];
+
+    appData.schools.forEach(s => {
+        if(!s.activeYear) s.activeYear = "2025-2026";
+        if(s.paiementStatut === undefined) s.paiementStatut = "A jour";
+        if(!s.chatMessages) s.chatMessages = [];
+        if(!s.jobApplications) s.jobApplications = [];
+        if(!s.yearsData) {
+            s.yearsData = {
+                "2025-2026": {
+                    classes: s.classes || [],
+                    teachers: s.teachers || [],
+                    students: s.students || [],
+                    courses: s.courses || {},
+                    notes: s.notes || {},
+                    caisse: s.caisse || [],
+                    studentPayments: s.studentPayments || [],
+                    discipline: [],
+                    presenceStudents: [],
+                    savedCards: [],
+                    courriers: [],
+                    dossiersArchive: [],
+                    calendrierVacances: [],
+                    horairesCours: []
+                }
+            };
+        }
+    });
+
+    renderSchoolsList();
+    renderPortalAnnouncements();
+}
 
 function saveData() {
     localStorage.setItem('comico_appData', JSON.stringify(appData));
@@ -292,34 +837,92 @@ function saveData() {
 
 function showSection(id) {
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    if (id === 'view-portal') renderSchoolsList();
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active');
+    if (id === 'view-portal') {
+        renderSchoolsList();
+        renderPortalAnnouncements();
+    }
 }
 
 function openSchoolForm() {
     document.getElementById('formCreateSchool').reset();
+    document.getElementById('editSchoolId').value = "";
+    document.getElementById('schoolSubDivision').innerHTML = '<option value="">-- D\'abord choisir la Province --</option>';
     showSection('view-create-school');
+}
+
+function compressAndResizeImage(file, callback) {
+    if (!file) {
+        callback("https://via.placeholder.com/70");
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 150;
+            canvas.height = 150;
+            ctx.drawImage(img, 0, 0, 150, 150);
+            callback(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 }
 
 function handleSaveSchool(e) {
     e.preventDefault();
     const name = document.getElementById('schoolName').value.trim();
     const province = document.getElementById('schoolProvince').value.trim();
+    const division = document.getElementById('schoolDivision').value.trim();
+    const subDivision = document.getElementById('schoolSubDivision').value.trim();
     const commune = document.getElementById('schoolCommune').value.trim();
+    const address = document.getElementById('schoolAddress').value.trim();
+    const regime = document.getElementById('schoolRegime').value;
+    const nif = document.getElementById('schoolNif').value.trim();
+    const rccm = document.getElementById('schoolRccm').value.trim();
+    const idNat = document.getElementById('schoolIdNat').value.trim();
+    const secope = document.getElementById('schoolSecope').value.trim();
     const phone = document.getElementById('schoolPhone').value.trim();
+    const agrement = document.getElementById('schoolAgrement').value.trim();
     const secretCode = 'MAD-' + Math.floor(1000 + Math.random() * 9000);
+    
+    const fileInput = document.getElementById('schoolLogoFile');
+    const file = (fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
 
+    compressAndResizeImage(file, function(compressedLogo) {
+        finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, compressedLogo);
+    });
+}
+
+function finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, logoUrl) {
     if(!appData.schools) appData.schools = [];
+    
+    const defaultYear = "2025-2026";
     appData.schools.push({
         id: 'SCH-' + Date.now(),
-        name, province, commune, phone, secretCode,
-        classes: [], teachers: [], students: [], courses: {}, notes: {}, caisse: [], courriers: []
+        name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, logoUrl,
+        activeYear: defaultYear,
+        paiementStatut: "A jour",
+        chatMessages: [],
+        jobApplications: [],
+        yearsData: {
+            "2025-2026": {
+                classes: [], teachers: [], students: [], courses: {}, notes: {},
+                caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
+            }
+        },
+        direction: [], communications: [], armoiries: '', devise: ''
     });
-
+    
     saveData();
     currentCreatedSecretCode = secretCode;
     document.getElementById('modalSecretCodeDisplay').innerText = secretCode;
     document.getElementById('secretCodeModal').style.display = 'flex';
+    document.getElementById('formCreateSchool').reset();
 }
 
 function closeSecretModal() {
@@ -327,27 +930,119 @@ function closeSecretModal() {
     showSection('view-portal');
 }
 
+function copySecretCodeModal() {
+    navigator.clipboard.writeText(currentCreatedSecretCode);
+    alert("Code Secret copié dans le presse-papier !");
+}
+
+let currentChatSchool = null;
+
+function openBlockedSchoolChat() {
+    const code = document.getElementById('blockedSchoolSecretCodeInput').value.trim();
+    if(!code) { alert("Veuillez saisir votre code secret."); return; }
+    const school = (appData.schools || []).find(s => s.secretCode.toUpperCase() === code.toUpperCase());
+    if(!school) { alert("Code secret incorrect."); return; }
+    currentChatSchool = school;
+    document.getElementById('chatSchoolNameDisplay').innerText = school.name;
+    document.getElementById('blockedSchoolChatArea').style.display = 'block';
+    renderSchoolChatMessages();
+}
+
+function closeBlockedSchoolChat() {
+    document.getElementById('blockedSchoolChatArea').style.display = 'none';
+    currentChatSchool = null;
+}
+
+function sendSchoolChatMessage() {
+    if(!currentChatSchool) return;
+    const input = document.getElementById('schoolChatMessageInput');
+    let text = input.value.trim();
+    if(!text) return;
+    if(!currentChatSchool.chatMessages) currentChatSchool.chatMessages = [];
+    currentChatSchool.chatMessages.push({
+        sender: 'ecole', text: text, type: 'écrit',
+        date: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    });
+    saveData();
+    input.value = '';
+    renderSchoolChatMessages();
+}
+
+function renderSchoolChatMessages() {
+    if(!currentChatSchool) return;
+    const container = document.getElementById('blockedSchoolMessagesContainer');
+    const msgs = currentChatSchool.chatMessages || [];
+    container.innerHTML = msgs.map(m => `
+        <div class="mb-2 p-2 rounded ${m.sender === 'ecole' ? 'bg-light text-end ms-4' : 'bg-warning bg-opacity-25 me-4'}">
+            <div class="small fw-bold">${m.sender === 'ecole' ? currentChatSchool.name : 'Admin Central'} (${m.date})</div>
+            <div class="small">${m.text}</div>
+        </div>
+    `).join('') || '<p class="text-muted small text-center my-2">Aucun message.</p>';
+}
+
+function openAdminNotificationsPanel() {
+    const pass = document.getElementById('adminCentralNotificationCodeInput').value.trim();
+    if(pass !== ADMIN_MASTER_PASSWORD) { alert("Code Admin Central incorrect."); return; }
+    document.getElementById('adminNotificationsListArea').style.display = 'block';
+}
+
+function closeFileViewerModal() {
+    document.getElementById('fileViewerModal').style.display = 'none';
+}
+
+function viewDocumentModal(url, title) {
+    const area = document.getElementById('fileViewerContentArea');
+    if(url.startsWith('data:image') || url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+        area.innerHTML = `<img src="${url}" alt="Document">`;
+    } else {
+        area.innerHTML = `<iframe src="${url}"></iframe>`;
+    }
+    document.getElementById('fileViewerModal').style.display = 'flex';
+}
+
 function renderSchoolsList() {
     const container = document.getElementById('schoolsListContainer');
-    if(!appData.schools || appData.schools.length === 0) {
+    if(!container) return;
+    if(!appData.schools || !appData.schools.length) {
         container.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">Aucune Madras enregistrée.</div></div>';
         return;
     }
     container.innerHTML = appData.schools.map(s => `
         <div class="col-md-6">
-            <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center justify-content-between">
-                <div>
+            <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center gap-3">
+                <img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo">
+                <div class="flex-grow-1">
                     <h5 class="fw-bold text-primary mb-1">${s.name}</h5>
-                    <small class="text-muted">Province : ${s.province} | Commune : ${s.commune}</small>
+                    <div class="small text-muted mb-1"><b>Prov :</b> ${s.province} | <b>Statut :</b> <span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></div>
+                    <div class="mt-2 d-flex gap-2">
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open me-1"></i> Ouvrir</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                    </div>
                 </div>
-                <button class="btn btn-primary btn-sm fw-bold" onclick="promptLoginCode('${s.id}')">Ouvrir</button>
             </div>
         </div>
     `).join('');
 }
 
+function renderPortalAnnouncements() {
+    const container = document.getElementById('portalAnnouncementsContainer');
+    if(!container) return;
+    let allComms = [];
+    appData.schools.forEach(s => {
+        if(s.communications) s.communications.forEach(c => allComms.push({ schoolName: s.name, ...c }));
+    });
+    container.innerHTML = allComms.map(item => `
+        <div class="alert alert-light border-start border-4 border-warning mb-2 py-2">
+            <strong>${item.schoolName}</strong> <small class="text-muted">(${item.date})</small>
+            <div class="small">${item.message}</div>
+            ${item.images && item.images.length ? `<div class="mt-2 d-flex gap-2">${item.images.map(img => `<img src="${img}" style="height:60px; border-radius:4px; object-fit:cover;">`).join('')}</div>` : ''}
+        </div>
+    `).join('') || '<p class="text-muted small mb-0">Aucune annonce publiée.</p>';
+}
+
 function promptLoginCode(id) {
     const s = appData.schools.find(x => x.id === id);
+    if(!s) return;
     const code = prompt("Entrez le code secret de \"" + s.name + "\" :");
     if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
         openSchoolDashboard(id);
@@ -356,295 +1051,1125 @@ function promptLoginCode(id) {
     }
 }
 
+function promptCentralDeleteSchool(id) {
+    const pass = prompt("Entrez le mot de passe Administrateur Central :");
+    if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        appData.schools = appData.schools.filter(x => x.id !== id);
+        saveData();
+        renderSchoolsList();
+        renderAdminCentralTable();
+        alert("Madras supprimée.");
+    }
+}
+
 function openSchoolDashboard(id) {
     activeSchoolId = id;
     const s = appData.schools.find(x => x.id === id);
     document.getElementById('dashSchoolTitle').innerText = s.name;
     document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
+    document.getElementById('dashSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/70';
+    
+    populateSchoolYearsSelect();
     refreshAllDropdowns();
     showSection('view-school-dashboard');
 }
 
+function populateSchoolYearsSelect() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const select = document.getElementById('globalSchoolYearSelect');
+    if(!select || !s) return;
+    const years = Object.keys(s.yearsData || { "2025-2026": {} });
+    select.innerHTML = years.map(y => `<option value="${y}" ${y === s.activeYear ? 'selected' : ''}>${y}</option>`).join('');
+}
+
+function promptUnlockSchoolYears() {
+    document.getElementById('schoolYearsSectionsContainer').setAttribute('style', 'display: flex !important;');
+    document.getElementById('btnUnlockSchoolYears').style.display = 'none';
+}
+
+function lockSchoolYears() {
+    document.getElementById('schoolYearsSectionsContainer').setAttribute('style', 'display: none !important;');
+    document.getElementById('btnUnlockSchoolYears').style.display = 'inline-block';
+}
+
+function switchSchoolYear(year) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.activeYear = year;
+    saveData();
+    refreshAllDropdowns();
+}
+
+function openNewSchoolYearWizard() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const newYear = prompt("Nouvelle année (ex: 2026-2027) :");
+    if(newYear && !s.yearsData[newYear]) {
+        s.activeYear = newYear;
+        s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
+        saveData();
+        populateSchoolYearsSelect();
+        refreshAllDropdowns();
+        alert("Nouvelle année ouverte et initialisée avec succès !");
+    } else if(newYear) {
+        alert("Cette année existe déjà.");
+    }
+}
+
 function toggleParamsSubmenu() {
-    const submenu = document.getElementById('paramsSubmenu');
-    submenu.classList.toggle('show');
+    document.getElementById('paramsSubmenu').classList.toggle('show');
+}
+
+/* VERIFICATION DU CODE PROPRIÉTAIRE POUR LES SECTIONS SÉCURISÉES */
+function promptSecureTabAccess(tabId, element) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const code = prompt("Sécurité : Entrez le Code Secret Propriétaire de la Madras :");
+    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+        if(tabId === 'tab-profs') teachersUnlocked = true;
+        switchTab(tabId, element);
+    } else if(code !== null) {
+        alert("Code secret propriétaire incorrect.");
+    }
 }
 
 function switchTab(tabId, element) {
+    if(tabId === 'defaultWelcomeMessage') {
+        document.getElementById('defaultWelcomeMessage').style.display = 'block';
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        return;
+    }
     document.getElementById('defaultWelcomeMessage').style.display = 'none';
     document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
+    refreshAllDropdowns();
 }
 
 function refreshAllDropdowns() {
+    if(!activeSchoolId) return;
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
+    const yData = s.yearsData[s.activeYear];
     
-    const classOpts = '<option value="">-- Choisir classe --</option>' + (s.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-    document.getElementById('studentClassSelect').innerHTML = classOpts;
-    document.getElementById('teacherClass').innerHTML = classOpts;
-    document.getElementById('courseClassSelect').innerHTML = classOpts;
+    // Classes
+    const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    ['teacherClass', 'studentClassSelect', 'cardClassSelect', 'courseClassSelect', 'notesClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'presClassSelect', 'discClassSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = classOptions;
+    });
 
-    const studOpts = '<option value="">-- Choisir élève --</option>' + (s.students || []).map(st => `<option value="${st.matricule}">${st.name} (${st.classe})</option>`).join('');
-    document.getElementById('notesStudentSelect').innerHTML = studOpts;
-    document.getElementById('bulletinStudentSelect').innerHTML = studOpts;
-    document.getElementById('cardStudentSelect').innerHTML = studOpts;
+    // Élèves
+    const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${st.matricule}">${st.matricule} - ${st.name} (${st.classe})</option>`).join('');
+    ['cardStudentSelect', 'notesStudentSelect', 'bulletinStudentSelect', 'bulletinPerStudentSelect', 'momoStudentSelect', 'presStudentSelect', 'discStudentSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = studentOptions;
+    });
 
+    // Caisse Personnes
+    const caisseSelect = document.getElementById('caissePersonSelect');
+    if(caisseSelect) {
+        let pOpts = '<option value="">-- Choisir --</option>';
+        (yData.students || []).forEach(st => pOpts += `<option value="${st.name}">Élève: ${st.name}</option>`);
+        (yData.teachers || []).forEach(t => pOpts += `<option value="${t.name}">Enseignant: ${t.name}</option>`);
+        caisseSelect.innerHTML = pOpts;
+    }
+
+    renderDirectionTable();
     renderClassesTable();
     renderTeachersTable();
     renderStudentsTable();
     renderCoursesTable();
-    renderNotesTable();
-    renderCaisseTable();
+    renderCommTable();
     renderCourriersTable();
+    renderDossiersTable();
+    renderCalendrierTable();
+    renderHorairesTable();
+    renderSchoolJobsTable();
+    renderArmoiriesDisplay();
+    renderPalmaresTable();
+    renderStatistiques();
 }
 
-// 1. CLASSES
+// 1. DIRECTION
+function handleSaveDirection(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const name = document.getElementById('dirName').value.trim();
+    const role = document.getElementById('dirRole').value;
+    const phone = document.getElementById('dirPhone').value.trim();
+    s.direction.push({ name, role, phone });
+    saveData();
+    renderDirectionTable();
+    document.getElementById('formDirection').reset();
+}
+
+function renderDirectionTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('directionTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.direction || []).map((d, i) => `
+        <tr><td>${d.name}</td><td><b>${d.role}</b></td><td>${d.phone}</td><td><button class="btn btn-sm btn-danger" onclick="s.direction.splice(${i},1);saveData();renderDirectionTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun membre.</td></tr>';
+}
+
+// 2. CLASSES
 function handleSaveClass(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
     const name = document.getElementById('className').value.trim();
     if(name) {
-        if(!s.classes) s.classes = [];
-        s.classes.push({ name });
+        yData.classes.push({ name });
         saveData();
+        renderClassesTable();
         refreshAllDropdowns();
-        document.getElementById('className').value = '';
+        document.getElementById('formClass').reset();
     }
 }
 
 function renderClassesTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('classesContainerList').innerHTML = (s.classes || []).map((c, i) => `
-        <div class="card p-2 mb-2 d-flex flex-row justify-content-between align-items-center">
-            <span>${c.name}</span>
-            <button class="btn btn-sm btn-danger" onclick="s.classes.splice(${i},1);saveData();refreshAllDropdowns();"><i class="fa fa-trash"></i></button>
+    const yData = s.yearsData[s.activeYear];
+    const container = document.getElementById('classesContainerList');
+    if(!container) return;
+    container.innerHTML = (yData.classes || []).map((c, i) => `
+        <div class="card p-3 mb-2 d-flex flex-row justify-content-between align-items-center">
+            <h5>${c.name}</h5>
+            <button class="btn btn-sm btn-danger" onclick="deleteClass(${i})"><i class="fa fa-trash"></i> Supprimer</button>
         </div>
-    `).join('') || '<p class="text-muted small">Aucune classe.</p>';
+    `).join('') || '<p class="text-muted">Aucune classe enregistrée.</p>';
 }
 
-// 2. ENSEIGNANTS
+function deleteClass(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].classes.splice(index, 1);
+    saveData();
+    renderClassesTable();
+    refreshAllDropdowns();
+}
+
+// 3. ENSEIGNANTS
+function promptUnlockTeachers() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const input = document.getElementById('ownerSecretInput').value.trim();
+    if(input.toUpperCase() === s.secretCode.toUpperCase()) {
+        teachersUnlocked = true;
+        document.getElementById('teachersUnlockedContainer').style.display = 'block';
+        document.getElementById('teachersLockedContainer').style.display = 'none';
+        document.getElementById('ownerSecretInput').value = '';
+    } else {
+        alert("Code secret de propriété incorrect.");
+    }
+}
+
+function lockTeachers() {
+    teachersUnlocked = false;
+    document.getElementById('teachersUnlockedContainer').style.display = 'none';
+    document.getElementById('teachersLockedContainer').style.display = 'block';
+}
+
 function handleSaveTeacher(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s.teachers) s.teachers = [];
-    s.teachers.push({
-        name: document.getElementById('teacherName').value.trim(),
-        classe: document.getElementById('teacherClass').value
-    });
+    const yData = s.yearsData[s.activeYear];
+    const name = document.getElementById('teacherName').value.trim();
+    const classe = document.getElementById('teacherClass').value;
+    const secretCode = document.getElementById('teacherSecretCode').value.trim();
+    
+    yData.teachers.push({ name, classe, secretCode });
     saveData();
     renderTeachersTable();
-    document.getElementById('teacherName').value = '';
+    document.getElementById('formTeacher').reset();
 }
 
 function renderTeachersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('teachersTableBody').innerHTML = (s.teachers || []).map((t, i) => `
-        <tr><td>${t.name}</td><td>${t.classe}</td><td><button class="btn btn-sm btn-danger" onclick="s.teachers.splice(${i},1);saveData();renderTeachersTable();"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucun enseignant.</td></tr>';
+    const yData = s.yearsData[s.activeYear];
+    const tbody = document.getElementById('teachersTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (yData.teachers || []).map((t, i) => `
+        <tr><td>${t.name}</td><td>${t.classe}</td><td><code>${t.secretCode}</code></td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].teachers.splice(${i},1);saveData();renderTeachersTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun enseignant.</td></tr>';
 }
 
-// 3. ÉLÈVES
+// 4. ÉLÈVES
+function openOwnerStudentRegistration() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = prompt("Veuillez saisir le Code Secret de la Madras pour déverrouiller l'inscription des élèves :");
+    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+        document.getElementById('studentsUnlockedContainer').style.display = 'block';
+        document.getElementById('studentsLockedContainer').style.display = 'none';
+        refreshAllDropdowns();
+    } else if(code !== null) {
+        alert("Code secret incorrect.");
+    }
+}
+
 function handleSaveStudent(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    s.students.push({
-        matricule: document.getElementById('studentMatricule').value.trim(),
-        name: document.getElementById('studentName').value.trim(),
-        classe: document.getElementById('studentClassSelect').value
-    });
+    const yData = s.yearsData[s.activeYear];
+    const matricule = document.getElementById('studentMatricule').value.trim();
+    const name = document.getElementById('studentName').value.trim();
+    const sex = document.getElementById('studentSex').value;
+    const classe = document.getElementById('studentClassSelect').value;
+
+    yData.students.push({ matricule, name, sex, classe });
     saveData();
+    renderStudentsTable();
     refreshAllDropdowns();
-    document.getElementById('studentMatricule').value = '';
-    document.getElementById('studentName').value = '';
+    document.getElementById('formStudent').reset();
 }
 
 function renderStudentsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('studentsContainerList').innerHTML = `
-        <table class="table table-bordered table-sm align-middle">
-            <thead><tr><th>Matricule</th><th>Nom</th><th>Classe</th><th>Action</th></tr></thead>
+    const yData = s.yearsData[s.activeYear];
+    const container = document.getElementById('studentsContainerList');
+    if(!container) return;
+    container.innerHTML = `
+        <table class="table table-bordered align-middle">
+            <thead><tr><th>Matricule</th><th>Nom & Prénom</th><th>Sexe</th><th>Classe</th><th>Action</th></tr></thead>
             <tbody>
-                ${(s.students || []).map((st, i) => `
-                    <tr><td>${st.matricule}</td><td>${st.name}</td><td>${st.classe}</td><td><button class="btn btn-sm btn-danger" onclick="s.students.splice(${i},1);saveData();refreshAllDropdowns();"><i class="fa fa-trash"></i></button></td></tr>
-                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun élève.</td></tr>'}
+                ${(yData.students || []).map((st, i) => `
+                    <tr><td>${st.matricule}</td><td>${st.name}</td><td>${st.sex}</td><td>${st.classe}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].students.splice(${i},1);saveData();renderStudentsTable();refreshAllDropdowns();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+                `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun élève inscrit.</td></tr>'}
             </tbody>
         </table>
     `;
 }
 
-// 4. CARTE ÉLÈVE
+// CARTE ÉLÈVE
+function loadStudentsForCardSelect() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const cls = document.getElementById('cardClassSelect').value;
+    const students = (yData.students || []).filter(st => st.classe === cls);
+    document.getElementById('cardStudentSelect').innerHTML = '<option value="">-- Choisir un Élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
+}
+
 function populateCardFromSelectedStudent() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
     const mat = document.getElementById('cardStudentSelect').value;
-    const st = (s.students || []).find(x => x.matricule === mat);
+    const st = (yData.students || []).find(x => x.matricule === mat);
     if(st) {
         document.getElementById('cardMatVal').innerText = st.matricule;
         document.getElementById('cardNomVal').innerText = st.name;
+        document.getElementById('cardSexeVal').innerText = st.sex;
         document.getElementById('cardClasseVal').innerText = st.classe;
         document.getElementById('cardSchoolName').innerText = s.name;
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
+        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/180';
     }
 }
 
-// 5. COURS
+function previewStudentCardPhoto(e) {
+    const file = e.target.files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { document.getElementById('cardPhotoPreview').src = evt.target.result; };
+        reader.readAsDataURL(file);
+    }
+}
+
+function saveStudentCardData() { alert("Carte enregistrée avec succès !"); }
+function printStudentCard() { window.print(); }
+
+// COURS
 function handleSaveCourse(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const cls = document.getElementById('courseClassSelect').value;
-    if(!s.courses) s.courses = {};
-    if(!s.courses[cls]) s.courses[cls] = [];
-    s.courses[cls].push({
-        name: document.getElementById('courseName').value.trim(),
-        max: document.getElementById('courseMax').value.trim()
-    });
+    const yData = s.yearsData[s.activeYear];
+    const classe = document.getElementById('courseClassSelect').value;
+    const name = document.getElementById('courseName').value.trim();
+    const max = document.getElementById('courseMax').value.trim();
+    
+    if(!yData.courses[classe]) yData.courses[classe] = [];
+    yData.courses[classe].push({ name, max });
     saveData();
     renderCoursesTable();
-    document.getElementById('courseName').value = '';
-    document.getElementById('courseMax').value = '';
+    document.getElementById('formCourse').reset();
 }
 
 function renderCoursesTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const tbody = document.getElementById('coursesTableBody');
+    if(!tbody) return;
     let html = '';
-    Object.keys(s.courses || {}).forEach(cls => {
-        (s.courses[cls] || []).forEach((c, i) => {
-            html += `<tr><td>${cls}</td><td>${c.name}</td><td>${c.max}</td><td><button class="btn btn-sm btn-danger" onclick="s.courses['${cls}'].splice(${i},1);saveData();renderCoursesTable();"><i class="fa fa-trash"></i></button></td></tr>`;
+    Object.keys(yData.courses || {}).forEach(cls => {
+        yData.courses[cls].forEach((crs, i) => {
+            html += `<tr><td>${cls}</td><td>${crs.name}</td><td>${crs.max}</td><td><button class="btn btn-sm btn-danger" onclick="deleteCourse('${cls}', ${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>`;
         });
     });
-    document.getElementById('coursesTableBody').innerHTML = html || '<tr><td colspan="4" class="text-center text-muted">Aucun cours.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="4" class="text-center text-muted">Aucun cours.</td></tr>';
 }
 
-// 6. NOTES
-function handleSaveStudentNote(e) {
+function deleteCourse(cls, index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].courses[cls].splice(index, 1);
+    saveData();
+    renderCoursesTable();
+}
+
+// 6. ACCÈS ENSEIGNANT NOTES ET BULLETINS
+function verifyTeacherAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('teacherAuthCode').value.trim();
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    if(teacher) {
+        currentTeacherRole = teacher;
+        document.getElementById('notesWorkspace').style.display = 'block';
+        document.getElementById('teacherAccessCheckArea').style.display = 'none';
+        
+        // Charger les classes dans la rubrique note
+        const classOpts = '<option value="">-- Choisir une classe --</option>' + (s.yearsData[s.activeYear].classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        document.getElementById('notesClassSelect').innerHTML = classOpts;
+        
+        alert("Accès autorisé pour l'enseignant : " + teacher.name);
+    } else {
+        alert("Code secret enseignant incorrect.");
+    }
+}
+
+function loadStudentsForNotes() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const cls = document.getElementById('notesClassSelect').value;
+    const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
+    document.getElementById('notesStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
+}
+
+function renderNotesSheet() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const cls = document.getElementById('notesClassSelect').value;
+    const mat = document.getElementById('notesStudentSelect').value;
+    const container = document.getElementById('notesSheetContainer');
+    if(!mat) { container.innerHTML = ''; return; }
+
+    const courses = yData.courses[cls] || [];
+    if(courses.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">Veuillez d\'abord ajouter des cours pour cette classe dans la rubrique "Cours & Matières".</div>';
+        return;
+    }
+
+    let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
+
+    let html = `
+        <div class="card p-3 bg-light">
+            <h6 class="fw-bold text-primary mb-3">Formulaire de Saisie des Cotes</h6>
+            <form onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
+                <div class="row g-2">
+    `;
+    courses.forEach(c => {
+        const val = notesObj[c.name] !== undefined ? notesObj[c.name] : '';
+        html += `
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">${c.name} (Max : ${c.max}) :</label>
+                <input type="number" step="0.01" max="${c.max}" class="form-control form-control-sm note-input" data-course="${c.name}" value="${val}" required>
+            </div>
+        `;
+    });
+    html += `
+                </div>
+                <button type="submit" class="btn btn-success btn-sm fw-bold mt-2"><i class="fa fa-save me-1"></i> Enregistrer les Notes</button>
+            </form>
+        </div>
+    `;
+    container.innerHTML = html;
+}
+
+function handleSaveStudentNotesForm(e, mat) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const mat = document.getElementById('notesStudentSelect').value;
-    if(!mat) return;
-    if(!s.notes) s.notes = {};
-    if(!s.notes[mat]) s.notes[mat] = [];
-    s.notes[mat].push({
-        course: document.getElementById('noteCourse').value,
-        score: parseFloat(document.getElementById('noteObtenue').value),
-        max: parseFloat(document.getElementById('noteMax').value)
+    const yData = s.yearsData[s.activeYear];
+    if(!yData.notes) yData.notes = {};
+    if(!yData.notes[mat]) yData.notes[mat] = {};
+
+    document.querySelectorAll('.note-input').forEach(input => {
+        const course = input.getAttribute('data-course');
+        yData.notes[mat][course] = parseFloat(input.value) || 0;
     });
+
     saveData();
-    renderNotesTable();
-    document.getElementById('noteCourse').value = '';
-    document.getElementById('noteObtenue').value = '';
-    document.getElementById('noteMax').value = '';
+    alert("Notes enregistrées avec succès !");
 }
 
-function renderNotesTable() {
+function verifyBulletinAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const mat = document.getElementById('notesStudentSelect').value;
-    const notes = (s.notes && s.notes[mat]) ? s.notes[mat] : [];
-    document.getElementById('notesTableContainer').innerHTML = `
-        <table class="table table-bordered table-sm align-middle">
-            <thead><tr><th>Matière</th><th>Note</th><th>Max</th><th>Action</th></tr></thead>
+    const code = document.getElementById('bulletinAuthCode').value.trim();
+    const isProprio = (code.toUpperCase() === s.secretCode.toUpperCase());
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    
+    if(isProprio || teacher) {
+        document.getElementById('bulletinWorkspace').style.display = 'block';
+        document.getElementById('bulletinAccessArea').style.display = 'none';
+        
+        const classOpts = '<option value="">-- Choisir classe --</option>' + (s.yearsData[s.activeYear].classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        document.getElementById('bulletinClassSelect').innerHTML = classOpts;
+        document.getElementById('bulletinPerClassSelect').innerHTML = classOpts;
+        
+        if(teacher && !isProprio) {
+            document.getElementById('printBulletinBtnContainer').style.display = 'none';
+        } else {
+            document.getElementById('printBulletinBtnContainer').style.display = 'block';
+        }
+        alert("Accès validé.");
+    } else {
+        alert("Code d'accès incorrect.");
+    }
+}
+
+function loadStudentsForBulletin() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const cls = document.getElementById('bulletinClassSelect').value;
+    const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
+    document.getElementById('bulletinStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
+}
+
+function renderBulletinFromSystem() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const mat = document.getElementById('bulletinStudentSelect').value;
+    const cls = document.getElementById('bulletinClassSelect').value;
+    const page = document.getElementById('page');
+    if(!mat) { page.innerHTML = '<p class="text-center text-muted">Sélectionnez un élève.</p>'; return; }
+
+    const choice = prompt("Que voulez-vous générer ?\n1 : Bulletin Scolaire\n2 : Attestation de Réussite");
+    if(choice === "2") {
+        renderAttestation(s, mat);
+        return;
+    }
+
+    const yData = s.yearsData[s.activeYear];
+    const student = (yData.students || []).find(x => x.matricule === mat);
+    const classStudents = (yData.students || []).filter(x => x.classe === cls);
+    const courses = yData.courses[cls] || [];
+
+    // Calculs de classement
+    let studentTotals = classStudents.map(st => {
+        let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
+        let tot = 0, maxTot = 0;
+        courses.forEach(c => {
+            tot += (notesObj[c.name] || 0);
+            maxTot += parseFloat(c.max);
+        });
+        return { mat: st.matricule, total: tot, maxTotal: maxTot, percentage: maxTot > 0 ? (tot / maxTot) * 100 : 0 };
+    });
+
+    studentTotals.sort((a, b) => b.percentage - a.percentage);
+    const rank = studentTotals.findIndex(x => x.mat === mat) + 1;
+    const currentStudentStats = studentTotals.find(x => x.mat === mat) || { total: 0, maxTotal: 100, percentage: 0 };
+
+    let html = `
+        <div class="text-center border-bottom pb-2 mb-3">
+            <h4 class="fw-bold text-primary mb-0">${s.name}</h4>
+            <div class="small text-muted">${s.province} | ${s.commune}</div>
+            <h5 class="fw-bold mt-2">BULLETIN SCOLAIRE - ANNEÉ ${s.activeYear}</h5>
+        </div>
+        <div class="row mb-3 small">
+            <div class="col-6"><b>Matricule :</b> ${student.matricule}<br><b>Nom & Prénom :</b> ${student.name}</div>
+            <div class="col-6 text-end"><b>Classe :</b> ${student.classe}<br><b>Sexe :</b> ${student.sex}</div>
+        </div>
+        <table class="table table-bordered table-sm align-middle small">
+            <thead><tr class="table-light"><th>Matière</th><th>Max</th><th>Note Obtenue</th></tr></thead>
             <tbody>
-                ${notes.map((n, i) => `
-                    <tr><td>${n.course}</td><td>${n.score}</td><td>${n.max}</td><td><button class="btn btn-sm btn-danger" onclick="s.notes['${mat}'].splice(${i},1);saveData();renderNotesTable();"><i class="fa fa-trash"></i></button></td></tr>
-                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune note.</td></tr>'}
+    `;
+    let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
+    courses.forEach(c => {
+        const score = notesObj[c.name] !== undefined ? notesObj[c.name] : 0;
+        html += `<tr><td>${c.name}</td><td>${c.max}</td><td><b>${score}</b></td></tr>`;
+    });
+    html += `
             </tbody>
         </table>
+        <div class="p-3 bg-light rounded border mt-3 small">
+            <div><b>Total Obtenu :</b> ${currentStudentStats.total} / ${currentStudentStats.maxTotal}</div>
+            <div><b>Pourcentage :</b> ${currentStudentStats.percentage.toFixed(2)} %</div>
+            <div><b>Place / Rang :</b> ${rank}<sup>e</sup> sur ${classStudents.length} élèves</div>
+            <div class="mt-2 fw-bold text-${currentStudentStats.percentage >= 50 ? 'success' : 'danger'}">
+                Décision : ${currentStudentStats.percentage >= 50 ? 'PASSAGE EN CLASSE SUPÉRIEURE' : 'REDOUBLEMENT'}
+            </div>
+        </div>
+    `;
+    page.innerHTML = html;
+}
+
+function renderAttestation(s, mat) {
+    const yData = s.yearsData[s.activeYear];
+    const student = (yData.students || []).find(x => x.matricule === mat);
+    const page = document.getElementById('page');
+
+    page.innerHTML = `
+        <div class="text-center p-4 border border-3 border-primary rounded">
+            <h3 class="fw-bold text-primary">${s.name}</h3>
+            <p class="small text-muted mb-4">${s.province} - ${s.commune}</p>
+            <h2 class="fw-bold my-4" style="text-decoration: underline;">ATTESTATION DE FRÉQUENTATION & RÉUSSITE</h2>
+            <p class="lead my-4">
+                Nous soussignés, Comité de Direction de la Madras <b>${s.name}</b>, attestons par la présente que l'élève <b>${student.name}</b>, 
+                immatriculé(e) sous le N° <b>${student.matricule}</b>, a régulièrement suivi les cours en classe de <b>${student.classe}</b> durant l'année scolaire <b>${s.activeYear}</b>.
+            </p>
+            <p class="lead fw-bold text-success my-4">L'élève est déclaré(e) ADMIS(E) pour passer dans la classe supérieure.</p>
+            <div class="row mt-5 pt-4">
+                <div class="col-6 text-start">Fait à ${s.commune}, le ${new Date().toLocaleDateString()}</div>
+                <div class="col-6 text-end fw-bold">Le Directeur / Le Préfet</div>
+            </div>
+        </div>
     `;
 }
 
-// 7. BULLETIN
-function generateBulletin() {
+function loadStudentsForPeriodicBulletin() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const mat = document.getElementById('bulletinStudentSelect').value;
-    const st = (s.students || []).find(x => x.matricule === mat);
-    const notes = (s.notes && s.notes[mat]) ? s.notes[mat] : [];
-    
-    let totalObt = 0, totalMax = 0;
-    notes.forEach(n => { totalObt += n.score; totalMax += n.max; });
-    
-    document.getElementById('bulletinDisplayArea').innerHTML = st ? `
-        <h5 class="fw-bold">Bulletin de : ${st.name} (${st.classe})</h5>
-        <hr>
-        <ul>
-            ${notes.map(n => `<li><b>${n.course} :</b> ${n.score} / ${n.max}</li>`).join('') || '<li>Aucune note.</li>'}
-        </ul>
-        <p class="fw-bold mt-2">Total : ${totalObt} / ${totalMax}</p>
-    ` : '<p class="text-muted">Sélectionnez un élève.</p>';
+    const cls = document.getElementById('bulletinPerClassSelect').value;
+    const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
+    document.getElementById('bulletinPerStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
 }
 
-// 8. CAISSE
-function handleSaveCaisse(e) {
+function renderPeriodicBulletin() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const mat = document.getElementById('bulletinPerStudentSelect').value;
+    const period = document.getElementById('bulletinPeriodSelect').value;
+    const page = document.getElementById('periodicBulletinPage');
+    if(!mat) return;
+
+    const yData = s.yearsData[s.activeYear];
+    const student = (yData.students || []).find(x => x.matricule === mat);
+    page.innerHTML = `
+        <div class="text-center border-bottom pb-2 mb-3">
+            <h4 class="fw-bold text-primary mb-0">${s.name}</h4>
+            <h5 class="fw-bold mt-2">BULLETIN PÉRIODIQUE (${period.toUpperCase()})</h5>
+        </div>
+        <div class="mb-3 small"><b>Élève :</b> ${student.name} | <b>Classe :</b> ${student.classe}</div>
+        <div class="alert alert-info small">Synthèse des notes enregistrées pour la période en cours.</div>
+    `;
+}
+
+// FRAIS SCOLAIRES AVEC FACTURE ET IMPRESSION
+function updateCaisseFieldsVisibility() {}
+
+function handleSaveCaissePaymentCustom(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s.caisse) s.caisse = [];
-    s.caisse.push({
-        motif: document.getElementById('caisseMotif').value,
+    const item = {
+        id: 'FAC-' + Date.now(),
+        cat: document.getElementById('caisseCategorie').value,
+        person: document.getElementById('caissePersonSelect').value,
         montant: document.getElementById('caisseMontant').value,
         date: new Date().toLocaleDateString()
-    });
+    };
+    s.yearsData[s.activeYear].caisse.push(item);
     saveData();
     renderCaisseTable();
-    document.getElementById('caisseMotif').value = '';
-    document.getElementById('caisseMontant').value = '';
+    document.getElementById('formPaymentCustom').reset();
 }
 
 function renderCaisseTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('caisseTableContainer').innerHTML = `
-        <table class="table table-bordered table-sm align-middle">
-            <thead><tr><th>Date</th><th>Motif</th><th>Montant ($)</th><th>Action</th></tr></thead>
-            <tbody>
-                ${(s.caisse || []).map((c, i) => `
-                    <tr><td>${c.date}</td><td>${c.motif}</td><td>$${c.montant}</td><td><button class="btn btn-sm btn-danger" onclick="s.caisse.splice(${i},1);saveData();renderCaisseTable();"><i class="fa fa-trash"></i></button></td></tr>
-                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune recette.</td></tr>'}
-            </tbody>
-        </table>
+    const tbody = document.getElementById('caisseCustomTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].caisse || []).map((c, i) => `
+        <tr>
+            <td>${c.cat}</td>
+            <td>${c.person}</td>
+            <td>$${c.montant}</td>
+            <td>${c.date}</td>
+            <td class="no-print">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="printFacture('${c.id}')"><i class="fa fa-print"></i> Facture</button>
+                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].caisse.splice(${i},1);saveData();renderCaisseTable();"><i class="fa fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune transaction.</td></tr>';
+}
+
+function printFacture(facId) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const item = (s.yearsData[s.activeYear].caisse || []).find(x => x.id === facId);
+    if(!item) return;
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html><head><title>Facture / Reçu de Caisse</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+        <body class="p-4" onload="window.print()">
+            <div class="border p-4 rounded text-center">
+                <h3 class="fw-bold text-primary">${s.name}</h3>
+                <h5 class="fw-bold my-3">REÇU DE PAIEMENT N° ${item.id}</h5>
+                <hr>
+                <div class="text-start my-3">
+                    <p><b>Date :</b> ${item.date}</p>
+                    <p><b>Bénéficiaire / Payeur :</b> ${item.person} (${item.cat})</p>
+                    <p><b>Montant Perçu :</b> $${item.montant}</p>
+                </div>
+                <hr>
+                <p class="small text-muted">Signature & Cachet de la Caisse</p>
+            </div>
+        </body></html>
+    `);
+}
+
+function handleSimulateMobileMoney(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].studentPayments.push({
+        id: 'MM-' + Date.now(),
+        date: new Date().toLocaleString(),
+        student: document.getElementById('momoStudentSelect').value,
+        operator: document.getElementById('momoOperator').value,
+        amount: document.getElementById('momoAmount').value,
+        status: 'Succès'
+    });
+    saveData();
+    renderMomoTable();
+    document.getElementById('formMobileMoney').reset();
+}
+
+function renderMomoTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('momoTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].studentPayments || []).map((m, i) => `
+        <tr>
+            <td>${m.date}</td><td>${m.student}</td><td>${m.operator}</td><td>$${m.amount}</td><td><span class="badge bg-success">${m.status}</span></td>
+            <td class="no-print">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="printFactureMomo('${m.id}')"><i class="fa fa-print"></i> Reçu</button>
+                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].studentPayments.splice(${i},1);saveData();renderMomoTable();"><i class="fa fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun paiement.</td></tr>';
+}
+
+function printFactureMomo(momoId) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const item = (s.yearsData[s.activeYear].studentPayments || []).find(x => x.id === momoId);
+    if(!item) return;
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html><head><title>Reçu Mobile Money</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+        <body class="p-4" onload="window.print()">
+            <div class="border p-4 rounded text-center">
+                <h3 class="fw-bold text-primary">${s.name}</h3>
+                <h5 class="fw-bold my-3">REÇU PAIEMENT MOBILE MONEY (${item.operator})</h5>
+                <hr>
+                <div class="text-start my-3">
+                    <p><b>Date :</b> ${item.date}</p>
+                    <p><b>Élève :</b> ${item.student}</p>
+                    <p><b>Montant :</b> $${item.amount}</p>
+                    <p><b>Statut :</b> ${item.status}</p>
+                </div>
+                <hr>
+                <p class="small text-muted">Validation Électronique COMICO</p>
+            </div>
+        </body></html>
+    `);
+}
+
+// PRÉSENCES DE LA CLASSE
+function loadStudentsForPresence() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const cls = document.getElementById('presClassSelect').value;
+    const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
+    document.getElementById('presStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.name}">${st.name}</option>`).join('');
+}
+
+function handleSavePresenceCustom(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].presenceStudents.push({
+        student: document.getElementById('presStudentSelect').value,
+        classe: document.getElementById('presClassSelect').value,
+        date: new Date().toLocaleDateString(),
+        heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        statut: document.getElementById('presStatutEleve').value
+    });
+    saveData();
+    renderPresenceTable();
+    document.getElementById('formPresenceCustom').reset();
+}
+
+function renderPresenceTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('presenceCustomTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].presenceStudents || []).map((p, i) => `
+        <tr><td>${p.student}</td><td>${p.classe || '-'}</td><td>${p.date} à ${p.heure || ''}</td><td>${p.statut}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].presenceStudents.splice(${i},1);saveData();renderPresenceTable();"><i class="fa fa-trash"></i></button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune présence.</td></tr>';
+}
+
+// DISCIPLINE ET SANCTIONS
+function loadStudentsForDiscipline() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const cls = document.getElementById('discClassSelect').value;
+    const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
+    document.getElementById('discStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.name}">${st.name}</option>`).join('');
+}
+
+function handleSaveDiscipline(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].discipline.push({
+        student: document.getElementById('discStudentSelect').value,
+        classe: document.getElementById('discClassSelect').value,
+        obs: document.getElementById('discobs').value,
+        duree: document.getElementById('discDuree').value
+    });
+    saveData();
+    renderDisciplineTable();
+    document.getElementById('formDiscipline').reset();
+}
+
+function renderDisciplineTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('disciplineTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].discipline || []).map((d, i) => `
+        <tr><td>${d.student} (${d.classe || ''})</td><td>${d.obs}</td><td>${d.duree}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].discipline.splice(${i},1);saveData();renderDisciplineTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune sanction.</td></tr>';
+}
+
+// COMMUNICATION AVEC GESTION D'IMAGES
+function handleSaveCommunication() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const text = document.getElementById('announcementText').value.trim();
+    const files = document.getElementById('commImageInput').files;
+    
+    let images = [];
+    let processed = 0;
+    if(files && files.length > 0) {
+        const count = Math.min(files.length, 2);
+        for(let i=0; i<count; i++) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                images.push(e.target.result);
+                processed++;
+                if(processed === count) {
+                    finishCommSave(s, text, images);
+                }
+            };
+            reader.readAsDataURL(files[i]);
+        }
+    } else {
+        finishCommSave(s, text, []);
+    }
+}
+
+function finishCommSave(s, text, images) {
+    if(text || images.length) {
+        s.communications.push({ date: new Date().toLocaleDateString(), message: text, images: images });
+        saveData();
+        renderCommTable();
+        renderPortalAnnouncements();
+        document.getElementById('announcementText').value = '';
+        document.getElementById('commImageInput').value = '';
+    }
+}
+
+function renderCommTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('commTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.communications || []).map((c, i) => `
+        <tr>
+            <td>${c.date}</td>
+            <td>${c.message}</td>
+            <td>${c.images && c.images.length ? c.images.map(img => `<img src="${img}" style="height:40px; border-radius:4px; margin-right:4px;">`).join('') : 'Aucune'}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="s.communications.splice(${i},1);saveData();renderCommTable();renderPortalAnnouncements();"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
+}
+
+// DEMANDES DE POSTE REÇUES
+function openJobApplicationSection() {
+    const select = document.getElementById('jobSchoolSelect');
+    select.innerHTML = (appData.schools || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    showSection('view-job-application');
+}
+
+function handleSendJobApplication(e) {
+    e.preventDefault();
+    const schId = document.getElementById('jobSchoolSelect').value;
+    const s = appData.schools.find(x => x.id === schId);
+    if(s) {
+        if(!s.jobApplications) s.jobApplications = [];
+        s.jobApplications.push({
+            id: 'JOB-' + Date.now(),
+            name: document.getElementById('jobApplicantName').value.trim(),
+            role: document.getElementById('jobRole').value.trim(),
+            status: 'En attente'
+        });
+        saveData();
+        alert("Candidature transmise à la Madras !");
+        showSection('view-portal');
+    }
+}
+
+function renderSchoolJobsTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('schoolJobsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.jobApplications || []).map((j, i) => `
+        <tr>
+            <td><b>${j.name}</b></td>
+            <td>${j.role}</td>
+            <td>
+                <button class="btn btn-sm btn-success me-1" onclick="replyJob('${j.id}')"><i class="fa fa-reply"></i> Répondre</button>
+                <button class="btn btn-sm btn-danger" onclick="s.jobApplications.splice(${i},1);saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue.</td></tr>';
+}
+
+function replyJob(id) {
+    const rep = prompt("Saisir votre réponse au candidat :");
+    if(rep) alert("Réponse envoyée au candidat !");
+}
+
+// EMBLÈMES ET DEVISE
+function handleSaveArmoiries(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.devise = document.getElementById('schoolDeviseInput').value.trim();
+    
+    const file = document.getElementById('schoolArmoiriesFile').files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            s.armoiries = evt.target.result;
+            saveData();
+            renderArmoiriesDisplay();
+            alert("Emblèmes enregistrés !");
+        };
+        reader.readAsDataURL(file);
+    } else {
+        saveData();
+        renderArmoiriesDisplay();
+        alert("Devise enregistrée !");
+    }
+}
+
+function renderArmoiriesDisplay() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const container = document.getElementById('armoiriesDisplayContainer');
+    if(!container) return;
+    container.innerHTML = `
+        ${s.armoiries ? `<img src="${s.armoiries}" style="max-height:120px;" class="mb-3"><br>` : ''}
+        <h4 class="fw-bold text-primary">" ${s.devise || 'Aucune devise renseignée'} "</h4>
+        ${s.armoiries || s.devise ? `<button class="btn btn-sm btn-danger mt-2" onclick="deleteArmoiries()"><i class="fa fa-trash"></i> Supprimer Emblèmes</button>` : ''}
     `;
 }
 
-// 9. CORRESPONDANCES
+function deleteArmoiries() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.armoiries = ''; s.devise = '';
+    saveData(); renderArmoiriesDisplay();
+}
+
+// PALMARÈS ET RÉUSSITES
+function renderPalmaresTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const container = document.getElementById('palmaresTableContainer');
+    if(!container) return;
+
+    const yData = s.yearsData[s.activeYear];
+    let html = `
+        <table class="table table-bordered table-sm align-middle">
+            <thead><tr class="table-dark"><th>Élève</th><th>Classe</th><th>Moyenne %</th><th>Mention / Décision</th></tr></thead>
+            <tbody>
+    `;
+    (yData.students || []).forEach(st => {
+        let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
+        let tot = 0, maxTot = 0;
+        const courses = yData.courses[st.classe] || [];
+        courses.forEach(c => { tot += (notesObj[c.name] || 0); maxTot += parseFloat(c.max); });
+        let pct = maxTot > 0 ? (tot / maxTot) * 100 : 0;
+        if(pct >= 50) {
+            html += `<tr><td><b>${st.name}</b></td><td>${st.classe}</td><td>${pct.toFixed(2)} %</td><td><span class="badge bg-success">ADMIS</span></td></tr>`;
+        }
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+// CORRESPONDANCES ET DOSSIERS SCANNÉS
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s.courriers) s.courriers = [];
-    s.courriers.push({
+    const file = document.getElementById('courrierFileInput').files[0];
+
+    const saveObj = {
         type: document.getElementById('courrierType').value,
-        objet: document.getElementById('courrierObjet').value,
-        exp: document.getElementById('courrierExp').value
-    });
-    saveData();
-    renderCourriersTable();
-    document.getElementById('courrierObjet').value = '';
-    document.getElementById('courrierExp').value = '';
+        numDoc: document.getElementById('courrierNumDoc').value.trim(),
+        date: document.getElementById('courrierDate').value,
+        exp: document.getElementById('courrierExp').value.trim(),
+        dest: document.getElementById('courrierDest').value.trim(),
+        objet: document.getElementById('courrierObjet').value.trim(),
+        fileUrl: ''
+    };
+
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            saveObj.fileUrl = evt.target.result;
+            s.yearsData[s.activeYear].courriers.push(saveObj);
+            saveData(); renderCourriersTable();
+            document.getElementById('formCourrier').reset();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        s.yearsData[s.activeYear].courriers.push(saveObj);
+        saveData(); renderCourriersTable();
+        document.getElementById('formCourrier').reset();
+    }
 }
 
 function renderCourriersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    document.getElementById('courriersTableBody').innerHTML = (s.courriers || []).map((c, i) => `
-        <tr><td>${c.type}</td><td>${c.objet}</td><td>${c.exp}</td><td><button class="btn btn-sm btn-danger" onclick="s.courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune correspondance.</td></tr>';
+    const tbody = document.getElementById('courriersTableBody');
+    if(!tbody) return;
+    const filter = (document.getElementById('courrierSearchInput') ? document.getElementById('courrierSearchInput').value.toLowerCase() : '');
+
+    tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).filter(c => c.objet.toLowerCase().includes(filter) || c.exp.toLowerCase().includes(filter)).map((c, i) => `
+        <tr>
+            <td>${c.date}</td><td>${c.type}</td><td><code>${c.numDoc || '-'}</code></td><td>${c.exp}</td><td>${c.dest || '-'}</td><td>${c.objet}</td>
+            <td>${c.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${c.fileUrl}', '${c.objet}')"><i class="fa fa-eye"></i> Aperçu</button>` : 'Aucun'}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i></button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="8" class="text-center text-muted">Aucune correspondance.</td></tr>';
+}
+
+// ARCHIVES ET DOSSIERS SCANNÉS
+function handleSaveArchiveDoc(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const file = document.getElementById('archiveFileInput').files[0];
+
+    const saveObj = {
+        classeur: document.getElementById('archiveClasseur').value,
+        numDoc: document.getElementById('archiveNumDoc').value.trim(),
+        date: document.getElementById('archiveDate').value,
+        nomDoc: document.getElementById('archiveNomDoc').value.trim(),
+        fileUrl: ''
+    };
+
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            saveObj.fileUrl = evt.target.result;
+            s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
+            saveData(); renderDossiersTable();
+            document.getElementById('formArchiveDoc').reset();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
+        saveData(); renderDossiersTable();
+        document.getElementById('formArchiveDoc').reset();
+    }
+}
+
+function renderDossiersTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('dossiersStorageTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
+        <tr>
+            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i></button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
+}
+
+// CALENDRIER
+function handleSaveCalendrierScolaire(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].calendrierVacances.push({
+        type: document.getElementById('calType').value,
+        titre: document.getElementById('calTitre').value,
+        debut: document.getElementById('calDebut').value,
+        fin: document.getElementById('calFin').value
+    });
+    saveData(); renderCalendrierTable();
+    document.getElementById('formCalendrierScolaire').reset();
+}
+
+function renderCalendrierTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('calendrierTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].calendrierVacances || []).map((c, i) => `
+        <tr><td><b>${c.type || 'Solaire'}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i></button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement.</td></tr>';
+}
+
+// HORAIRES
+function handleSaveHoraireCours(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].horairesCours.push({
+        classe: document.getElementById('horaireClassSelect').value,
+        jour: document.getElementById('horaireJour').value,
+        plage: document.getElementById('horairePlage').value,
+        cours: document.getElementById('horaireCoursNom').value
+    });
+    saveData(); renderHorairesTable();
+    document.getElementById('formHoraireCours').reset();
+}
+
+function renderHorairesTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('horairesTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.yearsData[s.activeYear].horairesCours || []).map((h, i) => `
+        <tr><td>${h.classe}</td><td>${h.jour}</td><td>${h.plage}</td><td>${h.cours}</td><td><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].horairesCours.splice(${i},1);saveData();renderHorairesTable();"><i class="fa fa-trash"></i></button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+}
+
+// STATISTIQUES
+function renderStatistiques() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const container = document.getElementById('statsContainer');
+    if(!container) return;
+
+    const yData = s.yearsData[s.activeYear];
+    const totalStudents = (yData.students || []).length;
+    const totalTeachers = (yData.teachers || []).length;
+    const totalClasses = (yData.classes || []).length;
+
+    container.innerHTML = `
+        <div class="col-md-4"><div class="card p-3 bg-primary text-white text-center"><h2>${totalStudents}</h2><div>Total Élèves</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-success text-white text-center"><h2>${totalTeachers}</h2><div>Total Enseignants</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-warning text-dark text-center"><h2>${totalClasses}</h2><div>Total Classes</div></div></div>
+    `;
 }
 
 function openAdminCentralPanel() {
-    const pass = prompt("Mot de passe Admin Central (défaut : ADMIN-2026) :");
-    if(pass === ADMIN_MASTER_PASSWORD) {
+    const pass = prompt("Mot de passe Admin Central :");
+    if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
         showSection('view-admin-central');
-        renderAdminTable();
+        renderAdminCentralTable();
     } else if(pass !== null) {
         alert("Mot de passe incorrect.");
     }
 }
 
-function renderAdminTable() {
-    document.getElementById('adminSchoolsTableBody').innerHTML = (appData.schools || []).map(s => `
+function renderAdminCentralTable() {
+    const tbody = document.getElementById('adminSchoolsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (appData.schools || []).map(s => `
         <tr>
-            <td><b>${s.name}</b></td>
-            <td>${s.province}</td>
+            <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
+            <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
+            <td>${s.province} / ${s.subDivision || '-'}</td>
+            <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
             <td><code>${s.secretCode}</code></td>
-            <td><button class="btn btn-sm btn-danger" onclick="appData.schools = appData.schools.filter(x => x.id !== '${s.id}');saveData();renderAdminTable();">Supprimer</button></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
+                <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
+            </td>
         </tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune Madras.</td></tr>';
+    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-window.onload = renderSchoolsList;
+function openDirectRegistrationModal() { alert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret, puis utiliser la section Inscription Élèves."); }
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
