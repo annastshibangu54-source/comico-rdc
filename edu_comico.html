@@ -1056,13 +1056,13 @@ function promptLoginCode(id) {
     const s = appData.schools.find(x => x.id === id);
     if(!s) return;
     
-    // Correction robuste de la comparaison insensible à la casse et aux espaces superflus
-    let realCode = String(s.secretCode || '').trim();
-    let code = prompt("Entrez le code secret de \"" + s.name + "\" :\n(Astuce : Vous pouvez aussi le vérifier dans l'Admin Central)");
+    // CORRECTION ROBUSTE : Comparaison insensible à la casse et nettoyage des espaces superflus
+    let realCode = String(s.secretCode || '').trim().toUpperCase();
+    let code = prompt("Entrez le code secret de \"" + s.name + "\" :\n(Exemple : MAD-3046)");
     
-    if (code && code.trim().toUpperCase() === realCode.toUpperCase()) {
+    if (code && code.trim().toUpperCase() === realCode) {
         openSchoolDashboard(id);
-    } else {
+    } else if (code !== null) {
         alert("Code incorrect. (Vérifiez l'exactitude de votre code secret)");
     }
 }
@@ -1136,9 +1136,9 @@ function toggleParamsSubmenu() {
 
 function promptSectionAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    let realCode = String(s.secretCode || '').trim();
+    let realCode = String(s.secretCode || '').trim().toUpperCase();
     const code = prompt("Veuillez saisir le Code Secret de Propriété de la Madras pour ouvrir cette section sécurisée :");
-    if(code && code.trim().toUpperCase() === realCode.toUpperCase()) {
+    if(code && code.trim().toUpperCase() === realCode) {
         switchTab(tabId, element);
     } else if(code !== null) {
         alert("Code secret incorrect. Accès refusé.");
