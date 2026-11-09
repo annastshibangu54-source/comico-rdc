@@ -2,118 +2,462 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>COMICO-RDC - Gestion des Madras</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<title>COMICO-RDC Plateforme Intégrée de Gestion des Madras</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  body { background: #f3f4f6; font-family: sans-serif; }
-  .card-box { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.view-section { display: none; }
+.view-section.active { display: block; }
+body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
+.sidebar-menu .list-group-item { font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; margin-bottom: 4px; cursor: pointer; }
+.sidebar-menu .list-group-item.active { background-color: #0d6efd; color: #fff; }
+.school-logo-display { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #0d6efd; }
+.params-submenu { padding-left: 10px; background-color: #f8f9fa; border-left: 3px solid #0d6efd; margin-top: 5px; display: none; }
+.params-submenu.show { display: block; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+.student-card-container { position: relative; width: 380px; min-height: 250px; margin: 0 auto; background: #fff; border: 2px solid #0d6efd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); overflow: hidden; color: #000; text-align: left; }
+.student-card-bg-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; opacity: 0.08; object-fit: contain; pointer-events: none; z-index: 0; }
+.student-card-content { position: relative; z-index: 1; }
+.secret-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
+.secret-modal-card { background: #fff; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+.secret-code-badge { font-size: 26px; font-weight: 800; color: #0d6efd; letter-spacing: 2px; background: #e7f1ff; padding: 10px 20px; border-radius: 8px; border: 2px dashed #0d6efd; display: inline-block; margin: 15px 0; }
+@media print {
+  body * { visibility: hidden; }
+  .tab-pane.active, .tab-pane.active *, .student-card-container, .student-card-container * { visibility: visible; }
+  .tab-pane.active { position: absolute; left: 0; top: 0; width: 100%; background: #fff !important; padding: 0 !important; }
+  .no-print, .navbar, .sidebar-menu, .action-bar, form, .btn { display: none !important; }
+}
 </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark bg-primary shadow-sm px-4">
-  <a class="navbar-brand fw-bold" href="#"><i class="fa fa-school me-2"></i>COMICO-RDC | Gestion des Madras</a>
+<nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
+    <div class="container-fluid">
+        <a href="#" class="navbar-brand d-flex align-items-center px-3">
+            <h2 class="m-0 text-primary">COMICO-RDC</h2>
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a href="javascript:void(0);" class="nav-item nav-link text-danger fw-bold" onclick="openAdminCentralPanel()"><i class="fa fa-user-shield me-1"></i> Admin Central</a>
+        </div>
+    </div>
 </nav>
 
-<div class="container py-4">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card-box text-center">
-        <i class="fa fa-plus-circle fa-3x text-primary mb-3"></i>
-        <h4>1. Enregistrer une Madras</h4>
-        <p class="text-muted small">Créez votre école islamique et obtenez votre code d'accès.</p>
-        <button class="btn btn-primary btn-sm fw-bold" onclick="openCreateForm()">Créer une Madras</button>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card-box text-center">
-        <i class="fa fa-user-graduate fa-3x text-success mb-3"></i>
-        <h4>2. Inscrire un Élève</h4>
-        <p class="text-muted small">Ajoutez des élèves et générez leurs cartes et bulletins.</p>
-        <button class="btn btn-success btn-sm fw-bold" onclick="alert('Veuillez d\'abord enregistrer une Madras.')">Gérer les Élèves</button>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card-box text-center">
-        <i class="fa fa-wallet fa-3x text-warning mb-3"></i>
-        <h4>3. Trésorerie & Caisse</h4>
-        <p class="text-muted small">Suivez les paiements et imprimez les reçus officiels.</p>
-        <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="alert('Module de caisse prêt.')">Ouvrir la Caisse</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card-box mt-4" id="formContainer" style="display:none;">
-    <h4 class="text-primary fw-bold mb-3">Fiche d'Enregistrement de la Madras</h4>
-    <form onsubmit="saveSchool(event)">
-      <div class="mb-3">
-        <label class="form-label fw-bold">Nom Officiel de la Madras :</label>
-        <input type="text" id="inputName" class="form-control" placeholder="Ex: Madras Al-Rahma" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">Province / Antenne :</label>
-        <input type="text" id="inputProvince" class="form-control" placeholder="Ex: Kinshasa" required>
-      </div>
-      <button type="submit" class="btn btn-success fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-      <button type="button" class="btn btn-secondary fw-bold" onclick="document.getElementById('formContainer').style.display='none'">Annuler</button>
-    </form>
-  </div>
-
-  <div class="card-box mt-4">
-    <h4 class="fw-bold mb-3">Liste des Madras Enregistrées</h4>
-    <div id="schoolList">
-      <p class="text-muted">Aucune Madras enregistrée pour le moment.</p>
+<!-- MODALE CODE SECRET -->
+<div id="secretCodeModal" class="secret-modal-overlay">
+  <div class="secret-modal-card">
+    <i class="fa fa-check-circle fa-4x text-success mb-3"></i>
+    <h3 class="fw-bold">Madras Créée avec Succès !</h3>
+    <p class="text-muted small">Voici votre <b>Code Secret</b> unique pour ouvrir votre établissement :</p>
+    <div id="modalSecretCodeDisplay" class="secret-code-badge">SEC-0000</div>
+    <div>
+      <button class="btn btn-success btn-sm fw-bold px-4" onclick="closeSecretModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
     </div>
   </div>
 </div>
 
-<script>
-function openCreateForm() {
-  document.getElementById('formContainer').style.display = 'block';
-}
+<div class="container-fluid bg-primary py-4 mb-4 text-center text-white no-print">
+    <h1 class="display-5 fw-bold">Plateforme Intégrée COMICO-RDC</h1>
+    <p class="lead">Gestion professionnelle des Madras (Écoles Islamiques)</p>
+</div>
 
-function saveSchool(e) {
-  e.preventDefault();
-  const name = document.getElementById('inputName').value;
-  const province = document.getElementById('inputProvince').value;
-  
-  let schools = JSON.parse(localStorage.getItem('simple_madras') || '[]');
-  schools.push({ name, province, code: 'MAD-' + Math.floor(1000 + Math.random() * 9000) });
-  localStorage.setItem('simple_madras', JSON.stringify(schools));
-  
-  alert('Madras enregistrée avec succès !');
-  document.getElementById('formContainer').style.display = 'none';
-  loadSchools();
-}
+<div class="container-fluid py-3 px-lg-4">
 
-function loadSchools() {
-  let schools = JSON.parse(localStorage.getItem('simple_madras') || '[]');
-  const list = document.getElementById('schoolList');
-  if(schools.length === 0) {
-    list.innerHTML = '<p class="text-muted">Aucune Madras enregistrée pour le moment.</p>';
-    return;
-  }
-  list.innerHTML = schools.map(s => `
-    <div class="alert alert-light border d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="fw-bold text-primary mb-1">${s.name}</h5>
-        <small class="text-muted">Province : ${s.province} | Code : <code>${s.code}</code></small>
-      </div>
-      <button class="btn btn-outline-danger btn-sm" onclick="clearData()"><i class="fa fa-trash"></i> Réinitialiser</button>
+<!-- PORTAIL PRINCIPAL -->
+<div id="view-portal" class="view-section active">
+    <div class="row g-3 mb-4 no-print">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
+                <i class="fa fa-school fa-3x text-primary mb-3"></i>
+                <h4 class="fw-bold">1. Créer une Madras</h4>
+                <p class="text-muted small">Enregistrer une nouvelle école islamique.</p>
+                <button onclick="openSchoolForm()" class="btn btn-primary btn-sm mt-2 fw-bold">Créer une Madras</button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
+                <i class="fa fa-user-shield fa-3x text-danger mb-3"></i>
+                <h4 class="fw-bold">2. Admin Central</h4>
+                <p class="text-muted small">Superviser l'ensemble des structures.</p>
+                <button onclick="openAdminCentralPanel()" class="btn btn-danger btn-sm mt-2 fw-bold">Accès Admin</button>
+            </div>
+        </div>
     </div>
-  `).join('');
+
+    <h3 class="mb-3">Liste des Madras Enregistrées</h3>
+    <div id="schoolsListContainer" class="row g-3"></div>
+</div>
+
+<!-- FORMULAIRE CRÉATION -->
+<div id="view-create-school" class="view-section">
+    <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white"><h4 class="m-0 text-white">Enregistrement Officiel d'une Madras</h4></div>
+        <div class="card-body p-4">
+            <form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6"><label class="form-label fw-bold">Nom Officiel de la Madras : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Province : *</label><input type="text" id="schoolProvince" class="form-control" placeholder="Ex: Kinshasa" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Commune : *</label><input type="text" id="schoolCommune" class="form-control" placeholder="Ex: Kalamu" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Téléphone :</label><input type="text" id="schoolPhone" class="form-control" placeholder="+243 ..."></div>
+                </div>
+                <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer et Obtenir le Code</button>
+                <button type="button" class="btn btn-secondary fw-bold px-4" onclick="showSection('view-portal')">Annuler</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ADMIN CENTRAL -->
+<div id="view-admin-central" class="view-section">
+    <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
+    <div class="card shadow-sm border-0 border-start border-4 border-danger">
+        <div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Registre Global - Administration Centrale COMICO</h4></div>
+        <div class="card-body p-4">
+            <table class="table table-bordered align-middle">
+                <thead><tr><th>Nom Madras</th><th>Province</th><th>Code Secret</th><th>Actions</th></tr></thead>
+                <tbody id="adminSchoolsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- DASHBOARD ÉCOLE -->
+<div id="view-school-dashboard" class="view-section">
+    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm no-print">
+        <div><h3 id="dashSchoolTitle" class="text-primary m-0 fw-bold"></h3><small id="dashSchoolSub" class="text-muted"></small></div>
+        <button class="btn btn-secondary btn-sm fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer / Retour</button>
+    </div>
+    <div class="row">
+        <div class="col-lg-3 mb-4 no-print">
+            <div class="list-group sidebar-menu shadow-sm">
+                <a class="list-group-item list-group-item-action bg-dark text-white fw-bold">Menu Gestion</a>
+                <a class="list-group-item rubric-item" onclick="switchTab('tab-classes', this)"><i class="fa fa-door-open me-2"></i> Classes / Niveaux</a>
+                <a class="list-group-item rubric-item" onclick="switchTab('tab-eleves-reg', this)"><i class="fa fa-user-graduate me-2"></i> Élèves / Étudiants</a>
+                <a class="list-group-item rubric-item" onclick="switchTab('tab-notes', this)"><i class="fa fa-edit me-2"></i> Saisie des Notes</a>
+                <a class="list-group-item rubric-item" onclick="switchTab('tab-bulletins', this)"><i class="fa fa-file-invoice me-2"></i> Bulletins Scolaires</a>
+                <a class="list-group-item rubric-item" onclick="switchTab('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Caisse & Trésorerie</a>
+            </div>
+        </div>
+        <div class="col-lg-9 col-12">
+            <div class="bg-white p-4 rounded shadow-sm">
+                <div id="defaultWelcomeMessage" class="text-center py-5 text-muted">
+                    <h5>Sélectionnez une option dans le menu à gauche pour gérer votre Madras.</h5>
+                </div>
+
+                <!-- CLASSES -->
+                <div class="tab-pane" id="tab-classes">
+                    <h5 class="text-primary fw-bold mb-3">Gestion des Classes</h5>
+                    <form onsubmit="handleSaveClass(event)" class="row g-2 mb-3">
+                        <div class="col-md-8"><input type="text" id="className" class="form-control" placeholder="Nom de la classe (ex: 1ère Année)" required></div>
+                        <div class="col-md-4"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Ajouter la Classe</button></div>
+                    </form>
+                    <div id="classesContainerList"></div>
+                </div>
+
+                <!-- ÉLÈVES -->
+                <div class="tab-pane" id="tab-eleves-reg">
+                    <h5 class="text-primary fw-bold mb-3">Inscription des Élèves</h5>
+                    <form onsubmit="handleSaveStudent(event)" class="row g-2 mb-3 bg-light p-3 rounded">
+                        <div class="col-md-3"><input type="text" id="studentMatricule" class="form-control" placeholder="Matricule" required></div>
+                        <div class="col-md-4"><input type="text" id="studentName" class="form-control" placeholder="Nom & Prénom" required></div>
+                        <div class="col-md-3"><select id="studentClassSelect" class="form-select" required></select></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Inscrire</button></div>
+                    </form>
+                    <div id="studentsContainerList"></div>
+                </div>
+
+                <!-- NOTES -->
+                <div class="tab-pane" id="tab-notes">
+                    <h5 class="text-primary fw-bold mb-3">Saisie des Notes</h5>
+                    <form onsubmit="handleSaveStudentNote(event)" class="row g-2 mb-3 bg-light p-3 rounded">
+                        <div class="col-md-4"><select id="notesStudentSelect" class="form-select" required></select></div>
+                        <div class="col-md-3"><input type="text" id="noteCourse" class="form-control" placeholder="Matière" required></div>
+                        <div class="col-md-2"><input type="number" id="noteObtenue" class="form-control" placeholder="Note" required></div>
+                        <div class="col-md-2"><input type="number" id="noteMax" class="form-control" placeholder="Max" required></div>
+                        <div class="col-md-1"><button type="submit" class="btn btn-success btn-sm w-100"><i class="fa fa-save"></i></button></div>
+                    </form>
+                    <div id="notesTableContainer"></div>
+                </div>
+
+                <!-- BULLETINS -->
+                <div class="tab-pane" id="tab-bulletins">
+                    <h5 class="text-primary fw-bold mb-3">Bulletin Scolaire</h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6"><select id="bulletinStudentSelect" class="form-select" onchange="generateBulletin()"></select></div>
+                    </div>
+                    <div id="bulletinDisplayArea" class="p-4 border bg-light rounded"></div>
+                </div>
+
+                <!-- CAISSE -->
+                <div class="tab-pane" id="tab-frais">
+                    <h5 class="text-primary fw-bold mb-3">Trésorerie & Recettes</h5>
+                    <form onsubmit="handleSaveCaisse(event)" class="row g-2 mb-3 bg-light p-3 rounded">
+                        <div class="col-md-5"><input type="text" id="caisseMotif" class="form-control" placeholder="Motif de perception" required></div>
+                        <div class="col-md-4"><input type="number" id="caisseMontant" class="form-control" placeholder="Montant ($)" required></div>
+                        <div class="col-md-3"><button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Encaisser</button></div>
+                    </form>
+                    <div id="caisseTableContainer"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
+let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [] };
+let activeSchoolId = null;
+let currentCreatedSecretCode = "";
+
+function saveData() {
+    localStorage.setItem('comico_appData', JSON.stringify(appData));
 }
 
-function clearData() {
-  localStorage.removeItem('simple_madras');
-  loadSchools();
+function showSection(id) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id === 'view-portal') renderSchoolsList();
 }
 
-window.onload = loadSchools;
+function openSchoolForm() {
+    document.getElementById('formCreateSchool').reset();
+    showSection('view-create-school');
+}
+
+function handleSaveSchool(e) {
+    e.preventDefault();
+    const name = document.getElementById('schoolName').value.trim();
+    const province = document.getElementById('schoolProvince').value.trim();
+    const commune = document.getElementById('schoolCommune').value.trim();
+    const phone = document.getElementById('schoolPhone').value.trim();
+    const secretCode = 'MAD-' + Math.floor(1000 + Math.random() * 9000);
+
+    if(!appData.schools) appData.schools = [];
+    appData.schools.push({
+        id: 'SCH-' + Date.now(),
+        name, province, commune, phone, secretCode,
+        classes: [], students: [], notes: {}, caisse: []
+    });
+
+    saveData();
+    currentCreatedSecretCode = secretCode;
+    document.getElementById('modalSecretCodeDisplay').innerText = secretCode;
+    document.getElementById('secretCodeModal').style.display = 'flex';
+}
+
+function closeSecretModal() {
+    document.getElementById('secretCodeModal').style.display = 'none';
+    showSection('view-portal');
+}
+
+function renderSchoolsList() {
+    const container = document.getElementById('schoolsListContainer');
+    if(!appData.schools || appData.schools.length === 0) {
+        container.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">Aucune Madras enregistrée.</div></div>';
+        return;
+    }
+    container.innerHTML = appData.schools.map(s => `
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <h5 class="fw-bold text-primary mb-1">${s.name}</h5>
+                    <small class="text-muted">Province : ${s.province} | Commune : ${s.commune}</small>
+                </div>
+                <button class="btn btn-primary btn-sm fw-bold" onclick="promptLoginCode('${s.id}')">Ouvrir</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function promptLoginCode(id) {
+    const s = appData.schools.find(x => x.id === id);
+    const code = prompt("Entrez le code secret de \"" + s.name + "\" :");
+    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+        openSchoolDashboard(id);
+    } else if(code !== null) {
+        alert("Code incorrect.");
+    }
+}
+
+function openSchoolDashboard(id) {
+    activeSchoolId = id;
+    const s = appData.schools.find(x => x.id === id);
+    document.getElementById('dashSchoolTitle').innerText = s.name;
+    document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
+    refreshAllDropdowns();
+    showSection('view-school-dashboard');
+}
+
+function switchTab(tabId, element) {
+    document.getElementById('defaultWelcomeMessage').style.display = 'none';
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+function refreshAllDropdowns() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    
+    const classOpts = '<option value="">-- Choisir classe --</option>' + (s.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    document.getElementById('studentClassSelect').innerHTML = classOpts;
+
+    const studOpts = '<option value="">-- Choisir élève --</option>' + (s.students || []).map(st => `<option value="${st.matricule}">${st.name} (${st.classe})</option>`).join('');
+    document.getElementById('notesStudentSelect').innerHTML = studOpts;
+    document.getElementById('bulletinStudentSelect').innerHTML = studOpts;
+
+    renderClassesTable();
+    renderStudentsTable();
+    renderCaisseTable();
+}
+
+function handleSaveClass(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const name = document.getElementById('className').value.trim();
+    if(name) {
+        if(!s.classes) s.classes = [];
+        s.classes.push({ name });
+        saveData();
+        refreshAllDropdowns();
+        document.getElementById('className').value = '';
+    }
+}
+
+function renderClassesTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    document.getElementById('classesContainerList').innerHTML = (s.classes || []).map((c, i) => `
+        <div class="card p-2 mb-2 d-flex flex-row justify-content-between align-items-center">
+            <span>${c.name}</span>
+            <button class="btn btn-sm btn-danger" onclick="s.classes.splice(${i},1);saveData();refreshAllDropdowns();"><i class="fa fa-trash"></i></button>
+        </div>
+    `).join('') || '<p class="text-muted small">Aucune classe.</p>';
+}
+
+function handleSaveStudent(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.students.push({
+        matricule: document.getElementById('studentMatricule').value.trim(),
+        name: document.getElementById('studentName').value.trim(),
+        classe: document.getElementById('studentClassSelect').value
+    });
+    saveData();
+    refreshAllDropdowns();
+    document.getElementById('studentMatricule').value = '';
+    document.getElementById('studentName').value = '';
+}
+
+function renderStudentsTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    document.getElementById('studentsContainerList').innerHTML = `
+        <table class="table table-bordered table-sm align-middle">
+            <thead><tr><th>Matricule</th><th>Nom</th><th>Classe</th><th>Action</th></tr></thead>
+            <tbody>
+                ${(s.students || []).map((st, i) => `
+                    <tr><td>${st.matricule}</td><td>${st.name}</td><td>${st.classe}</td><td><button class="btn btn-sm btn-danger" onclick="s.students.splice(${i},1);saveData();refreshAllDropdowns();"><i class="fa fa-trash"></i></button></td></tr>
+                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun élève.</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function handleSaveStudentNote(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const mat = document.getElementById('notesStudentSelect').value;
+    if(!mat) return;
+    if(!s.notes) s.notes = {};
+    if(!s.notes[mat]) s.notes[mat] = [];
+    s.notes[mat].push({
+        course: document.getElementById('noteCourse').value,
+        score: parseFloat(document.getElementById('noteObtenue').value),
+        max: parseFloat(document.getElementById('noteMax').value)
+    });
+    saveData();
+    alert("Note enregistrée !");
+    document.getElementById('noteCourse').value = '';
+    document.getElementById('noteObtenue').value = '';
+    document.getElementById('noteMax').value = '';
+}
+
+function generateBulletin() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const mat = document.getElementById('bulletinStudentSelect').value;
+    const st = (s.students || []).find(x => x.matricule === mat);
+    const notes = (s.notes && s.notes[mat]) ? s.notes[mat] : [];
+    
+    let totalObt = 0, totalMax = 0;
+    notes.forEach(n => { totalObt += n.score; totalMax += n.max; });
+    
+    document.getElementById('bulletinDisplayArea').innerHTML = st ? `
+        <h5 class="fw-bold">Bulletin de : ${st.name} (${st.classe})</h5>
+        <hr>
+        <ul>
+            ${notes.map(n => `<li><b>${n.course} :</b> ${n.score} / ${n.max}</li>`).join('') || '<li>Aucune note.</li>'}
+        </ul>
+        <p class="fw-bold mt-2">Total : ${totalObt} / ${totalMax}</p>
+    ` : '<p class="text-muted">Sélectionnez un élève.</p>';
+}
+
+function handleSaveCaisse(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s.caisse) s.caisse = [];
+    s.caisse.push({
+        motif: document.getElementById('caisseMotif').value,
+        montant: document.getElementById('caisseMontant').value,
+        date: new Date().toLocaleDateString()
+    });
+    saveData();
+    renderCaisseTable();
+    document.getElementById('caisseMotif').value = '';
+    document.getElementById('caisseMontant').value = '';
+}
+
+function renderCaisseTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    document.getElementById('caisseTableContainer').innerHTML = `
+        <table class="table table-bordered table-sm align-middle">
+            <thead><tr><th>Date</th><th>Motif</th><th>Montant ($)</th><th>Action</th></tr></thead>
+            <tbody>
+                ${(s.caisse || []).map((c, i) => `
+                    <tr><td>${c.date}</td><td>${c.motif}</td><td>$${c.montant}</td><td><button class="btn btn-sm btn-danger" onclick="s.caisse.splice(${i},1);saveData();renderCaisseTable();"><i class="fa fa-trash"></i></button></td></tr>
+                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune recette.</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function openAdminCentralPanel() {
+    const pass = prompt("Mot de passe Admin Central (défaut : ADMIN-2026) :");
+    if(pass === ADMIN_MASTER_PASSWORD) {
+        showSection('view-admin-central');
+        renderAdminTable();
+    } else if(pass !== null) {
+        alert("Mot de passe incorrect.");
+    }
+}
+
+function renderAdminTable() {
+    document.getElementById('adminSchoolsTableBody').innerHTML = (appData.schools || []).map(s => `
+        <tr>
+            <td><b>${s.name}</b></td>
+            <td>${s.province}</td>
+            <td><code>${s.secretCode}</code></td>
+            <td><button class="btn btn-sm btn-danger" onclick="appData.schools = appData.schools.filter(x => x.id !== '${s.id}');saveData();renderAdminTable();">Supprimer</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune Madras.</td></tr>';
+}
+
+window.onload = renderSchoolsList;
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
