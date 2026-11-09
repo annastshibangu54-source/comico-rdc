@@ -951,7 +951,7 @@ let currentChatSchool = null;
 function openBlockedSchoolChat() {
     const code = document.getElementById('blockedSchoolSecretCodeInput').value.trim();
     if(!code) { alert("Veuillez saisir votre code secret."); return; }
-    const school = (appData.schools || []).find(s => s.secretCode.toUpperCase() === code.toUpperCase());
+    const school = (appData.schools || []).find(s => String(s.secretCode || '').trim().toUpperCase() === code.toUpperCase());
     if(!school) { alert("Code secret incorrect."); return; }
     currentChatSchool = school;
     document.getElementById('chatSchoolNameDisplay').innerText = school.name;
@@ -1055,11 +1055,15 @@ function renderPortalAnnouncements() {
 function promptLoginCode(id) {
     const s = appData.schools.find(x => x.id === id);
     if(!s) return;
-    const code = prompt("Entrez le code secret de \"" + s.name + "\" :");
-    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+    
+    // Correction robuste de la comparaison insensible à la casse et aux espaces superflus
+    let realCode = String(s.secretCode || '').trim();
+    let code = prompt("Entrez le code secret de \"" + s.name + "\" :\n(Astuce : Vous pouvez aussi le vérifier dans l'Admin Central)");
+    
+    if (code && code.trim().toUpperCase() === realCode.toUpperCase()) {
         openSchoolDashboard(id);
     } else {
-        alert("Code incorrect.");
+        alert("Code incorrect. (Vérifiez l'exactitude de votre code secret)");
     }
 }
 
@@ -1132,8 +1136,9 @@ function toggleParamsSubmenu() {
 
 function promptSectionAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    let realCode = String(s.secretCode || '').trim();
     const code = prompt("Veuillez saisir le Code Secret de Propriété de la Madras pour ouvrir cette section sécurisée :");
-    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+    if(code && code.trim().toUpperCase() === realCode.toUpperCase()) {
         switchTab(tabId, element);
     } else if(code !== null) {
         alert("Code secret incorrect. Accès refusé.");
@@ -1922,7 +1927,7 @@ function renderAdminCentralTable() {
             <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
             <td>${s.province} / ${s.subDivision || '-'}</td>
             <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
-            <td><code>${s.secretCode}</code></td>
+            <td><code class="text-danger fw-bold" style="font-size: 15px;">${s.secretCode}</code></td>
             <td>
                 <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
                 <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
