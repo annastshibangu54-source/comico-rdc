@@ -82,10 +82,44 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <h3 class="fw-bold">Madras Créée avec Succès !</h3>
     <p class="text-muted small">Voici votre <b>Code Secret Madras</b> généré automatiquement par le système (il permet uniquement l'accès utilisateur à l'école) :</p>
     <div id="modalSecretCodeDisplay" class="secret-code-badge">MAD-0000</div>
-    <p class="text-muted small mt-2">Le Code Directeur / Propriétaire (DIR-XXXX) sera généré dans la section Comité Directeur.</p>
+    <p class="text-muted small mt-2">Le Code Directeur / Propriétaire (DIR-XXXX) sera généré lors de votre première connexion aux paramètres.</p>
     <div>
       <button class="btn btn-outline-primary btn-sm me-2" onclick="copySecretCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
       <button class="btn btn-success btn-sm fw-bold px-4" onclick="closeSecretModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOITE DE DIALOGUE OBLIGATOIRE POUR INSCRIRE LE DIRECTEUR LORS DU 1ER PARAMÈTRE -->
+<div id="directorPromptModal" class="secret-modal-overlay">
+  <div class="secret-modal-card">
+    <i class="fa fa-user-tie fa-4x text-primary mb-3"></i>
+    <h3 class="fw-bold">Première Connexion aux Paramètres</h3>
+    <p class="text-muted small">Veuillez renseigner l'identité du <b>Directeur / Propriétaire</b> de la Madras. Le système générera son code secret confidentiel.</p>
+    <form onsubmit="handleSaveDirectorPrompt(event)">
+        <div class="mb-3 text-start">
+            <label class="form-label fw-bold small">Nom et Prénom du Directeur : *</label>
+            <input type="text" id="promptDirName" class="form-control" placeholder="Ex: El Hadj Mohamed" required>
+        </div>
+        <div class="mb-3 text-start">
+            <label class="form-label fw-bold small">Téléphone / Contact :</label>
+            <input type="text" id="promptDirPhone" class="form-control" placeholder="+243 ...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm fw-bold w-100"><i class="fa fa-key me-1"></i> Générer le Code Secret du Directeur</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODALE D'AFFICHAGE DU CODE DIRECTEUR GÉNÉRÉ -->
+<div id="directorCreatedModal" class="secret-modal-overlay">
+  <div class="secret-modal-card">
+    <i class="fa fa-shield-alt fa-4x text-success mb-3"></i>
+    <h3 class="fw-bold">Code Directeur Généré !</h3>
+    <p class="text-muted small">Voici le <b>Code Secret du Directeur</b> (Gardez-le bien précieusement, il ne sera plus affiché nulle part) :</p>
+    <div id="modalDirectorCodeDisplay" class="secret-code-badge">DIR-0000</div>
+    <div>
+      <button class="btn btn-outline-primary btn-sm me-2" onclick="copyDirectorCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
+      <button class="btn btn-success btn-sm fw-bold px-4" onclick="closeDirectorCreatedModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
     </div>
   </div>
 </div>
@@ -273,7 +307,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Madras & Gestion COMICO</h4></div>
 <div class="card-body p-4">
 <table class="table table-bordered align-middle">
-<thead><tr><th>Logo</th><th>Madras</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Madras</th><th>Actions Administration Centrale</th></tr></thead>
+<thead><tr><th>Logo</th><th>Madras</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Madras / Code Directeur</th><th>Actions Administration Centrale</th></tr></thead>
 <tbody id="adminSchoolsTableBody"></tbody>
 </table>
 </div>
@@ -368,7 +402,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- 1. DIRECTION -->
 <div class="tab-pane" id="tab-direction">
-<h5 class="text-primary fw-bold mb-3">Comité de Gestion & Administration (Génération des Autorités & Codes Propriétaires)</h5>
+<h5 class="text-primary fw-bold mb-3">Comité de Gestion & Administration</h5>
 <form id="formDirection" onsubmit="handleSaveDirection(event)" class="row g-2 mb-3 no-print">
 <input type="hidden" id="dirEditIndex">
 <div class="col-md-3"><input type="text" id="dirName" class="form-control" placeholder="Nom et Prénom" required></div>
@@ -382,7 +416,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </select>
 </div>
 <div class="col-md-3"><input type="text" id="dirPhone" class="form-control" placeholder="Téléphone / Contact"></div>
-<div class="col-md-3"><input type="text" id="dirSecretCode" class="form-control bg-light fw-bold text-primary" placeholder="Code Propriétaire (Généré)" readonly></div>
 <div class="col-12 action-bar mt-2">
 <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
 <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="clearDirectionForm()"><i class="fa fa-trash me-1"></i> Supprimer</button>
@@ -393,7 +426,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered align-middle"><thead><tr><th>Nom</th><th>Fonction</th><th>Contact</th><th>Code Secret Attribué</th><th class="no-print">Action</th></tr></thead><tbody id="directionTableBody"></tbody></table>
+<table class="table table-bordered align-middle"><thead><tr><th>Nom</th><th>Fonction</th><th>Contact</th><th class="no-print">Action</th></tr></thead><tbody id="directionTableBody"></tbody></table>
 </div>
 
 <!-- 2. CLASSES / DISCIPLINES -->
@@ -420,15 +453,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-profs">
 <h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
 <div id="teachersLockedContainer" class="text-center py-5" style="display: none;">
-    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Sécurisé : Saisissez le <b>Code Secret de Propriété (Directeur)</b> généré par le système.</p>
+    <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Sécurisé : Saisissez le <b>Code Secret du Directeur (DIR-XXXX)</b> généré par le système.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
-        <input type="password" id="ownerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="ownerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockTeachers()">Déverrouiller</button>
     </div>
 </div>
 <div id="teachersUnlockedContainer">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé (Propriétaire)</span>
+        <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé (Directeur)</span>
         <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
     </div>
     <form id="formTeacher" onsubmit="handleSaveTeacher(event)" class="row g-2 mb-3 no-print">
@@ -456,9 +489,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-eleves-reg">
 <h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
 <div id="studentsLockedContainer" class="text-center py-5" style="display: none;">
-    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictement réservé au propriétaire de la Madras.</p>
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès strictement réservé au Directeur de la Madras.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
-        <input type="password" id="studentOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="studentOwnerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-danger fw-bold" onclick="openOwnerStudentRegistration()">Déverrouiller Inscription</button>
     </div>
 </div>
@@ -498,9 +531,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-carte-eleve">
 <h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
 <div id="cardLockedContainer" class="text-center py-5" style="display: none;">
-    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès sécurisé par le Code Secret du Propriétaire.</p>
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Accès sécurisé par le Code Secret du Directeur.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
-        <input type="password" id="cardOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="cardOwnerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockCard()">Déverrouiller</button>
     </div>
 </div>
@@ -623,7 +656,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-bulletins">
 <h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation (Code Enseignant = Voir Seulement | Code Admin-Centrale = Tout Faire)</h5>
 <div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Authentification (Code Enseignant ou Code Admin-Centrale / Propriétaire) :</label>
+    <label class="form-label small fw-bold">Authentification (Code Enseignant ou Code Directeur / Administrateur) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="bulletinAuthCode" class="form-control" placeholder="Code d'accès...">
         <button class="btn btn-primary" onclick="verifyBulletinAccess()">Accéder</button>
@@ -683,9 +716,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- TRÉSORERIE & COTISATIONS -->
 <div class="tab-pane" id="tab-frais">
-<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Code Secret Propriétaire Requis)</h5>
+<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Code Secret Directeur Requis)</h5>
 <div id="treasurerAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Code Secret Propriétaire / Directeur :</label>
+    <label class="form-label small fw-bold">Code Secret Directeur :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="treasurerSecretInput" class="form-control" placeholder="Code secret...">
         <button class="btn btn-primary" onclick="verifyTreasurerAccess()">Ouvrir Trésorerie</button>
@@ -738,9 +771,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-mobile-money">
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-mobile-alt me-2"></i>Simulation Paiement Mobile Money (RDC)</h5>
 <div id="momoAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Code Secret Propriétaire Requis :</label>
+    <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="momoSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="momoSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary" onclick="verifyMomoAccess()">Ouvrir Mobile Money</button>
     </div>
 </div>
@@ -825,11 +858,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- COMMUNICATION -->
 <div class="tab-pane" id="tab-communication">
-<h5 class="text-primary fw-bold mb-3">Communication & Annonces (Propriétaire - Validité 72h)</h5>
+<h5 class="text-primary fw-bold mb-3">Communication & Annonces (Directeur - Validité 72h)</h5>
 <div id="commAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Code Secret Propriétaire Requis :</label>
+    <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="commSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="commSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary" onclick="verifyCommAccess()">Ouvrir Communication</button>
     </div>
 </div>
@@ -856,9 +889,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-jobs-received">
 <h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues</h5>
 <div id="jobsLockedContainer" class="text-center py-5" style="display: none;">
-    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Sécurisé : Saisissez le Code Secret Propriétaire de la Madras.</p>
+    <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Sécurisé : Saisissez le Code Secret du Directeur de la Madras.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
-        <input type="password" id="jobOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <input type="password" id="jobOwnerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockJobs()">Déverrouiller</button>
     </div>
 </div>
@@ -1052,6 +1085,7 @@ const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
 let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
+let currentCreatedDirectorCode = "";
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 
@@ -1350,7 +1384,7 @@ function promptLoginCode(id) {
     if(!s) return;
     const code = prompt("Entrez le code secret Madras (" + s.name + ") :");
     if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
-        openSchoolDashboard(id);
+        checkAndOpenSchoolDashboard(id);
     } else if(code !== null) {
         alert("Code secret Madras incorrect.");
     }
@@ -1367,7 +1401,50 @@ function promptCentralDeleteSchool(id) {
     }
 }
 
-function openSchoolDashboard(id) {
+function checkAndOpenSchoolDashboard(id) {
+    activeSchoolId = id;
+    const s = appData.schools.find(x => x.id === id);
+    
+    // Si aucun Directeur n'est encore enregistré, on force l'ouverture de la boîte de dialogue demandée
+    if (!s.direction || s.direction.length === 0) {
+        document.getElementById('directorPromptModal').style.display = 'flex';
+    } else {
+        proceedToDashboardOpen(id);
+    }
+}
+
+function handleSaveDirectorPrompt(e) {
+    e.preventDefault();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const name = document.getElementById('promptDirName').value.trim();
+    const phone = document.getElementById('promptDirPhone').value.trim();
+    const secretCode = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
+    
+    s.direction = [{
+        name: name,
+        role: "Directeur / Propriétaire",
+        phone: phone,
+        secretCode: secretCode
+    }];
+    saveData();
+    
+    document.getElementById('directorPromptModal').style.display = 'none';
+    currentCreatedDirectorCode = secretCode;
+    document.getElementById('modalDirectorCodeDisplay').innerText = secretCode;
+    document.getElementById('directorCreatedModal').style.display = 'flex';
+}
+
+function copyDirectorCodeModal() {
+    navigator.clipboard.writeText(currentCreatedDirectorCode);
+    alert("Code Directeur copié !");
+}
+
+function closeDirectorCreatedModal() {
+    document.getElementById('directorCreatedModal').style.display = 'none';
+    proceedToDashboardOpen(activeSchoolId);
+}
+
+function proceedToDashboardOpen(id) {
     activeSchoolId = id;
     const s = appData.schools.find(x => x.id === id);
     document.getElementById('dashSchoolTitle').innerText = s.name;
@@ -1423,21 +1500,17 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS PAR CODE PROPRIÉTAIRE (DIR-XXXX) */
+/* SÉCURISATION DES SECTIONS PAR CODE DIRECTEUR (DIR-XXXX) */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    let validOwnerCode = s.secretCode; // par défaut
-    if(s.direction && s.direction.length > 0) {
-        // Chercher un code directeur enregistré
-        validOwnerCode = s.direction[0].secretCode;
-    }
-    const code = prompt("Sécurité Propriétaire : Entrez le Code Secret Propriétaire (ex: DIR-XXXX) pour ouvrir cette section et tout contrôler :");
-    if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase() === s.secretCode.toUpperCase() || code.trim().toUpperCase().startsWith('DIR-'))) {
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    const code = prompt("Sécurité Directeur : Entrez le Code Secret du Directeur (ex: DIR-XXXX) pour ouvrir cette section et tout contrôler :");
+    if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase().startsWith('DIR-'))) {
         if(tabId === 'tab-profs') teachersUnlocked = true;
         switchTab(tabId, element);
     } else if(code !== null) {
-        alert("Code secret propriétaire incorrect. Accès réservé au directeur.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -1451,7 +1524,7 @@ function promptUnlockCard() {
         document.getElementById('cardOwnerSecretInput').value = '';
         renderSavedCardsTable();
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -1465,7 +1538,7 @@ function promptUnlockJobs() {
         document.getElementById('jobOwnerSecretInput').value = '';
         renderSchoolJobsTable();
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -1532,7 +1605,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Génération du code propriétaire DIR-XXXX)
+// 1. DIRECTION (Le code directeur n'apparaît plus ici ni dans les paramètres de la section)
 function handleSaveDirection(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1540,18 +1613,14 @@ function handleSaveDirection(e) {
     const role = document.getElementById('dirRole').value;
     const phone = document.getElementById('dirPhone').value.trim();
     
-    const secretCode = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('dirSecretCode').value = secretCode;
-    
-    s.direction.push({ name, role, phone, secretCode });
+    s.direction.push({ name, role, phone });
     saveData();
     renderDirectionTable();
-    alert("Directeur / Propriétaire enregistré avec succès ! Son code secret propriétaire est : " + secretCode);
+    alert("Membre de la direction enregistré avec succès !");
 }
 
 function clearDirectionForm() {
     document.getElementById('formDirection').reset();
-    document.getElementById('dirSecretCode').value = '';
 }
 
 function publishDirection() {
@@ -1571,12 +1640,11 @@ function renderDirectionTable() {
             <td>${d.name}</td>
             <td><b>${d.role}</b></td>
             <td>${d.phone || '-'}</td>
-            <td><code class="fw-bold text-success">${d.secretCode} (Propriétaire / Tout Ouvrir)</code></td>
             <td class="no-print">
                 <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun membre.</td></tr>';
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucun membre.</td></tr>';
 }
 
 function deleteDirection(index) {
@@ -1650,7 +1718,7 @@ function promptUnlockTeachers() {
         document.getElementById('ownerSecretInput').value = '';
         document.getElementById('teacherSecretCode').value = 'ENS-' + Math.floor(100 + Math.random() * 900);
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -1728,7 +1796,7 @@ function openOwnerStudentRegistration() {
         document.getElementById('studentMatricule').value = 'MAT-' + Math.floor(1000 + Math.random() * 9000);
         refreshAllDropdowns();
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -1832,7 +1900,6 @@ function populateCardFromSelectedStudent() {
 }
 
 function updateCardMot(val) {
-    // Mot d'assistance corrigé
     document.getElementById('cardMotVal').innerText = val;
 }
 
@@ -1879,7 +1946,6 @@ function saveStudentCardData() {
     renderSavedCardsTable();
     alert("Carte d'élève enregistrée et stockée avec succès !");
 
-    // Vider les zones de saisie après enregistrement
     document.getElementById('cardClassSelect').value = '';
     document.getElementById('cardStudentSelect').innerHTML = '<option value="">-- D\'abord choisir la classe --</option>';
     document.getElementById('cardPhotoInput').value = '';
@@ -2102,16 +2168,16 @@ function verifyBulletinAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('bulletinAuthCode').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-') || code.toUpperCase() === s.secretCode.toUpperCase());
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-'));
     const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
         document.getElementById('bulletinWorkspace').style.display = 'block';
         document.getElementById('bulletinAccessArea').style.display = 'none';
-        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Admin-Centrale / Propriétaire : Accès complet (Voir, Imprimer, Télécharger, Enregistrer, Faire tout).';
+        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Directeur : Accès complet (Voir, Imprimer, Télécharger, Enregistrer, Faire tout).';
         document.getElementById('bulletinActionButtonsArea').style.display = 'flex';
         setupBulletinClasses();
-        alert("Accès Admin validé.");
+        alert("Accès Directeur validé.");
     } else if(teacher) {
         document.getElementById('bulletinWorkspace').style.display = 'block';
         document.getElementById('bulletinAccessArea').style.display = 'none';
@@ -2249,7 +2315,7 @@ function verifyTreasurerAccess() {
         renderCaisseTable();
         alert("Accès Trésorerie validé.");
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -2342,7 +2408,7 @@ function verifyMomoAccess() {
         renderMomoTable();
         alert("Accès Mobile Money validé.");
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -2505,7 +2571,7 @@ function verifyCommAccess() {
         renderCommTable();
         alert("Accès Communication validé.");
     } else {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret directeur incorrect.");
     }
 }
 
@@ -2768,7 +2834,7 @@ function searchArchiveByNumDoc() {
 
 function printArchiveItem(numDoc) { window.print(); }
 
-// 7. CALENDRIER SCOLAIRE (Séparation stricte Islamique vs Solaire/Chrétien avec dates du 11 Nov 2026 / 01 Al-Akhira 1448 H)
+// 7. CALENDRIER SCOLAIRE
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2796,7 +2862,7 @@ function renderCalendrierTable() {
     
     tbody.innerHTML = list.map((c, i) => `
         <tr><td><b>${c.type}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement trouvé pour ce filtre. (Ex. du jour: 11 Nov 2026 / 01 Al-Akhira 1448 H).</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement trouvé pour ce filtre.</td></tr>';
 }
 
 function handleSaveHoraireCours(e) {
@@ -2847,19 +2913,22 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => `
-        <tr>
-            <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
-            <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
-            <td>${s.province} / ${s.subDivision || '-'}</td>
-            <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
-            <td><code>${s.secretCode}</code></td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
-                <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
-            </td>
-        </tr>
-    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+    tbody.innerHTML = (appData.schools || []).map(s => {
+        let dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : '<span class="text-danger">Non défini</span>';
+        return `
+            <tr>
+                <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
+                <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
+                <td>${s.province} / ${s.subDivision || '-'}</td>
+                <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
+                <td><b>Madras:</b> <code>${s.secretCode}</code><br><b>Directeur:</b> <code class="text-success">${dirCode}</code></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
+                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
 function openDirectRegistrationModal() { alert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret."); }
