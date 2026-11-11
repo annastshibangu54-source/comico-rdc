@@ -604,16 +604,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- COURS / RÈGLEMENTS -->
 <div class="tab-pane" id="tab-cours">
-<h5 class="text-primary fw-bold mb-3">Cours, Matières & Règlements (Sécurisé par Code Enseignant Exclusif)</h5>
-<div id="courseAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
+<h5 class="text-primary fw-bold mb-3">Cours, Matières & Règlements (Répond uniquement au Code Secret Enseignant)</h5>
+<div id="courseAuthArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Code Secret Enseignant (Saisissez votre code pour ouvrir et gérer uniquement votre classe) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="courseAuthCode" class="form-control" placeholder="Code secret enseignant...">
         <button class="btn btn-primary" onclick="verifyCourseAccess()">Valider l'Accès</button>
     </div>
 </div>
-<div id="courseWorkspace">
-    <div class="alert alert-success py-1 small mb-2"><i class="fa fa-check-circle me-1"></i> Espace Cours & Matières ouvert</div>
+<div id="courseWorkspace" style="display: none;">
+    <div class="alert alert-success py-1 small mb-2"><i class="fa fa-check-circle me-1"></i> Espace Cours & Matières ouvert (Enseignant)</div>
     <form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
     <div class="col-md-4"><select id="courseClassSelect" class="form-select"></select></div>
     <div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
@@ -631,16 +631,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- NOTES / PERFORMANCES -->
 <div class="tab-pane" id="tab-notes">
-<h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations (1p, 2p, Examen & 3p, 4p, Examen)</h5>
-<div id="teacherAccessCheckArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
+<h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations (Répond uniquement au Code Secret Enseignant)</h5>
+<div id="teacherAccessCheckArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Accès enseignant (Saisir votre Code Secret Enseignant pour ouvrir votre classe et insérer les données) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="teacherAuthCode" class="form-control" placeholder="Votre code secret enseignant...">
         <button class="btn btn-primary" onclick="verifyTeacherAccess()">Valider l'Accès</button>
     </div>
 </div>
-<div id="notesWorkspace">
-    <div class="alert alert-success py-1 small mb-2"><i class="fa fa-check-circle me-1"></i> Saisie des Notes ouverte</div>
+<div id="notesWorkspace" style="display: none;">
+    <div class="alert alert-success py-1 small mb-2"><i class="fa fa-check-circle me-1"></i> Saisie des Notes ouverte (Enseignant)</div>
     <div class="row g-2 mb-3 no-print">
         <div class="col-md-6"><select id="notesClassSelect" class="form-select" onchange="loadStudentsForNotes()"></select></div>
         <div class="col-md-6"><select id="notesStudentSelect" class="form-select" onchange="renderNotesSheet()"></select></div>
@@ -654,26 +654,26 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- BULLETINS -->
 <div class="tab-pane" id="tab-bulletins">
-<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation (Code Enseignant = Voir Seulement | Code Admin-Centrale = Tout Faire)</h5>
-<div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Authentification (Code Enseignant ou Code Directeur / Administrateur) :</label>
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation (Répond aux 2 codes : Enseignant = Voir Seulement + Fermer | Directeur = Tout voir, imprimer, télécharger, enregistrer, fermer)</h5>
+<div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Authentification (Code Enseignant ou Code Directeur) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="bulletinAuthCode" class="form-control" placeholder="Code d'accès...">
         <button class="btn btn-primary" onclick="verifyBulletinAccess()">Accéder</button>
     </div>
 </div>
-<div id="bulletinWorkspace">
-    <div class="alert alert-info py-1 small mb-2" id="bulletinRoleNotice">Mode Libre : Accès complet (Voir, Imprimer, Télécharger).</div>
+<div id="bulletinWorkspace" style="display: none;">
+    <div class="alert alert-info py-1 small mb-2" id="bulletinRoleNotice">Mode Authentifié.</div>
     <div class="row g-2 mb-3 no-print">
         <div class="col-md-4"><select id="bulletinClassSelect" class="form-select" onchange="loadStudentsForBulletin()"></select></div>
         <div class="col-md-4"><select id="bulletinStudentSelect" class="form-select" onchange="askBulletinType()"></select></div>
         <div class="col-md-4 action-bar" id="bulletinActionButtonsArea">
-            <button class="btn btn-success btn-sm fw-bold" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
-            <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+            <button class="btn btn-success btn-sm fw-bold" id="btnSaveBulletin" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
+            <button class="btn btn-danger btn-sm fw-bold" id="btnDeleteBulletin" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
             <button class="btn btn-primary btn-sm fw-bold" id="btnPrintBulletin" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
             <button class="btn btn-outline-primary btn-sm fw-bold" id="btnDownloadBulletin" onclick="downloadSectionData('bulletins')"><i class="fa fa-download me-1"></i> Télécharger</button>
-            <button class="btn btn-warning btn-sm fw-bold" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
-            <button class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
+            <button class="btn btn-warning btn-sm fw-bold" id="btnPublishBulletin" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
+            <button class="btn btn-info btn-sm fw-bold text-white" id="btnEditBulletin" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
             <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
         </div>
     </div>
@@ -686,29 +686,39 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- RAPPORTS PÉRIODIQUES -->
 <div class="tab-pane" id="tab-bulletins-periodiques">
-<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Périodique (Même procédure de sécurité)</h5>
-<div class="row g-2 mb-3 no-print">
-<div class="col-md-3"><select id="bulletinPerClassSelect" class="form-select" onchange="loadStudentsForPeriodicBulletin()"></select></div>
-<div class="col-md-3"><select id="bulletinPerStudentSelect" class="form-select" onchange="askPeriodicBulletinType()"></select></div>
-<div class="col-md-2">
-    <select id="bulletinPeriodSelect" class="form-select" onchange="renderPeriodicBulletin()">
-        <option value="p1">1ère Période</option>
-        <option value="p2">2ème Période</option>
-        <option value="p3">3ème Période</option>
-        <option value="p4">4ème Période</option>
-    </select>
+<h5 class="text-primary fw-bold mb-3 no-print">Bulletin Périodique (Même procédure de sécurité à 2 codes : Enseignant = Voir + Fermer | Directeur = Tout)</h5>
+<div id="bulletinPerAccessArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Authentification (Code Enseignant ou Code Directeur) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="bulletinPerAuthCode" class="form-control" placeholder="Code d'accès...">
+        <button class="btn btn-primary" onclick="verifyPeriodicBulletinAccess()">Accéder</button>
+    </div>
 </div>
-<div class="col-md-4 action-bar" id="periodicActionButtonsArea">
-    <button class="btn btn-success btn-sm fw-bold" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enr.</button>
-    <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supp.</button>
-    <button class="btn btn-primary btn-sm fw-bold" id="btnPrintPeriodic" onclick="window.print()"><i class="fa fa-print me-1"></i> Impr.</button>
-    <button class="btn btn-outline-primary btn-sm fw-bold" id="btnDownloadPeriodic" onclick="downloadSectionData('periodic')"><i class="fa fa-download me-1"></i> Téléch.</button>
-    <button class="btn btn-warning btn-sm fw-bold" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Pub.</button>
-    <button class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Mod.</button>
-    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+<div id="bulletinPerWorkspace" style="display: none;">
+    <div class="alert alert-info py-1 small mb-2" id="bulletinPerRoleNotice">Mode Authentifié.</div>
+    <div class="row g-2 mb-3 no-print">
+    <div class="col-md-3"><select id="bulletinPerClassSelect" class="form-select" onchange="loadStudentsForPeriodicBulletin()"></select></div>
+    <div class="col-md-3"><select id="bulletinPerStudentSelect" class="form-select" onchange="askPeriodicBulletinType()"></select></div>
+    <div class="col-md-2">
+        <select id="bulletinPeriodSelect" class="form-select" onchange="renderPeriodicBulletin()">
+            <option value="p1">1ère Période</option>
+            <option value="p2">2ème Période</option>
+            <option value="p3">3ème Période</option>
+            <option value="p4">4ème Période</option>
+        </select>
+    </div>
+    <div class="col-md-4 action-bar" id="periodicActionButtonsArea">
+        <button class="btn btn-success btn-sm fw-bold" id="btnSavePeriodic" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enr.</button>
+        <button class="btn btn-danger btn-sm fw-bold" id="btnDeletePeriodic" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supp.</button>
+        <button class="btn btn-primary btn-sm fw-bold" id="btnPrintPeriodic" onclick="window.print()"><i class="fa fa-print me-1"></i> Impr.</button>
+        <button class="btn btn-outline-primary btn-sm fw-bold" id="btnDownloadPeriodic" onclick="downloadSectionData('periodic')"><i class="fa fa-download me-1"></i> Téléch.</button>
+        <button class="btn btn-warning btn-sm fw-bold" id="btnPublishPeriodic" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Pub.</button>
+        <button class="btn btn-info btn-sm fw-bold text-white" id="btnEditPeriodic" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Mod.</button>
+        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+    </div>
+    </div>
+    <div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
 </div>
-</div>
-<div class="bulletin-container"><div class="page" id="periodicBulletinPage"><p class="text-center text-muted">Sélectionnez une classe et un élève.</p></div></div>
 <div class="mt-3 no-print">
     <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
@@ -804,15 +814,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
-<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours (Code Enseignant Requis)</h5>
-<div id="presenceAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-    <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant (pour ouvrir et gérer uniquement votre classe, tous les boutons sont fonctionnels) :</label>
+<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours (Reconnaît les 2 codes : Enseignant ou Directeur)</h5>
+<div id="presenceAuthArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Saisissez votre Code Secret (Enseignant ou Directeur) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="presenceSecretInput" class="form-control" placeholder="Code secret enseignant...">
+        <input type="password" id="presenceSecretInput" class="form-control" placeholder="Code secret...">
         <button class="btn btn-primary" onclick="verifyPresenceAccess()">Ouvrir Présences</button>
     </div>
 </div>
-<div id="presenceWorkspace">
+<div id="presenceWorkspace" style="display: none;">
 <form id="formPresenceCustom" onsubmit="handleSavePresenceCustom(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-2"><label class="small fw-bold">Classe :</label><select id="presClassSelect" class="form-select form-select-sm"></select></div>
 <div class="col-md-3"><label class="small fw-bold">Élève :</label><select id="presStudentSelect" class="form-select form-select-sm" required></select></div>
@@ -837,7 +847,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Reconnaît les 2 codes : Enseignant ou Directeur)</h5>
+<div id="disciplineAuthArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Saisissez votre Code Secret (Enseignant ou Directeur) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="disciplineSecretInput" class="form-control" placeholder="Code secret...">
+        <button class="btn btn-primary" onclick="verifyDisciplineAccess()">Ouvrir Discipline</button>
+    </div>
+</div>
+<div id="disciplineWorkspace" style="display: none;">
 <form id="formDiscipline" onsubmit="handleSaveDiscipline(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded">
 <div class="col-md-2"><select id="discClassSelect" class="form-select form-select-sm" onchange="loadStudentsForDiscipline()" required></select></div>
 <div class="col-md-3"><select id="discStudentSelect" class="form-select form-select-sm" required></select></div>
@@ -854,6 +872,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </form>
 <table class="table table-bordered"><thead><tr><th>Classe</th><th>Élève</th><th>Motif / Sanction</th><th>Durée</th><th class="no-print">Action</th></tr></thead><tbody id="disciplineTableBody"></tbody></table>
+</div>
+<div class="mt-3 no-print">
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+</div>
 </div>
 
 <!-- COMMUNICATION -->
@@ -998,40 +1020,52 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
 </div>
 
-<!-- CALENDRIER (Séparation stricte Islamique vs Solaire/Chrétien avec dates du 11 Nov 2026 / 01 Al-Akhira 1448 H) -->
+<!-- CALENDRIER -->
 <div class="tab-pane" id="tab-calendrier-vacances">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire (Séparation Stricte : Islamique / Hégirien vs Chrétien / Solaire)</h5>
-  <div class="alert alert-info py-2 small">
-      <b>Repères officiels actuels :</b> <br>
-      • Calendrier Chrétien / Solaire : <b>11 Novembre 2026</b><br>
-      • Calendrier Lunaire / Islamique (Hégirien, 12 mois de 29 ou 30 jours) : <b>01 Al-Akhira 1448 H</b>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire (Réservé au Code Directeur)</h5>
+  <div id="calAuthArea" class="mb-3 p-3 bg-light rounded border">
+      <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
+      <div class="input-group input-group-sm" style="max-width: 350px;">
+          <input type="password" id="calSecretInput" class="form-control" placeholder="Code secret directeur...">
+          <button class="btn btn-primary" onclick="verifyCalAccess()">Ouvrir Calendrier</button>
+      </div>
   </div>
-  <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-3">
-        <label class="form-label small fw-bold">Type de Calendrier :</label>
-        <select id="calType" class="form-select form-select-sm" required>
-            <option value="Calendrier Islamique (Hégirien)">Calendrier Islamique (Hégirien)</option>
-            <option value="Calendrier Solaire (Chrétien)">Calendrier Solaire (Chrétien)</option>
-        </select>
-    </div>
-    <div class="col-md-3"><label class="form-label small fw-bold">Intitulé de l'événement :</label><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Mois de Ramadan / Examen Trimestriel" required></div>
-    <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Début :</label><input type="text" id="calDebut" class="form-control form-control-sm" placeholder="Ex: 01 Al-Akhira 1448 / 11 Nov 2026" required></div>
-    <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Fin :</label><input type="text" id="calFin" class="form-control form-control-sm" placeholder="Ex: 29 Al-Akhira 1448 / 20 Déc 2026" required></div>
-    <div class="col-md-2 action-bar">
-        <label class="form-label small fw-bold d-block">&nbsp;</label>
-        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
-  </form>
-  <div class="mb-3">
-      <label class="form-label small fw-bold">Filtrer strictement l'affichage :</label>
-      <select id="calendarFilterSelect" class="form-select form-select-sm" style="max-width: 350px;" onchange="renderCalendrierTable()">
-          <option value="Tous">Afficher Tous</option>
-          <option value="Calendrier Islamique (Hégirien)">Purement Calendrier Islamique (Hégirien)</option>
-          <option value="Calendrier Solaire (Chrétien)">Purement Calendrier Chrétien / Solaire</option>
-      </select>
+  <div id="calWorkspace" style="display: none;">
+      <div class="alert alert-info py-2 small">
+          <b>Repères officiels actuels :</b> <br>
+          • Calendrier Chrétien / Solaire : <b>11 Novembre 2026</b><br>
+          • Calendrier Lunaire / Islamique (Hégirien, 12 mois de 29 ou 30 jours) : <b>01 Al-Akhira 1448 H</b>
+      </div>
+      <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Type de Calendrier :</label>
+            <select id="calType" class="form-select form-select-sm" required>
+                <option value="Calendrier Islamique (Hégirien)">Calendrier Islamique (Hégirien)</option>
+                <option value="Calendrier Solaire (Chrétien)">Calendrier Solaire (Chrétien)</option>
+            </select>
+        </div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Intitulé de l'événement :</label><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Mois de Ramadan / Examen Trimestriel" required></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Début :</label><input type="text" id="calDebut" class="form-control form-control-sm" placeholder="Ex: 01 Al-Akhira 1448 / 11 Nov 2026" required></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Fin :</label><input type="text" id="calFin" class="form-control form-control-sm" placeholder="Ex: 29 Al-Akhira 1448 / 20 Déc 2026" required></div>
+        <div class="col-md-2 action-bar">
+            <label class="form-label small fw-bold d-block">&nbsp;</label>
+            <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
+            <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+        </div>
+      </form>
+      <div class="mb-3">
+          <label class="form-label small fw-bold">Filtrer strictement l'affichage :</label>
+          <select id="calendarFilterSelect" class="form-select form-select-sm" style="max-width: 350px;" onchange="renderCalendrierTable()">
+              <option value="Tous">Afficher Tous</option>
+              <option value="Calendrier Islamique (Hégirien)">Purement Calendrier Islamique (Hégirien)</option>
+              <option value="Calendrier Solaire (Chrétien)">Purement Calendrier Chrétien / Solaire</option>
+          </select>
+      </div>
+      <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type de Calendrier</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
   </div>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type de Calendrier</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
+  <div class="mt-3 no-print">
+      <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
 
 <!-- HORAIRES -->
@@ -1057,7 +1091,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- STATISTIQUES -->
 <div class="tab-pane" id="tab-statistiques">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO</h5>
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code Secret)</h5>
 <div class="row g-3" id="statsContainer"></div>
 <div class="action-bar mt-3 no-print">
     <button class="btn btn-success btn-sm fw-bold" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
@@ -1218,7 +1252,6 @@ function handleSaveSchool(e) {
     const phone = document.getElementById('schoolPhone').value.trim();
     const agrement = document.getElementById('schoolAgrement').value.trim();
     
-    // Code Secret Madras (Permet à tout utilisateur d'accéder à l'école et rien d'autre)
     const secretCode = 'MAD-' + Math.floor(1000 + Math.random() * 9000);
     
     const fileInput = document.getElementById('schoolLogoFile');
@@ -1405,7 +1438,6 @@ function checkAndOpenSchoolDashboard(id) {
     activeSchoolId = id;
     const s = appData.schools.find(x => x.id === id);
     
-    // Si aucun Directeur n'est encore enregistré, on force l'ouverture de la boîte de dialogue demandée
     if (!s.direction || s.direction.length === 0) {
         document.getElementById('directorPromptModal').style.display = 'flex';
     } else {
@@ -1500,17 +1532,32 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS PAR CODE DIRECTEUR (DIR-XXXX) */
+/* SÉCURISATION DES SECTIONS PAR CODE DIRECTEUR (DIR-XXXX) STRICT (Règle 1 & 6) */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const code = prompt("Sécurité Directeur : Entrez le Code Secret du Directeur (ex: DIR-XXXX) pour ouvrir cette section et tout contrôler :");
-    if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase().startsWith('DIR-'))) {
+    const code = prompt("Sécurité Directeur Stricte : Entrez le Code Secret du Directeur (ex: DIR-XXXX) :");
+    if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase())) {
         if(tabId === 'tab-profs') teachersUnlocked = true;
         switchTab(tabId, element);
     } else if(code !== null) {
-        alert("Code secret directeur incorrect.");
+        alert("Code directeur incorrect ou non reconnu. Accès refusé.");
+    }
+}
+
+function verifyCalAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    const code = document.getElementById('calSecretInput').value.trim();
+    if(code && code.toUpperCase() === validOwnerCode.toUpperCase()) {
+        document.getElementById('calWorkspace').style.display = 'block';
+        document.getElementById('calAuthArea').style.display = 'none';
+        renderCalendrierTable();
+        alert("Accès Calendrier Directeur autorisé.");
+    } else {
+        alert("Code directeur incorrect.");
     }
 }
 
@@ -1518,7 +1565,7 @@ function promptUnlockCard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('cardOwnerSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-')) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('cardUnlockedContainer').style.display = 'block';
         document.getElementById('cardLockedContainer').style.display = 'none';
         document.getElementById('cardOwnerSecretInput').value = '';
@@ -1532,7 +1579,7 @@ function promptUnlockJobs() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('jobOwnerSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-')) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('jobsUnlockedContainer').style.display = 'block';
         document.getElementById('jobsLockedContainer').style.display = 'none';
         document.getElementById('jobOwnerSecretInput').value = '';
@@ -1564,21 +1611,18 @@ function refreshAllDropdowns() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
     
-    // Classes
     const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
     ['teacherClass', 'studentClassSelect', 'cardClassSelect', 'courseClassSelect', 'notesClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'presClassSelect', 'discClassSelect'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerHTML = classOptions;
     });
 
-    // Élèves
     const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${st.matricule}">${st.matricule} - ${st.name} (${st.classe})</option>`).join('');
     ['cardStudentSelect', 'notesStudentSelect', 'bulletinStudentSelect', 'bulletinPerStudentSelect', 'momoStudentSelect', 'presStudentSelect', 'discStudentSelect'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerHTML = studentOptions;
     });
 
-    // Caisse Personnes
     const caisseSelect = document.getElementById('caissePersonSelect');
     if(caisseSelect) {
         let pOpts = '<option value="">-- Choisir --</option>';
@@ -1605,7 +1649,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Le code directeur n'apparaît plus ici ni dans les paramètres de la section)
+// 1. DIRECTION
 function handleSaveDirection(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1706,12 +1750,12 @@ function deleteClass(index) {
     refreshAllDropdowns();
 }
 
-// 3. ENSEIGNANTS (Code enseignant exclusif permettant d'ouvrir seulement sa classe)
+// 3. ENSEIGNANTS
 function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const input = document.getElementById('ownerSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(input.toUpperCase() === validOwnerCode.toUpperCase() || input.toUpperCase().startsWith('DIR-')) {
+    if(input.toUpperCase() === validOwnerCode.toUpperCase()) {
         teachersUnlocked = true;
         document.getElementById('teachersUnlockedContainer').style.display = 'block';
         document.getElementById('teachersLockedContainer').style.display = 'none';
@@ -1789,7 +1833,7 @@ function openOwnerStudentRegistration() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('studentOwnerSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code && (code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-'))) {
+    if(code && (code.toUpperCase() === validOwnerCode.toUpperCase())) {
         document.getElementById('studentsUnlockedContainer').style.display = 'block';
         document.getElementById('studentsLockedContainer').style.display = 'none';
         document.getElementById('studentOwnerSecretInput').value = '';
@@ -1872,7 +1916,6 @@ function deleteStudent(index) {
     }
 }
 
-// 1. CARTE D'ÉLÈVE (Classe choisie d'abord, puis élève, rubriques exactes, stockage permanent)
 function loadStudentsForCardSelect() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
@@ -1945,16 +1988,6 @@ function saveStudentCardData() {
     saveData();
     renderSavedCardsTable();
     alert("Carte d'élève enregistrée et stockée avec succès !");
-
-    document.getElementById('cardClassSelect').value = '';
-    document.getElementById('cardStudentSelect').innerHTML = '<option value="">-- D\'abord choisir la classe --</option>';
-    document.getElementById('cardPhotoInput').value = '';
-    document.getElementById('cardMatVal').innerText = '-';
-    document.getElementById('cardNomVal').innerText = '-';
-    document.getElementById('cardSexeVal').innerText = '-';
-    document.getElementById('cardClasseVal').innerText = '-';
-    document.getElementById('cardAdresseVal').innerText = '-';
-    document.getElementById('cardPhotoPreview').src = 'https://via.placeholder.com/80';
 }
 
 function renderSavedCardsTable() {
@@ -1994,7 +2027,6 @@ function consultCard(id) {
         document.getElementById('cardMotVal').innerText = c.mot;
         document.getElementById('cardPhotoPreview').src = c.photo;
         window.scrollTo({ top: 200, behavior: 'smooth' });
-        alert("Carte chargée dans la zone de visualisation, prête à être consultée ou imprimée.");
     }
 }
 
@@ -2003,7 +2035,6 @@ function deleteSavedCard(index) {
     s.yearsData[s.activeYear].savedCards.splice(index, 1);
     saveData();
     renderSavedCardsTable();
-    alert("Carte supprimée.");
 }
 
 function deleteStudentCardData() { alert("Action non requise."); }
@@ -2012,7 +2043,7 @@ function publishStudentCard() { alert("Carte publiée !"); }
 function editStudentCard() { alert("Mode modification."); }
 function printStudentCard() { window.print(); }
 
-// 2. COURS, MATIÈRES & RÈGLEMENTS (Sécurisé par Code Enseignant)
+// 2. COURS & MATIÈRES (Répond uniquement au Code Secret Enseignant)
 function verifyCourseAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('courseAuthCode').value.trim();
@@ -2021,7 +2052,6 @@ function verifyCourseAccess() {
         authenticatedTeacher = teacher;
         document.getElementById('courseWorkspace').style.display = 'block';
         document.getElementById('courseAuthArea').style.display = 'none';
-        document.getElementById('authCourseClassDisplay').innerText = teacher.classe;
         
         const classSelect = document.getElementById('courseClassSelect');
         classSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
@@ -2072,7 +2102,7 @@ function deleteCourse(cls, index) {
     renderCoursesTable();
 }
 
-// 3. SAISIE DES NOTES & ÉVALUATION (Code enseignant restreint à sa classe + affichage immédiat et permanent)
+// 2. SAISIE DE NOTES (Répond uniquement au Code Secret Enseignant)
 function verifyTeacherAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('teacherAuthCode').value.trim();
@@ -2081,7 +2111,6 @@ function verifyTeacherAccess() {
         authenticatedTeacher = teacher;
         document.getElementById('notesWorkspace').style.display = 'block';
         document.getElementById('teacherAccessCheckArea').style.display = 'none';
-        document.getElementById('authTeacherClassDisplay').innerText = teacher.classe;
         
         const classSelect = document.getElementById('notesClassSelect');
         classSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
@@ -2118,7 +2147,7 @@ function renderNotesSheet() {
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     let html = `
         <div class="card p-3 bg-light">
-            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes (1p, 2p, Examen & 3p, 4p, Examen)</h6>
+            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes</h6>
             <form onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
                 <div class="row g-3">
     `;
@@ -2135,12 +2164,6 @@ function renderNotesSheet() {
                 </div>
                 <button type="submit" class="btn btn-success btn-sm fw-bold mt-3"><i class="fa fa-save me-1"></i> Enregistrer les notes</button>
             </form>
-        </div>
-        <div class="mt-3 p-3 bg-white border rounded">
-            <h6 class="fw-bold text-success">Notes Actuellement Enregistrées (Consultation immédiate) :</h6>
-            <ul>
-                ${Object.keys(notesObj).map(crs => `<li><b>${crs}</b> : ${notesObj[crs]} points</li>`).join('') || '<li>Aucune note enregistrée pour l\'instant.</li>'}
-            </ul>
         </div>
     `;
     container.innerHTML = html;
@@ -2160,34 +2183,77 @@ function handleSaveStudentNotesForm(e, mat) {
 
     saveData();
     renderNotesSheet();
-    alert("Notes enregistrées avec succès et affichées immédiatement !");
+    alert("Notes enregistrées avec succès !");
 }
 
-// 4 & 5. BULLETINS (Code Enseignant = Voir seulement | Code Admin = Tout faire)
+// 3. GESTION BULLETIN & PÉRIODIQUE (Code Enseignant = Ouvrir/Voir + Fermer | Directeur = Tout + Imprimer, Télécharger, Enregistrer, Fermer)
 function verifyBulletinAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('bulletinAuthCode').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-'));
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
         document.getElementById('bulletinWorkspace').style.display = 'block';
         document.getElementById('bulletinAccessArea').style.display = 'none';
-        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Directeur : Accès complet (Voir, Imprimer, Télécharger, Enregistrer, Faire tout).';
-        document.getElementById('bulletinActionButtonsArea').style.display = 'flex';
+        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Directeur : Accès complet (Imprimer, Télécharger, Enregistrer, Fermer).';
+        document.getElementById('btnSaveBulletin').style.display = 'inline-block';
+        document.getElementById('btnDeleteBulletin').style.display = 'inline-block';
+        document.getElementById('btnPrintBulletin').style.display = 'inline-block';
+        document.getElementById('btnDownloadBulletin').style.display = 'inline-block';
+        document.getElementById('btnPublishBulletin').style.display = 'inline-block';
+        document.getElementById('btnEditBulletin').style.display = 'inline-block';
         setupBulletinClasses();
         alert("Accès Directeur validé.");
     } else if(teacher) {
         document.getElementById('bulletinWorkspace').style.display = 'block';
         document.getElementById('bulletinAccessArea').style.display = 'none';
-        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-user-lock me-1"></i> Mode Enseignant ("' + teacher.name + '") : Vous pouvez <b>voir</b> le bulletin mais l\'impression et le téléchargement ne sont pas autorisés.';
+        document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-user-lock me-1"></i> Mode Enseignant ("' + teacher.name + '") : Vous pouvez ouvrir et voir le bulletin. Seul le bouton Fermer est exécutable.';
+        document.getElementById('btnSaveBulletin').style.display = 'none';
+        document.getElementById('btnDeleteBulletin').style.display = 'none';
         document.getElementById('btnPrintBulletin').style.display = 'none';
         document.getElementById('btnDownloadBulletin').style.display = 'none';
-        document.getElementById('btnPrintPeriodic').style.display = 'none';
-        document.getElementById('btnDownloadPeriodic').style.display = 'none';
+        document.getElementById('btnPublishBulletin').style.display = 'none';
+        document.getElementById('btnEditBulletin').style.display = 'none';
         setupBulletinClasses();
         alert("Accès Enseignant (Consultation) validé.");
+    } else {
+        alert("Code d'accès incorrect.");
+    }
+}
+
+function verifyPeriodicBulletinAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('bulletinPerAuthCode').value.trim();
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    
+    if(isProprio) {
+        document.getElementById('bulletinPerWorkspace').style.display = 'block';
+        document.getElementById('bulletinPerAccessArea').style.display = 'none';
+        document.getElementById('bulletinPerRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Directeur : Accès complet Bulletin Périodique.';
+        document.getElementById('btnSavePeriodic').style.display = 'inline-block';
+        document.getElementById('btnDeletePeriodic').style.display = 'inline-block';
+        document.getElementById('btnPrintPeriodic').style.display = 'inline-block';
+        document.getElementById('btnDownloadPeriodic').style.display = 'inline-block';
+        document.getElementById('btnPublishPeriodic').style.display = 'inline-block';
+        document.getElementById('btnEditPeriodic').style.display = 'inline-block';
+        setupBulletinClasses();
+        alert("Accès Directeur validé.");
+    } else if(teacher) {
+        document.getElementById('bulletinPerWorkspace').style.display = 'block';
+        document.getElementById('bulletinPerAccessArea').style.display = 'none';
+        document.getElementById('bulletinPerRoleNotice').innerHTML = '<i class="fa fa-user-lock me-1"></i> Mode Enseignant : Consultation Bulletin Périodique.';
+        document.getElementById('btnSavePeriodic').style.display = 'none';
+        document.getElementById('btnDeletePeriodic').style.display = 'none';
+        document.getElementById('btnPrintPeriodic').style.display = 'none';
+        document.getElementById('btnDownloadPeriodic').style.display = 'none';
+        document.getElementById('btnPublishPeriodic').style.display = 'none';
+        document.getElementById('btnEditPeriodic').style.display = 'none';
+        setupBulletinClasses();
+        alert("Accès Enseignant validé.");
     } else {
         alert("Code d'accès incorrect.");
     }
@@ -2256,9 +2322,6 @@ function renderBulletinFromSystem() {
         <div class="p-3 bg-light rounded border mt-3 small">
             <div><b>Total Points :</b> ${total} / ${maxTotal}</div>
             <div><b>Pourcentage :</b> ${percentage.toFixed(2)} %</div>
-            <div class="mt-2 fw-bold text-${percentage >= 50 ? 'success' : 'danger'}">
-                Décision : ${percentage >= 50 ? 'ADMIS(E) EN CLASSE SUPÉRIEURE' : 'ÉCHEC'}
-            </div>
         </div>
     `;
     page.innerHTML = html;
@@ -2304,12 +2367,47 @@ function renderPeriodicBulletin() {
     `;
 }
 
-// 6. TRÉSORERIE & FACTURE
+// 4. PRÉSENCES & DISCIPLINE (Reconnaissent les 2 codes : Enseignant ou Directeur)
+function verifyPresenceAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('presenceSecretInput').value.trim();
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    
+    if(code.toUpperCase() === validOwnerCode.toUpperCase() || teacher) {
+        document.getElementById('presenceWorkspace').style.display = 'block';
+        document.getElementById('presenceAuthArea').style.display = 'none';
+        loadStudentsForPresence();
+        renderPresenceTable();
+        alert("Accès Présences autorisé.");
+    } else {
+        alert("Code secret incorrect.");
+    }
+}
+
+function verifyDisciplineAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('disciplineSecretInput').value.trim();
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    
+    if(code.toUpperCase() === validOwnerCode.toUpperCase() || teacher) {
+        document.getElementById('disciplineWorkspace').style.display = 'block';
+        document.getElementById('disciplineAuthArea').style.display = 'none';
+        loadStudentsForDiscipline();
+        renderDisciplineTable();
+        alert("Accès Discipline autorisé.");
+    } else {
+        alert("Code secret incorrect.");
+    }
+}
+
+// TRÉSORERIE
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-')) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('treasurerWorkspace').style.display = 'block';
         document.getElementById('treasurerAuthArea').style.display = 'none';
         renderCaisseTable();
@@ -2337,7 +2435,7 @@ function handleSaveCaissePaymentCustom(e) {
     saveData();
     renderCaisseTable();
     document.getElementById('formPaymentCustom').reset();
-    alert("Paiement enregistré et Facture générée !");
+    alert("Paiement enregistré !");
 }
 
 function clearCaisseForm() { document.getElementById('formPaymentCustom').reset(); }
@@ -2366,7 +2464,6 @@ function deleteCaisseItem(index) {
         s.yearsData[s.activeYear].caisse.splice(index, 1);
         saveData();
         renderCaisseTable();
-        alert("Transaction supprimée.");
     }
 }
 
@@ -2397,12 +2494,11 @@ function printFacture(facId) {
     `);
 }
 
-// 7. MOBILE MONEY
 function verifyMomoAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('momoSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-')) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('momoWorkspace').style.display = 'block';
         document.getElementById('momoAuthArea').style.display = 'none';
         renderMomoTable();
@@ -2445,30 +2541,9 @@ function deleteMomoItem(index) {
     renderMomoTable();
 }
 
-// 6. GESTION DE PRÉSENCE AUX COURS (Tous les boutons fonctionnels)
-function verifyPresenceAccess() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const code = document.getElementById('presenceSecretInput').value.trim();
-    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
-    if(teacher) {
-        authenticatedTeacher = teacher;
-        document.getElementById('presenceWorkspace').style.display = 'block';
-        document.getElementById('presenceAuthArea').style.display = 'none';
-        
-        const classSelect = document.getElementById('presClassSelect');
-        classSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
-        classSelect.value = teacher.classe;
-        loadStudentsForPresence();
-        renderPresenceTable();
-        alert("Accès Présences autorisé pour l'enseignant : " + teacher.name);
-    } else {
-        alert("Code secret enseignant incorrect.");
-    }
-}
-
 function loadStudentsForPresence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('presClassSelect').value;
+    const cls = document.getElementById('presClassSelect').value;
     const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
     document.getElementById('presStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.name}">${st.name}</option>`).join('');
 }
@@ -2479,7 +2554,7 @@ function handleSavePresenceCustom(e) {
     const now = new Date();
     s.yearsData[s.activeYear].presenceStudents.push({
         student: document.getElementById('presStudentSelect').value,
-        classe: authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('presClassSelect').value,
+        classe: document.getElementById('presClassSelect').value,
         date: now.toLocaleDateString(),
         heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
@@ -2506,7 +2581,6 @@ function deletePresenceItem(index) {
     s.yearsData[s.activeYear].presenceStudents.splice(index, 1);
     saveData();
     renderPresenceTable();
-    alert("Présence supprimée.");
 }
 
 function deletePresenceItemActive() {
@@ -2515,13 +2589,9 @@ function deletePresenceItemActive() {
         s.yearsData[s.activeYear].presenceStudents.pop();
         saveData();
         renderPresenceTable();
-        alert("Dernière présence supprimée.");
-    } else {
-        alert("Aucune présence à supprimer.");
     }
 }
 
-// DISCIPLINE
 function loadStudentsForDiscipline() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const cls = document.getElementById('discClassSelect').value;
@@ -2560,12 +2630,11 @@ function deleteDisciplineItem(index) {
     renderDisciplineTable();
 }
 
-// COMMUNICATION
 function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('commSecretInput').value.trim();
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || code.toUpperCase().startsWith('DIR-')) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
@@ -2834,7 +2903,7 @@ function searchArchiveByNumDoc() {
 
 function printArchiveItem(numDoc) { window.print(); }
 
-// 7. CALENDRIER SCOLAIRE
+// 6. CALENDRIER SCOLAIRE
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
