@@ -814,11 +814,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
-<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours (Reconnaît les 2 codes : Enseignant ou Directeur)</h5>
+<h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours (Répond au Code Secret Enseignant)</h5>
 <div id="presenceAuthArea" class="mb-3 p-3 bg-light rounded border">
-    <label class="form-label small fw-bold">Saisissez votre Code Secret (Enseignant ou Directeur) :</label>
+    <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="presenceSecretInput" class="form-control" placeholder="Code secret...">
+        <input type="password" id="presenceSecretInput" class="form-control" placeholder="Code secret enseignant...">
         <button class="btn btn-primary" onclick="verifyPresenceAccess()">Ouvrir Présences</button>
     </div>
 </div>
@@ -847,11 +847,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Reconnaît les 2 codes : Enseignant ou Directeur)</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond au Code Secret Enseignant)</h5>
 <div id="disciplineAuthArea" class="mb-3 p-3 bg-light rounded border">
-    <label class="form-label small fw-bold">Saisissez votre Code Secret (Enseignant ou Directeur) :</label>
+    <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="disciplineSecretInput" class="form-control" placeholder="Code secret...">
+        <input type="password" id="disciplineSecretInput" class="form-control" placeholder="Code secret enseignant...">
         <button class="btn btn-primary" onclick="verifyDisciplineAccess()">Ouvrir Discipline</button>
     </div>
 </div>
@@ -926,7 +926,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-success btn-sm fw-bold" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
         <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-        <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('jobs')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
     <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
@@ -1068,10 +1067,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
-<!-- HORAIRES -->
-<div class="tab-pane" id="tab-horaires-cours">
+<!-- STATISTIQUES (AVEC HORAIRES DE COURS AFFICHÉS JUSTE EN BAS) -->
+<div class="tab-pane" id="tab-statistiques">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code Secret)</h5>
+<div class="row g-3 mb-4" id="statsContainer"></div>
+
+<!-- HORAIRES DES COURS (Placé juste en bas de statistiques analytique) -->
+<div class="card shadow-sm border-0 mt-4 p-3 bg-light">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours & Publication</h5>
-  <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
+  <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
     <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
     <div class="col-md-3"><input type="text" id="horairePlage" class="form-control form-control-sm" placeholder="08h00 - 10h00" required></div>
@@ -1083,16 +1087,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('horaires')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="alert('Horaires publiés !')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
         <button type="button" class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
-        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
   </form>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle bg-white"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
 </div>
 
-<!-- STATISTIQUES -->
-<div class="tab-pane" id="tab-statistiques">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code Secret)</h5>
-<div class="row g-3" id="statsContainer"></div>
 <div class="action-bar mt-3 no-print">
     <button class="btn btn-success btn-sm fw-bold" onclick="alert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
     <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
@@ -2043,7 +2042,7 @@ function publishStudentCard() { alert("Carte publiée !"); }
 function editStudentCard() { alert("Mode modification."); }
 function printStudentCard() { window.print(); }
 
-// 2. COURS & MATIÈRES (Répond uniquement au Code Secret Enseignant)
+// COURS & MATIÈRES (Répond au Code Secret Enseignant)
 function verifyCourseAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('courseAuthCode').value.trim();
@@ -2102,7 +2101,7 @@ function deleteCourse(cls, index) {
     renderCoursesTable();
 }
 
-// 2. SAISIE DE NOTES (Répond uniquement au Code Secret Enseignant)
+// SAISIE DE NOTES (Répond au Code Secret Enseignant)
 function verifyTeacherAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('teacherAuthCode').value.trim();
@@ -2367,38 +2366,49 @@ function renderPeriodicBulletin() {
     `;
 }
 
-// 4. PRÉSENCES & DISCIPLINE (Reconnaissent les 2 codes : Enseignant ou Directeur)
+// PRÉSENCES (Répond au Code Secret Enseignant)
 function verifyPresenceAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('presenceSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || teacher) {
+    if(teacher) {
+        authenticatedTeacher = teacher;
         document.getElementById('presenceWorkspace').style.display = 'block';
         document.getElementById('presenceAuthArea').style.display = 'none';
+        
+        const presClassSelect = document.getElementById('presClassSelect');
+        presClassSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
+        presClassSelect.value = teacher.classe;
+        
         loadStudentsForPresence();
         renderPresenceTable();
-        alert("Accès Présences autorisé.");
+        alert("Accès Présences autorisé pour l'enseignant : " + teacher.name);
     } else {
-        alert("Code secret incorrect.");
+        alert("Code secret enseignant incorrect.");
     }
 }
 
+// DISCIPLINE (Répond au Code Secret Enseignant)
 function verifyDisciplineAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('disciplineSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || teacher) {
+    if(teacher) {
+        authenticatedTeacher = teacher;
         document.getElementById('disciplineWorkspace').style.display = 'block';
         document.getElementById('disciplineAuthArea').style.display = 'none';
+        
+        const discClassSelect = document.getElementById('discClassSelect');
+        discClassSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
+        discClassSelect.value = teacher.classe;
+        
         loadStudentsForDiscipline();
         renderDisciplineTable();
-        alert("Accès Discipline autorisé.");
+        alert("Accès Discipline autorisé pour l'enseignant : " + teacher.name);
     } else {
-        alert("Code secret incorrect.");
+        alert("Code secret enseignant incorrect.");
     }
 }
 
@@ -2543,7 +2553,7 @@ function deleteMomoItem(index) {
 
 function loadStudentsForPresence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const cls = document.getElementById('presClassSelect').value;
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('presClassSelect').value;
     const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
     document.getElementById('presStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.name}">${st.name}</option>`).join('');
 }
@@ -2554,7 +2564,7 @@ function handleSavePresenceCustom(e) {
     const now = new Date();
     s.yearsData[s.activeYear].presenceStudents.push({
         student: document.getElementById('presStudentSelect').value,
-        classe: document.getElementById('presClassSelect').value,
+        classe: authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('presClassSelect').value,
         date: now.toLocaleDateString(),
         heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
@@ -2571,7 +2581,11 @@ function renderPresenceTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('presenceCustomTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.yearsData[s.activeYear].presenceStudents || []).map((p, i) => `
+    let list = s.yearsData[s.activeYear].presenceStudents || [];
+    if(authenticatedTeacher) {
+        list = list.filter(p => p.classe === authenticatedTeacher.classe);
+    }
+    tbody.innerHTML = list.map((p, i) => `
         <tr><td>${p.student}</td><td>${p.classe || '-'}</td><td>${p.statut}</td><td>${p.date}</td><td>${p.heure || ''}</td><td>${p.jour || ''}</td><td>${p.nomControleur || '-'}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deletePresenceItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
     `).join('') || '<tr><td colspan="8" class="text-center text-muted">Aucune présence.</td></tr>';
 }
@@ -2594,7 +2608,7 @@ function deletePresenceItemActive() {
 
 function loadStudentsForDiscipline() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const cls = document.getElementById('discClassSelect').value;
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('discClassSelect').value;
     const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
     document.getElementById('discStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.name}">${st.name}</option>`).join('');
 }
@@ -2604,7 +2618,7 @@ function handleSaveDiscipline(e) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     s.yearsData[s.activeYear].discipline.push({
         student: document.getElementById('discStudentSelect').value,
-        classe: document.getElementById('discClassSelect').value,
+        classe: authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('discClassSelect').value,
         obs: document.getElementById('discobs').value,
         duree: document.getElementById('discDuree').value
     });
@@ -2618,7 +2632,11 @@ function renderDisciplineTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('disciplineTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.yearsData[s.activeYear].discipline || []).map((d, i) => `
+    let list = s.yearsData[s.activeYear].discipline || [];
+    if(authenticatedTeacher) {
+        list = list.filter(d => d.classe === authenticatedTeacher.classe);
+    }
+    tbody.innerHTML = list.map((d, i) => `
         <tr><td>${d.classe || '-'}</td><td>${d.student}</td><td>${d.obs}</td><td>${d.duree}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDisciplineItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune sanction.</td></tr>';
 }
