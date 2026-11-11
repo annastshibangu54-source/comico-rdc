@@ -505,9 +505,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 <div id="cardUnlockedContainer" style="display:none;">
 <div class="row mb-3 no-print">
-<div class="col-md-4"><label>Classe / Niveau :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
-<div class="col-md-4"><label>Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
-<div class="col-md-4"><label>Photo de l'Élève :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
+<div class="col-md-3"><label>Classe / Niveau :</label><select id="cardClassSelect" class="form-select" onchange="loadStudentsForCardSelect()"></select></div>
+<div class="col-md-3"><label>Élève :</label><select id="cardStudentSelect" class="form-select" onchange="populateCardFromSelectedStudent()"></select></div>
+<div class="col-md-3"><label>Photo de l'Élève :</label><input type="file" id="cardPhotoInput" class="form-control" accept="image/*" onchange="previewStudentCardPhoto(event)"></div>
+<div class="col-md-3"><label>Mot d'assistance :</label><input type="text" id="cardMotInput" class="form-control" value="Assistance divine et protection des autorités civiles et militaires" oninput="updateCardMot(this.value)"></div>
 </div>
 
 <div class="student-card-container mb-3" id="studentCardPrintArea">
@@ -530,11 +531,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                     <div style="font-size: 10px;"><b>Sexe :</b> <span id="cardSexeVal">-</span></div>
                     <div style="font-size: 10px;"><b>Classe :</b> <span id="cardClasseVal">-</span></div>
                     <div style="font-size: 10px;"><b>Adresse :</b> <span id="cardAdresseVal">-</span></div>
-                    <div style="font-size: 10px;"><b>Mot d'assistance :</b> <span id="cardMotVal">Assistance divine</span></div>
                 </div>
                 <div class="col-4 text-end">
                     <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
                 </div>
+            </div>
+            <div class="mt-2 text-center" style="font-size: 8px; font-weight: bold; border-top: 1px dashed #0d6efd; padding-top: 3px;">
+                <span id="cardMotVal">Assistance divine et protection des autorités civiles et militaires</span>
             </div>
         </div>
         <!-- VERSO -->
@@ -549,7 +552,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <button class="btn btn-outline-secondary btn-sm fw-bold me-2" onclick="toggleCardFace('recto')">Afficher Recto</button>
     <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="toggleCardFace('verso')">Afficher Verso</button>
 </div>
-</div>
 
 <div class="action-bar justify-content-center mt-3 no-print">
 <button class="btn btn-success btn-sm fw-bold" onclick="saveStudentCardData()"><i class="fa fa-save me-1"></i> Enregistrer</button>
@@ -560,27 +562,34 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button class="btn btn-info btn-sm fw-bold text-white" onclick="editStudentCard()"><i class="fa fa-edit me-1"></i> Modifier</button>
 <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
+
+<h6 class="text-primary fw-bold mt-4">Cartes d'Élèves Enregistrées (Stockage permanent)</h6>
+<div id="savedCardsTableContainer"></div>
+</div>
 </div>
 
 <!-- COURS / RÈGLEMENTS -->
 <div class="tab-pane" id="tab-cours">
 <h5 class="text-primary fw-bold mb-3">Cours, Matières & Règlements</h5>
-<form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
-<div class="col-md-4"><select id="courseClassSelect" class="form-select" required></select></div>
-<div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
-<div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
-<div class="col-md-2 action-bar">
-<button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button>
+<div id="courseAuthArea" class="mb-3 p-3 bg-light rounded border">
+    <label class="form-label small fw-bold">Code Secret Enseignant (Saisissez votre code pour ouvrir et gérer uniquement votre classe) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="courseAuthCode" class="form-control" placeholder="Code secret enseignant...">
+        <button class="btn btn-primary" onclick="verifyCourseAccess()">Valider l'Accès</button>
+    </div>
 </div>
-</form>
-<table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
-<div class="action-bar mt-3 no-print">
-    <button class="btn btn-success btn-sm fw-bold" onclick="alert('Cours enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
-    <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
-    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('cours')"><i class="fa fa-download me-1"></i> Télécharger</button>
-    <button class="btn btn-warning btn-sm fw-bold" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
-    <button class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Mode modification')"><i class="fa fa-edit me-1"></i> Modifier</button>
+<div id="courseWorkspace" style="display:none;">
+    <form id="formCourse" onsubmit="handleSaveCourse(event)" class="row g-2 mb-3 no-print">
+    <div class="col-md-4"><select id="courseClassSelect" class="form-select" disabled></select></div>
+    <div class="col-md-4"><input type="text" id="courseName" class="form-control" placeholder="Intitulé du cours / matière" required></div>
+    <div class="col-md-2"><input type="number" id="courseMax" class="form-control" placeholder="Max" required></div>
+    <div class="col-md-2 action-bar">
+    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa fa-plus me-1"></i> Ajouter</button>
+    </div>
+    </form>
+    <table class="table table-bordered"><thead><tr><th>Classe</th><th>Cours / Matière</th><th>Max</th><th class="no-print">Action</th></tr></thead><tbody id="coursesTableBody"></tbody></table>
+</div>
+<div class="mt-3 no-print">
     <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
@@ -604,13 +613,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div id="notesSheetContainer" class="mb-3"></div>
 </div>
 <div class="action-bar mt-3 no-print">
-    <button class="btn btn-success btn-sm fw-bold" onclick="alert('Notes enregistrées')"><i class="fa fa-save me-1"></i> Enregistrer</button>
-    <button class="btn btn-danger btn-sm fw-bold" onclick="alert('Notes supprimées')"><i class="fa fa-trash me-1"></i> Supprimer</button>
-    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('notes')"><i class="fa fa-download me-1"></i> Télécharger</button>
-    <button class="btn btn-warning btn-sm fw-bold" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
-    <button class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
-    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+    <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
 
@@ -768,7 +771,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="tab-pane" id="tab-presences">
 <h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours (Code Enseignant Requis)</h5>
 <div id="presenceAuthArea" class="mb-3 p-3 bg-light rounded border">
-    <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
+    <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant (pour ouvrir et gérer uniquement votre classe) :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="presenceSecretInput" class="form-control" placeholder="Code secret enseignant...">
         <button class="btn btn-primary" onclick="verifyPresenceAccess()">Ouvrir Présences</button>
@@ -970,38 +973,40 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
 </div>
 
-<!-- CALENDRIER (Séparation stricte Islamique vs Solaire/Chrétien) -->
+<!-- CALENDRIER (Séparation stricte Islamique vs Solaire/Chrétien avec dates du 11 Nov 2026 / 01 Al-Akhira 1448 H) -->
 <div class="tab-pane" id="tab-calendrier-vacances">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire (Islamique ou Chrétien / Solaire)</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-check me-2"></i>Calendrier Scolaire (Séparation Stricte : Islamique / Hégirien vs Chrétien / Solaire)</h5>
+  <div class="alert alert-info py-2 small">
+      <b>Repères officiels actuels :</b> <br>
+      • Calendrier Chrétien / Solaire : <b>11 Novembre 2026</b><br>
+      • Calendrier Lunaire / Islamique (Hégirien) : <b>01 Al-Akhira 1448 H</b>
+  </div>
   <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
     <div class="col-md-3">
-        <select id="calType" class="form-select form-select-sm" onchange="onCalendarTypeChange()" required>
-            <option value="Calendrier Islamique">Calendrier Islamique</option>
+        <label class="form-label small fw-bold">Type de Calendrier :</label>
+        <select id="calType" class="form-select form-select-sm" required>
+            <option value="Calendrier Islamique (Hégirien)">Calendrier Islamique (Hégirien)</option>
             <option value="Calendrier Solaire (Chrétien)">Calendrier Solaire (Chrétien)</option>
         </select>
     </div>
-    <div class="col-md-3"><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Intitulé (ex: Mois de Ramadan / Vacances de Noël)" required></div>
-    <div class="col-md-2"><input type="date" id="calDebut" class="form-control form-control-sm" required></div>
-    <div class="col-md-2"><input type="date" id="calFin" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small fw-bold">Intitulé de l'événement :</label><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Mois de Ramadan / Examen Trimestriel" required></div>
+    <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Début :</label><input type="text" id="calDebut" class="form-control form-control-sm" placeholder="Ex: 01 Al-Akhira 1448 / 11 Nov 2026" required></div>
+    <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Fin :</label><input type="text" id="calFin" class="form-control form-control-sm" placeholder="Ex: 29 Al-Akhira 1448 / 20 Déc 2026" required></div>
     <div class="col-md-2 action-bar">
+        <label class="form-label small fw-bold d-block">&nbsp;</label>
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="alert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
-        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('cal')"><i class="fa fa-download me-1"></i> Télécharger</button>
-        <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="alert('Publié')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
-        <button type="button" class="btn btn-info btn-sm fw-bold text-white" onclick="alert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
   </form>
   <div class="mb-3">
-      <label class="form-label small fw-bold">Filtrer l'affichage du calendrier :</label>
-      <select id="calendarFilterSelect" class="form-select form-select-sm" style="max-width: 300px;" onchange="renderCalendrierTable()">
+      <label class="form-label small fw-bold">Filtrer strictement l'affichage :</label>
+      <select id="calendarFilterSelect" class="form-select form-select-sm" style="max-width: 350px;" onchange="renderCalendrierTable()">
           <option value="Tous">Afficher Tous</option>
-          <option value="Calendrier Islamique">Purement Calendrier Islamique</option>
+          <option value="Calendrier Islamique (Hégirien)">Purement Calendrier Islamique (Hégirien)</option>
           <option value="Calendrier Solaire (Chrétien)">Purement Calendrier Chrétien / Solaire</option>
       </select>
   </div>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Type de Calendrier</th><th>Intitulé</th><th>Début</th><th>Fin</th><th class="no-print">Action</th></tr></thead><tbody id="calendrierTableBody"></tbody></table>
 </div>
 
 <!-- HORAIRES -->
@@ -1189,7 +1194,7 @@ function handleSaveSchool(e) {
     const phone = document.getElementById('schoolPhone').value.trim();
     const agrement = document.getElementById('schoolAgrement').value.trim();
     
-    // Code Secret Madras (Portefeuille / accès général)
+    // Code Secret Madras (Permet à tout utilisateur autorisé d'ouvrir la Madras et rien d'autre)
     const secretCode = 'MAD-' + Math.floor(1000 + Math.random() * 9000);
     
     const fileInput = document.getElementById('schoolLogoFile');
@@ -1334,7 +1339,6 @@ function renderPortalAnnouncements() {
     appData.schools.forEach(s => {
         if(s.communications) {
             s.communications.forEach(c => {
-                // Filtrage de la règle des 72h (72 * 3600 * 1000 ms)
                 const cTime = c.timestamp || nowTime;
                 if((nowTime - cTime) <= (72 * 3600 * 1000)) {
                     allComms.push({ schoolName: s.name, ...c });
@@ -1429,16 +1433,16 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS PAR CODE SECRET PROPRIÉTAIRE */
+/* SÉCURISATION DES SECTIONS PAR CODE SECRET PROPRIÉTAIRE (Directeur) */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    const code = prompt("Sécurité : Entrez le Code Secret Propriétaire de la Madras :");
+    const code = prompt("Sécurité Propriétaire / Directeur : Entrez le Code Secret Propriétaire pour ouvrir cette section :");
     if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
         if(tabId === 'tab-profs') teachersUnlocked = true;
         switchTab(tabId, element);
     } else if(code !== null) {
-        alert("Code secret propriétaire incorrect.");
+        alert("Code secret propriétaire incorrect. Accès refusé.");
     }
 }
 
@@ -1449,6 +1453,7 @@ function promptUnlockCard() {
         document.getElementById('cardUnlockedContainer').style.display = 'block';
         document.getElementById('cardLockedContainer').style.display = 'none';
         document.getElementById('cardOwnerSecretInput').value = '';
+        renderSavedCardsTable();
     } else {
         alert("Code secret propriétaire incorrect.");
     }
@@ -1530,26 +1535,26 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Génération automatique des codes secrets pour chaque autorité enregistrée)
+// 1. DIRECTION (Enregistrement de directeur / autorités - le code propriétaire généré ici permet d'ouvrir tout)
 function handleSaveDirection(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const name = document.getElementById('dirName').value.trim();
     const role = document.getElementById('dirRole').value;
     const phone = document.getElementById('dirPhone').value.trim();
-    const secretCode = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
+    
+    // Le code secret propriétaire attribué au directeur met l'ordre, sécurise et ouvre tout
+    const secretCode = s.secretCode; 
     
     s.direction.push({ name, role, phone, secretCode });
     saveData();
     renderDirectionTable();
     document.getElementById('formDirection').reset();
-    document.getElementById('dirSecretCode').value = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
-    alert("Autorité enregistrée ! Son code secret attribué est : " + secretCode);
+    alert("Autorité / Directeur enregistré avec succès ! Son code secret propriétaire est : " + secretCode);
 }
 
 function clearDirectionForm() {
     document.getElementById('formDirection').reset();
-    document.getElementById('dirSecretCode').value = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
 }
 
 function publishDirection() {
@@ -1557,7 +1562,7 @@ function publishDirection() {
 }
 
 function editDirectionMode() {
-    alert("Mode modification activé. Veuillez resaisir et enregistrer.");
+    alert("Mode modification activé.");
 }
 
 function renderDirectionTable() {
@@ -1569,7 +1574,7 @@ function renderDirectionTable() {
             <td>${d.name}</td>
             <td><b>${d.role}</b></td>
             <td>${d.phone || '-'}</td>
-            <td><code class="fw-bold">${d.secretCode || 'DIR-0000'}</code></td>
+            <td><code class="fw-bold text-success">${d.secretCode} (Propriétaire / Tout Ouvrir)</code></td>
             <td class="no-print">
                 <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
@@ -1636,7 +1641,7 @@ function deleteClass(index) {
     refreshAllDropdowns();
 }
 
-// 3. ENSEIGNANTS (Code secret enseignant généré automatiquement)
+// 3. ENSEIGNANTS (Code enseignant exclusif par classe)
 function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const input = document.getElementById('ownerSecretInput').value.trim();
@@ -1670,7 +1675,7 @@ function handleSaveTeacher(e) {
     renderTeachersTable();
     document.getElementById('formTeacher').reset();
     document.getElementById('teacherSecretCode').value = 'ENS-' + Math.floor(100 + Math.random() * 900);
-    alert("Enseignant enregistré ! Son code secret est : " + secretCode);
+    alert("Enseignant enregistré ! Son code secret exclusif pour la classe " + classe + " est : " + secretCode);
 }
 
 function clearTeacherForm() {
@@ -1694,8 +1699,8 @@ function renderTeachersTable() {
     tbody.innerHTML = (yData.teachers || []).map((t, i) => `
         <tr>
             <td>${t.name}</td>
-            <td>${t.classe}</td>
-            <td><code>${t.secretCode}</code></td>
+            <td><b>${t.classe}</b></td>
+            <td><code class="fw-bold">${t.secretCode}</code></td>
             <td class="no-print">
                 <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
@@ -1713,7 +1718,7 @@ function deleteTeacher(index) {
     }
 }
 
-// 4. ÉLÈVES (Matricule généré automatiquement + sélection de classe indépendante)
+// 4. ÉLÈVES
 function openOwnerStudentRegistration() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('studentOwnerSecretInput').value.trim();
@@ -1733,9 +1738,7 @@ function lockStudents() {
     document.getElementById('studentsLockedContainer').style.display = 'block';
 }
 
-function onStudentClassChange() {
-    // La classe choisie s'ouvre/s'initialise correctement pour l'inscription
-}
+function onStudentClassChange() {}
 
 function handleSaveStudent(e) {
     e.preventDefault();
@@ -1802,7 +1805,7 @@ function deleteStudent(index) {
     }
 }
 
-// CARTE ÉLÈVE (Recto/Verso, polices 17 et 18, filigrane logo transparent et vidage après enregistrement)
+// 1. CARTE D'ÉLÈVE (Classe d'abord, puis élève, rubriques exactes recto/verso, stockage permanent)
 function loadStudentsForCardSelect() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
@@ -1829,6 +1832,10 @@ function populateCardFromSelectedStudent() {
     }
 }
 
+function updateCardMot(val) {
+    document.getElementById('cardMotVal').innerText = val;
+}
+
 function toggleCardFace(face) {
     if(face === 'recto') {
         document.getElementById('cardRectoView').style.display = 'block';
@@ -1848,9 +1855,31 @@ function previewStudentCardPhoto(e) {
     }
 }
 
-function saveStudentCardData() { 
-    alert("Carte de membre enregistrée avec succès !"); 
-    // Vider les zones de saisie après enregistrement carte
+function saveStudentCardData() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const mat = document.getElementById('cardStudentSelect').value;
+    if(!mat) { alert("Veuillez sélectionner un élève."); return; }
+    
+    const student = (yData.students || []).find(x => x.matricule === mat);
+    const cardData = {
+        id: 'CARD-' + Date.now(),
+        matricule: student.matricule,
+        name: student.name,
+        classe: student.classe,
+        sex: student.sex,
+        adresse: s.address,
+        mot: document.getElementById('cardMotInput').value,
+        photo: document.getElementById('cardPhotoPreview').src
+    };
+
+    if(!yData.savedCards) yData.savedCards = [];
+    yData.savedCards.push(cardData);
+    saveData();
+    renderSavedCardsTable();
+    alert("Carte d'élève enregistrée et stockée avec succès !");
+
+    // Vider les zones de saisie après enregistrement
     document.getElementById('cardClassSelect').value = '';
     document.getElementById('cardStudentSelect').innerHTML = '<option value="">-- Choisir un Élève --</option>';
     document.getElementById('cardPhotoInput').value = '';
@@ -1861,18 +1890,87 @@ function saveStudentCardData() {
     document.getElementById('cardAdresseVal').innerText = '-';
     document.getElementById('cardPhotoPreview').src = 'https://via.placeholder.com/80';
 }
-function deleteStudentCardData() { alert("Données de la carte supprimées."); }
+
+function renderSavedCardsTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s.yearsData[s.activeYear];
+    const container = document.getElementById('savedCardsTableContainer');
+    if(!container) return;
+    container.innerHTML = `
+        <table class="table table-bordered table-sm align-middle">
+            <thead><tr><th>Matricule</th><th>Nom</th><th>Classe</th><th>Action de Consultation</th></tr></thead>
+            <tbody>
+                ${(yData.savedCards || []).map((c, i) => `
+                    <tr>
+                        <td>${c.matricule}</td>
+                        <td>${c.name}</td>
+                        <td>${c.classe}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="consultCard('${c.id}')"><i class="fa fa-eye"></i> Consulter / Imprimer</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSavedCard(${i})"><i class="fa fa-trash"></i> Supprimer</button>
+                        </td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune carte enregistrée.</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function consultCard(id) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const c = (s.yearsData[s.activeYear].savedCards || []).find(x => x.id === id);
+    if(c) {
+        document.getElementById('cardMatVal').innerText = c.matricule;
+        document.getElementById('cardNomVal').innerText = c.name;
+        document.getElementById('cardSexeVal').innerText = c.sex;
+        document.getElementById('cardClasseVal').innerText = c.classe;
+        document.getElementById('cardAdresseVal').innerText = c.adresse;
+        document.getElementById('cardMotVal').innerText = c.mot;
+        document.getElementById('cardPhotoPreview').src = c.photo;
+        window.scrollTo({ top: 200, behavior: 'smooth' });
+        alert("Carte chargée dans la zone de visualisation, prête à être imprimée.");
+    }
+}
+
+function deleteSavedCard(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].savedCards.splice(index, 1);
+    saveData();
+    renderSavedCardsTable();
+    alert("Carte supprimée.");
+}
+
+function deleteStudentCardData() { alert("Action non requise."); }
 function downloadStudentCard() { alert("Téléchargement de la carte d'élève en cours..."); }
 function publishStudentCard() { alert("Carte publiée !"); }
-function editStudentCard() { alert("Mode modification de la carte."); }
+function editStudentCard() { alert("Mode modification."); }
 function printStudentCard() { window.print(); }
 
-// COURS
+// 2. COURS, MATIÈRES & RÈGLEMENTS (Sécurisé par Code Enseignant)
+function verifyCourseAccess() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const code = document.getElementById('courseAuthCode').value.trim();
+    const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
+    if(teacher) {
+        authenticatedTeacher = teacher;
+        document.getElementById('courseWorkspace').style.display = 'block';
+        document.getElementById('courseAuthArea').style.display = 'none';
+        
+        const classSelect = document.getElementById('courseClassSelect');
+        classSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
+        classSelect.value = teacher.classe;
+        renderCoursesTable();
+        alert("Accès Cours autorisé pour l'enseignant : " + teacher.name);
+    } else {
+        alert("Code secret enseignant incorrect.");
+    }
+}
+
 function handleSaveCourse(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const classe = document.getElementById('courseClassSelect').value;
+    const classe = authenticatedTeacher ? authenticatedTeacher.classe : document.getElementById('courseClassSelect').value;
     const name = document.getElementById('courseName').value.trim();
     const max = document.getElementById('courseMax').value.trim();
     
@@ -1881,7 +1979,7 @@ function handleSaveCourse(e) {
     saveData();
     renderCoursesTable();
     document.getElementById('formCourse').reset();
-    alert("Cours enregistré !");
+    alert("Cours enregistré pour votre classe !");
 }
 
 function renderCoursesTable() {
@@ -1891,9 +1989,11 @@ function renderCoursesTable() {
     if(!tbody) return;
     let html = '';
     Object.keys(yData.courses || {}).forEach(cls => {
-        yData.courses[cls].forEach((crs, i) => {
-            html += `<tr><td>${cls}</td><td>${crs.name}</td><td>${crs.max}</td><td><button class="btn btn-sm btn-danger" onclick="deleteCourse('${cls}', ${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>`;
-        });
+        if(!authenticatedTeacher || authenticatedTeacher.classe === cls) {
+            yData.courses[cls].forEach((crs, i) => {
+                html += `<tr><td>${cls}</td><td>${crs.name}</td><td>${crs.max}</td><td><button class="btn btn-sm btn-danger" onclick="deleteCourse('${cls}', ${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>`;
+            });
+        }
     });
     tbody.innerHTML = html || '<tr><td colspan="4" class="text-center text-muted">Aucun cours.</td></tr>';
 }
@@ -1905,7 +2005,7 @@ function deleteCourse(cls, index) {
     renderCoursesTable();
 }
 
-// 3 & 6. NOTES & ÉVALUATIONS (Code enseignant restreint à sa classe)
+// 3. SAISIE DES NOTES & ÉVALUATION (Code enseignant restreint à sa classe + affichage immédiat)
 function verifyTeacherAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('teacherAuthCode').value.trim();
@@ -1916,13 +2016,12 @@ function verifyTeacherAccess() {
         document.getElementById('teacherAccessCheckArea').style.display = 'none';
         document.getElementById('authTeacherClassDisplay').innerText = teacher.classe;
         
-        // Bloquer et pré-sélectionner uniquement la classe de l'enseignant
         const classSelect = document.getElementById('notesClassSelect');
         classSelect.innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre Classe)</option>`;
         classSelect.value = teacher.classe;
         
         loadStudentsForNotes();
-        alert("Accès autorisé pour l'enseignant : " + teacher.name + " (Classe : " + teacher.classe + ")");
+        alert("Accès Enseignant validé pour la classe : " + teacher.classe);
     } else {
         alert("Code secret enseignant incorrect.");
     }
@@ -1952,31 +2051,29 @@ function renderNotesSheet() {
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     let html = `
         <div class="card p-3 bg-light">
-            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes : Cours, points, 1p, 2p, Examen (1er Sem.) & 3p, 4p, Examen (2e Sem.)</h6>
+            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes (Consultation immédiate et permanente)</h6>
             <form onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
                 <div class="row g-3">
     `;
     courses.forEach(c => {
         let val = notesObj[c.name] !== undefined ? notesObj[c.name] : '';
-        let pNotes = (yData.periodicNotes && yData.periodicNotes[mat] && yData.periodicNotes[mat][c.name]) ? yData.periodicNotes[mat][c.name] : {p1:'', p2:'', ex1:'', p3:'', p4:'', ex2:''};
         html += `
-            <div class="col-12 border-bottom pb-2 mb-2">
-                <div class="fw-bold text-dark mb-1">${c.name} (Max Examen : ${c.max})</div>
-                <div class="row g-2">
-                    <div class="col-md-2"><label class="form-label small text-muted">1ère Période (1p) :</label><input type="number" step="0.01" class="form-control form-control-sm p-input" data-course="${c.name}" data-period="p1" value="${pNotes.p1}"></div>
-                    <div class="col-md-2"><label class="form-label small text-muted">2ème Période (2p) :</label><input type="number" step="0.01" class="form-control form-control-sm p-input" data-course="${c.name}" data-period="p2" value="${pNotes.p2}"></div>
-                    <div class="col-md-2"><label class="form-label small text-muted">Examen 1er Sem. :</label><input type="number" step="0.01" class="form-control form-control-sm note-input" data-course="${c.name}" value="${val}" required></div>
-                    <div class="col-md-2"><label class="form-label small text-muted">3ème Période (3p) :</label><input type="number" step="0.01" class="form-control form-control-sm p-input" data-course="${c.name}" data-period="p3" value="${pNotes.p3}"></div>
-                    <div class="col-md-2"><label class="form-label small text-muted">4ème Période (4p) :</label><input type="number" step="0.01" class="form-control form-control-sm p-input" data-course="${c.name}" data-period="p4" value="${pNotes.p4}"></div>
-                    <div class="col-md-2"><label class="form-label small text-muted">Examen Final :</label><input type="number" step="0.01" class="form-control form-control-sm p-input" data-course="${c.name}" data-period="ex2" value="${pNotes.ex2}"></div>
-                </div>
+            <div class="col-md-6 border-bottom pb-2">
+                <label class="form-label fw-bold small">${c.name} (Max : ${c.max}) :</label>
+                <input type="number" step="0.01" class="form-control form-control-sm note-input" data-course="${c.name}" value="${val}" required>
             </div>
         `;
     });
     html += `
                 </div>
-                <button type="submit" class="btn btn-success btn-sm fw-bold mt-3"><i class="fa fa-save me-1"></i> Enregistrer les notes & cotes</button>
+                <button type="submit" class="btn btn-success btn-sm fw-bold mt-3"><i class="fa fa-save me-1"></i> Enregistrer les notes</button>
             </form>
+        </div>
+        <div class="mt-3 p-3 bg-white border rounded">
+            <h6 class="fw-bold text-success">Notes Actuellement Enregistrées pour cet Élève :</h6>
+            <ul>
+                ${Object.keys(notesObj).map(crs => `<li><b>${crs}</b> : ${notesObj[crs]} points</li>`).join('') || '<li>Aucune note enregistrée pour l\'instant.</li>'}
+            </ul>
         </div>
     `;
     container.innerHTML = html;
@@ -1988,23 +2085,15 @@ function handleSaveStudentNotesForm(e, mat) {
     const yData = s.yearsData[s.activeYear];
     if(!yData.notes) yData.notes = {};
     if(!yData.notes[mat]) yData.notes[mat] = {};
-    if(!yData.periodicNotes) yData.periodicNotes = {};
-    if(!yData.periodicNotes[mat]) yData.periodicNotes[mat] = {};
 
     document.querySelectorAll('.note-input').forEach(input => {
         const course = input.getAttribute('data-course');
         yData.notes[mat][course] = parseFloat(input.value) || 0;
     });
 
-    document.querySelectorAll('.p-input').forEach(input => {
-        const course = input.getAttribute('data-course');
-        const period = input.getAttribute('data-period');
-        if(!yData.periodicNotes[mat][course]) yData.periodicNotes[mat][course] = {p1:'', p2:'', p3:'', p4:'', ex2:''};
-        yData.periodicNotes[mat][course][period] = parseFloat(input.value) || 0;
-    });
-
     saveData();
-    alert("Notes & cotes enregistrées et consultables avec succès !");
+    renderNotesSheet();
+    alert("Notes enregistrées avec succès et affichées immédiatement !");
 }
 
 // 4 & 5. BULLETINS (Code Enseignant = Voir seulement | Code Admin = Tout faire)
@@ -2025,7 +2114,6 @@ function verifyBulletinAccess() {
         document.getElementById('bulletinWorkspace').style.display = 'block';
         document.getElementById('bulletinAccessArea').style.display = 'none';
         document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-user-lock me-1"></i> Mode Enseignant ("' + teacher.name + '") : Vous pouvez <b>voir</b> les bulletins mais l\'impression et le téléchargement sont verrouillés.';
-        // Désactiver impression et téléchargement pour l'enseignant
         document.getElementById('btnPrintBulletin').style.display = 'none';
         document.getElementById('btnDownloadBulletin').style.display = 'none';
         document.getElementById('btnPrintPeriodic').style.display = 'none';
@@ -2054,23 +2142,7 @@ function loadStudentsForBulletin() {
 function askBulletinType() {
     const mat = document.getElementById('bulletinStudentSelect').value;
     if(!mat) return;
-    const choice = prompt("Que voulez-vous générer ?\nTapez 1 : Bulletin Scolaire\nTapez 2 : Attestation");
-    if(choice === "2") {
-        renderAttestation();
-    } else {
-        renderBulletinFromSystem();
-    }
-}
-
-function askPeriodicBulletinType() {
-    const mat = document.getElementById('bulletinPerStudentSelect').value;
-    if(!mat) return;
-    const choice = prompt("Que voulez-vous générer ?\nTapez 1 : Bulletin Périodique\nTapez 2 : Attestation Périodique");
-    if(choice === "2") {
-        renderPeriodicAttestation();
-    } else {
-        renderPeriodicBulletin();
-    }
+    renderBulletinFromSystem();
 }
 
 function renderBulletinFromSystem() {
@@ -2082,22 +2154,15 @@ function renderBulletinFromSystem() {
 
     const yData = s.yearsData[s.activeYear];
     const student = (yData.students || []).find(x => x.matricule === mat);
-    const classStudents = (yData.students || []).filter(x => x.classe === cls);
     const courses = yData.courses[cls] || [];
+    let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
 
-    let studentTotals = classStudents.map(st => {
-        let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
-        let tot = 0, maxTot = 0;
-        courses.forEach(c => {
-            tot += (notesObj[c.name] || 0);
-            maxTot += parseFloat(c.max);
-        });
-        return { mat: st.matricule, total: tot, maxTotal: maxTot, percentage: maxTot > 0 ? (tot / maxTot) * 100 : 0 };
+    let total = 0, maxTotal = 0;
+    courses.forEach(c => {
+        total += (notesObj[c.name] || 0);
+        maxTotal += parseFloat(c.max);
     });
-
-    studentTotals.sort((a, b) => b.percentage - a.percentage);
-    const rank = studentTotals.findIndex(x => x.mat === mat) + 1;
-    const currentStudentStats = studentTotals.find(x => x.mat === mat) || { total: 0, maxTotal: 100, percentage: 0 };
+    let percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
 
     let html = `
         <div class="text-center border-bottom pb-2 mb-3">
@@ -2113,7 +2178,6 @@ function renderBulletinFromSystem() {
             <thead><tr class="table-light"><th>Matière</th><th>Max</th><th>Note Obtenue</th></tr></thead>
             <tbody>
     `;
-    let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     courses.forEach(c => {
         let score = notesObj[c.name] !== undefined ? notesObj[c.name] : 0;
         html += `<tr><td>${c.name}</td><td>${c.max}</td><td><b>${score}</b></td></tr>`;
@@ -2122,40 +2186,14 @@ function renderBulletinFromSystem() {
             </tbody>
         </table>
         <div class="p-3 bg-light rounded border mt-3 small">
-            <div><b>Total Points Obtenus :</b> ${currentStudentStats.total} / ${currentStudentStats.maxTotal}</div>
-            <div><b>Pourcentage :</b> ${currentStudentStats.percentage.toFixed(2)} %</div>
-            <div><b>Place / Rang Occupé :</b> ${rank}<sup>e</sup> sur ${classStudents.length} élèves</div>
-            <div class="mt-2 fw-bold text-${currentStudentStats.percentage >= 50 ? 'success' : 'danger'}">
-                Confirmation / Décision : ${currentStudentStats.percentage >= 50 ? 'PASSAGE EN CLASSE SUPÉRIEURE (ADMIS)' : 'REDOUBLEMENT (ÉCHEC)'}
+            <div><b>Total Points :</b> ${total} / ${maxTotal}</div>
+            <div><b>Pourcentage :</b> ${percentage.toFixed(2)} %</div>
+            <div class="mt-2 fw-bold text-${percentage >= 50 ? 'success' : 'danger'}">
+                Décision : ${percentage >= 50 ? 'ADMIS(E) EN CLASSE SUPÉRIEURE' : 'ÉCHEC'}
             </div>
         </div>
     `;
     page.innerHTML = html;
-}
-
-function renderAttestation() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const mat = document.getElementById('bulletinStudentSelect').value;
-    const yData = s.yearsData[s.activeYear];
-    const student = (yData.students || []).find(x => x.matricule === mat);
-    const page = document.getElementById('page');
-
-    page.innerHTML = `
-        <div class="text-center p-4 border border-3 border-primary rounded">
-            <h3 class="fw-bold text-primary">${s.name}</h3>
-            <p class="small text-muted mb-4">${s.province} - ${s.commune}</p>
-            <h2 class="fw-bold my-4" style="text-decoration: underline;">ATTESTATION DE FRÉQUENTATION & RÉUSSITE</h2>
-            <p class="lead my-4">
-                Nous soussignés, Comité de Direction de la Madras <b>${s.name}</b>, attestons par la présente que l'élève <b>${student.name}</b>, 
-                immatriculé(e) sous le N° <b>${student.matricule}</b>, a régulièrement suivi les cours en classe de <b>${student.classe}</b> durant l'année scolaire <b>${s.activeYear}</b>.
-            </p>
-            <p class="lead fw-bold text-success my-4">L'élève est déclaré(e) ADMIS(E) pour passer dans la classe supérieure.</p>
-            <div class="row mt-5 pt-4">
-                <div class="col-6 text-start">Fait à ${s.commune}, le ${new Date().toLocaleDateString()}</div>
-                <div class="col-6 text-end fw-bold">Le Directeur / Le Préfet</div>
-            </div>
-        </div>
-    `;
 }
 
 function loadStudentsForPeriodicBulletin() {
@@ -2164,6 +2202,8 @@ function loadStudentsForPeriodicBulletin() {
     const students = (s.yearsData[s.activeYear].students || []).filter(st => st.classe === cls);
     document.getElementById('bulletinPerStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${st.matricule}">${st.name}</option>`).join('');
 }
+
+function askPeriodicBulletinType() { renderPeriodicBulletin(); }
 
 function renderPeriodicBulletin() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2176,10 +2216,9 @@ function renderPeriodicBulletin() {
     const yData = s.yearsData[s.activeYear];
     const student = (yData.students || []).find(x => x.matricule === mat);
     const courses = yData.courses[cls] || [];
-    let periodNotesObj = (yData.periodicNotes && yData.periodicNotes[mat]) ? yData.periodicNotes[mat] : {};
+    let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
 
-    let total = 0, maxTotal = courses.length * 20; 
-    let html = `
+    page.innerHTML = `
         <div class="text-center border-bottom pb-2 mb-3">
             <h4 class="fw-bold text-primary mb-0">${s.name}</h4>
             <h5 class="fw-bold mt-2">BULLETIN PÉRIODIQUE (${period.toUpperCase()})</h5>
@@ -2189,54 +2228,15 @@ function renderPeriodicBulletin() {
             <div class="col-6 text-end"><b>Classe :</b> ${student.classe}<br><b>Période :</b> ${period.toUpperCase()}</div>
         </div>
         <table class="table table-bordered table-sm align-middle small">
-            <thead><tr class="table-light"><th>Matière</th><th>Max Période</th><th>Note Périodique</th></tr></thead>
+            <thead><tr class="table-light"><th>Matière</th><th>Note Périodique</th></tr></thead>
             <tbody>
-    `;
-    courses.forEach(c => {
-        let pScore = (periodNotesObj[c.name] && periodNotesObj[c.name][period] !== undefined) ? periodNotesObj[c.name][period] : 0;
-        total += parseFloat(pScore);
-        html += `<tr><td>${c.name}</td><td>20</td><td><b>${pScore}</b></td></tr>`;
-    });
-    let percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-    html += `
+                ${courses.map(c => `<tr><td>${c.name}</td><td><b>${notesObj[c.name] || 0}</b></td></tr>`).join('')}
             </tbody>
         </table>
-        <div class="p-3 bg-light rounded border mt-3 small">
-            <div><b>Total Périodique :</b> ${total} / ${maxTotal}</div>
-            <div><b>Pourcentage Périodique :</b> ${percentage.toFixed(2)} %</div>
-            <div class="mt-2 fw-bold text-${percentage >= 50 ? 'success' : 'warning'}">
-                Évaluation : ${percentage >= 50 ? 'SATISFAISANT' : 'EFFORTS À FOURNIR'}
-            </div>
-        </div>
-    `;
-    page.innerHTML = html;
-}
-
-function renderPeriodicAttestation() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const mat = document.getElementById('bulletinPerStudentSelect').value;
-    const period = document.getElementById('bulletinPeriodSelect').value;
-    const yData = s.yearsData[s.activeYear];
-    const student = (yData.students || []).find(x => x.matricule === mat);
-    const page = document.getElementById('periodicBulletinPage');
-
-    page.innerHTML = `
-        <div class="text-center p-4 border border-3 border-warning rounded">
-            <h3 class="fw-bold text-primary">${s.name}</h3>
-            <p class="small text-muted mb-4">${s.province} - ${s.commune}</p>
-            <h2 class="fw-bold my-4" style="text-decoration: underline;">ATTESTATION DE FRÉQUENTATION PÉRIODIQUE (${period.toUpperCase()})</h2>
-            <p class="lead my-4">
-                Nous certifions que l'élève <b>${student.name}</b> (Matricule : <b>${student.matricule}</b>) a pris part active aux évaluations de la <b>${period.toUpperCase()}</b> de l'année scolaire <b>${s.activeYear}</b> au sein de la classe de <b>${student.classe}</b>.
-            </p>
-            <div class="row mt-5 pt-4">
-                <div class="col-6 text-start">Fait à ${s.commune}, le ${new Date().toLocaleDateString()}</div>
-                <div class="col-6 text-end fw-bold">Le Préfet des Études</div>
-            </div>
-        </div>
     `;
 }
 
-// 6. TRÉSORERIE & FACTURE (Boutons supprimer et imprimer facture entièrement réparés)
+// 6. TRÉSORERIE & FACTURE
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
@@ -2268,12 +2268,10 @@ function handleSaveCaissePaymentCustom(e) {
     saveData();
     renderCaisseTable();
     document.getElementById('formPaymentCustom').reset();
-    alert("Paiement enregistré et Facture générée avec succès !");
+    alert("Paiement enregistré et Facture générée !");
 }
 
-function clearCaisseForm() {
-    document.getElementById('formPaymentCustom').reset();
-}
+function clearCaisseForm() { document.getElementById('formPaymentCustom').reset(); }
 
 function renderCaisseTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2299,7 +2297,7 @@ function deleteCaisseItem(index) {
         s.yearsData[s.activeYear].caisse.splice(index, 1);
         saveData();
         renderCaisseTable();
-        alert("Transaction et facture supprimées avec succès !");
+        alert("Transaction supprimée.");
     }
 }
 
@@ -2330,7 +2328,7 @@ function printFacture(facId) {
     `);
 }
 
-// 7. MOBILE MONEY (Code propriétaire requis + bouton supprimer fonctionnel)
+// 7. MOBILE MONEY
 function verifyMomoAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('momoSecretInput').value.trim();
@@ -2358,7 +2356,7 @@ function handleSimulateMobileMoney(e) {
     saveData();
     renderMomoTable();
     document.getElementById('formMobileMoney').reset();
-    alert("Paiement Mobile Money simulé et enregistré !");
+    alert("Paiement enregistré !");
 }
 
 function renderMomoTable() {
@@ -2372,15 +2370,12 @@ function renderMomoTable() {
 
 function deleteMomoItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.yearsData[s.activeYear].studentPayments) {
-        s.yearsData[s.activeYear].studentPayments.splice(index, 1);
-        saveData();
-        renderMomoTable();
-        alert("Paiement Mobile Money supprimé avec succès !");
-    }
+    s.yearsData[s.activeYear].studentPayments.splice(index, 1);
+    saveData();
+    renderMomoTable();
 }
 
-// 8. PRÉSENCES (Code enseignant restreint à sa classe + boutons fonctionnels)
+// 8. PRÉSENCES (Code enseignant restreint à sa classe)
 function verifyPresenceAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('presenceSecretInput').value.trim();
@@ -2438,15 +2433,12 @@ function renderPresenceTable() {
 
 function deletePresenceItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.yearsData[s.activeYear].presenceStudents) {
-        s.yearsData[s.activeYear].presenceStudents.splice(index, 1);
-        saveData();
-        renderPresenceTable();
-        alert("Présence supprimée avec succès !");
-    }
+    s.yearsData[s.activeYear].presenceStudents.splice(index, 1);
+    saveData();
+    renderPresenceTable();
 }
 
-// 9. DISCIPLINE (Bouton supprimer fonctionnel)
+// 9. DISCIPLINE
 function loadStudentsForDiscipline() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const cls = document.getElementById('discClassSelect').value;
@@ -2480,15 +2472,12 @@ function renderDisciplineTable() {
 
 function deleteDisciplineItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.yearsData[s.activeYear].discipline) {
-        s.yearsData[s.activeYear].discipline.splice(index, 1);
-        saveData();
-        renderDisciplineTable();
-        alert("Sanction supprimée avec succès !");
-    }
+    s.yearsData[s.activeYear].discipline.splice(index, 1);
+    saveData();
+    renderDisciplineTable();
 }
 
-// 10. COMMUNICATION & ANNONCES (Propriétaire, affichage taille normale/A3-A4, validité 72h)
+// 10. COMMUNICATION
 function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('commSecretInput').value.trim();
@@ -2527,18 +2516,13 @@ function handleSaveCommunication() {
 
 function finishCommSave(s, text, images, timestamp) {
     if(text || images.length) {
-        s.communications.push({ 
-            date: new Date().toLocaleString(), 
-            message: text, 
-            images: images,
-            timestamp: timestamp 
-        });
+        s.communications.push({ date: new Date().toLocaleString(), message: text, images: images, timestamp: timestamp });
         saveData();
         renderCommTable();
         renderPortalAnnouncements();
         document.getElementById('announcementText').value = '';
         document.getElementById('commImageInput').value = '';
-        alert("Annonce publiée (valable 72h) avec succès !");
+        alert("Annonce publiée (valable 72h) !");
     }
 }
 
@@ -2558,16 +2542,12 @@ function renderCommTable() {
 
 function deleteCommItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.communications) {
-        s.communications.splice(index, 1);
-        saveData();
-        renderCommTable();
-        renderPortalAnnouncements();
-        alert("Annonce supprimée avec succès !");
-    }
+    s.communications.splice(index, 1);
+    saveData();
+    renderCommTable();
+    renderPortalAnnouncements();
 }
 
-// DEMANDES DE POSTE REÇUES
 function openJobApplicationSection() {
     const select = document.getElementById('jobSchoolSelect');
     select.innerHTML = (appData.schools || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -2580,11 +2560,7 @@ function handleSendJobApplication(e) {
     const s = appData.schools.find(x => x.id === schId);
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
-        s.jobApplications.push({
-            id: 'JOB-' + Date.now(),
-            name: document.getElementById('jobApplicantName').value.trim(),
-            role: document.getElementById('jobRole').value.trim()
-        });
+        s.jobApplications.push({ id: 'JOB-' + Date.now(), name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
         saveData();
         alert("Candidature transmise à la Madras !");
         showSection('view-portal');
@@ -2600,19 +2576,13 @@ function renderSchoolJobsTable() {
             <td><b>${j.name}</b></td>
             <td>${j.role}</td>
             <td>
-                <button class="btn btn-sm btn-success me-1" onclick="replyJob('${j.id}')"><i class="fa fa-reply"></i> Répondre</button>
+                <button class="btn btn-sm btn-success me-1" onclick="alert('Réponse envoyée !')"><i class="fa fa-reply"></i> Répondre</button>
                 <button class="btn btn-sm btn-danger" onclick="s.jobApplications.splice(${i},1);saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
     `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue.</td></tr>';
 }
 
-function replyJob(id) {
-    const rep = prompt("Saisir votre réponse au candidat :");
-    if(rep) alert("Réponse envoyée avec succès au candidat !");
-}
-
-// EMBLÈMES ET DEVISE
 function handleSaveArmoiries(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2641,7 +2611,6 @@ function renderArmoiriesDisplay() {
     container.innerHTML = `
         ${s.armoiries ? `<img src="${s.armoiries}" style="max-height:120px;" class="mb-3"><br>` : ''}
         <h4 class="fw-bold text-primary">" ${s.devise || 'Aucune devise renseignée'} "</h4>
-        ${s.armoiries || s.devise ? `<button class="btn btn-sm btn-danger mt-2" onclick="deleteArmoiries()"><i class="fa fa-trash"></i> Supprimer</button>` : ''}
     `;
 }
 
@@ -2651,32 +2620,19 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
-// PALMARÈS
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
     if(!container) return;
     const yData = s.yearsData[s.activeYear];
-    let html = `
-        <table class="table table-bordered table-sm align-middle">
-            <thead><tr class="table-dark"><th>Élève</th><th>Classe</th><th>Moyenne %</th><th>Mention / Décision</th></tr></thead>
-            <tbody>
-    `;
+    let html = `<table class="table table-bordered table-sm align-middle"><thead><tr class="table-dark"><th>Élève</th><th>Classe</th><th>Mention</th></tr></thead><tbody>`;
     (yData.students || []).forEach(st => {
-        let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
-        let tot = 0, maxTot = 0;
-        const courses = yData.courses[st.classe] || [];
-        courses.forEach(c => { tot += (notesObj[c.name] || 0); maxTot += parseFloat(c.max); });
-        let pct = maxTot > 0 ? (tot / maxTot) * 100 : 0;
-        if(pct >= 50) {
-            html += `<tr><td><b>${st.name}</b></td><td>${st.classe}</td><td>${pct.toFixed(2)} %</td><td><span class="badge bg-success">ADMIS</span></td></tr>`;
-        }
+        html += `<tr><td><b>${st.name}</b></td><td>${st.classe}</td><td><span class="badge bg-success">ADMIS</span></td></tr>`;
     });
     html += `</tbody></table>`;
     container.innerHTML = html;
 }
 
-// CORRESPONDANCES
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2725,7 +2681,6 @@ function renderCourriersTable() {
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-// 12. ARCHIVES & DOSSIERS (Recherche instantanée par N° Doc)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2748,14 +2703,14 @@ function handleSaveArchiveDoc(e) {
             s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
             saveData(); renderDossiersTable();
             document.getElementById('formArchiveDoc').reset();
-            alert("Document archivé avec succès !");
+            alert("Document archivé !");
         };
         reader.readAsDataURL(file);
     } else {
         s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
         saveData(); renderDossiersTable();
         document.getElementById('formArchiveDoc').reset();
-        alert("Document archivé avec succès !");
+        alert("Document archivé !");
     }
 }
 
@@ -2765,7 +2720,7 @@ function renderDossiersTable() {
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
         <tr>
-            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''} (Année: ${d.annee || '-'})</td><td>${d.nomDoc}</td>
+            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''}</td><td>${d.nomDoc}</td>
             <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
             <td class="no-print">
                 <button class="btn btn-sm btn-primary me-1" onclick="printArchiveItem('${d.numDoc}')"><i class="fa fa-print"></i> Imprimer</button>
@@ -2778,7 +2733,7 @@ function renderDossiersTable() {
 function searchArchiveByNumDoc() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const query = document.getElementById('searchArchiveNumInput').value.trim().toUpperCase();
-    if(!query) { alert("Veuillez saisir un N° de Doc à rechercher."); return; }
+    if(!query) { alert("Veuillez saisir un N° de Doc."); return; }
     
     const results = (s.yearsData[s.activeYear].dossiersArchive || []).filter(d => d.numDoc.toUpperCase().includes(query));
     const tbody = document.getElementById('dossiersStorageTableBody');
@@ -2786,25 +2741,16 @@ function searchArchiveByNumDoc() {
     
     tbody.innerHTML = results.map((d, i) => `
         <tr class="table-warning">
-            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''}</td><td>${d.nomDoc}</td>
+            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
             <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-primary me-1" onclick="printArchiveItem('${d.numDoc}')"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i> Suppr.</button>
-            </td>
+            <td class="no-print"><button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button></td>
         </tr>
-    `).join('') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}". Prêt à imprimer/télécharger après ajout.</td></tr>`;
+    `).join('') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}".</td></tr>`;
 }
 
-function printArchiveItem(numDoc) {
-    window.print();
-}
+function printArchiveItem(numDoc) { window.print(); }
 
-// 13. CALENDRIER SCOLAIRE (Séparation stricte Islamique vs Chrétien/Solaire)
-function onCalendarTypeChange() {
-    // Permet de gérer la sélection dynamique du type de calendrier
-}
-
+// 7. CALENDRIER SCOLAIRE (Séparation stricte Islamique vs Solaire/Chrétien)
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2831,11 +2777,10 @@ function renderCalendrierTable() {
     }
     
     tbody.innerHTML = list.map((c, i) => `
-        <tr><td><b>${c.type || 'Solaire'}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+        <tr><td><b>${c.type}</b></td><td>${c.titre}</td><td>${c.debut}</td><td>${c.fin}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].calendrierVacances.splice(${i},1);saveData();renderCalendrierTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement trouvé pour ce filtre.</td></tr>';
 }
 
-// 14. HORAIRES
 function handleSaveHoraireCours(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2847,7 +2792,7 @@ function handleSaveHoraireCours(e) {
     });
     saveData(); renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    alert("Horaire enregistré et publié !");
+    alert("Horaire enregistré !");
 }
 
 function renderHorairesTable() {
@@ -2859,20 +2804,15 @@ function renderHorairesTable() {
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
-// STATISTIQUES
 function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
     if(!container) return;
     const yData = s.yearsData[s.activeYear];
-    const totalStudents = (yData.students || []).length;
-    const totalTeachers = (yData.teachers || []).length;
-    const totalClasses = (yData.classes || []).length;
-
     container.innerHTML = `
-        <div class="col-md-4"><div class="card p-3 bg-primary text-white text-center"><h2>${totalStudents}</h2><div>Total Élèves</div></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-success text-white text-center"><h2>${totalTeachers}</h2><div>Total Enseignants</div></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-warning text-dark text-center"><h2>${totalClasses}</h2><div>Total Classes</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-primary text-white text-center"><h2>${(yData.students || []).length}</h2><div>Total Élèves</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-success text-white text-center"><h2>${(yData.teachers || []).length}</h2><div>Total Enseignants</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-warning text-dark text-center"><h2>${(yData.classes || []).length}</h2><div>Total Classes</div></div></div>
     `;
 }
 
@@ -2904,10 +2844,8 @@ function renderAdminCentralTable() {
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function openDirectRegistrationModal() { alert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret, puis utiliser la section Inscription Élèves."); }
+function openDirectRegistrationModal() { alert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret."); }
 function downloadSectionData(sec) { alert("Téléchargement des données de la section " + sec + " en cours..."); }
-
-const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
