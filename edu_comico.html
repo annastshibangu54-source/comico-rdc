@@ -760,7 +760,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- TRÉSORERIE & COTISATIONS (MODIFIÉ: Catégorie Élève/Enseignant filtre dynamiquement) -->
+<!-- TRÉSORERIE & COTISATIONS (MODIFIÉ: Code Trésorier ou Propriétaire uniquement - Code Enseignant refusé) -->
 <div class="tab-pane" id="tab-frais">
 <h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Code Trésorier ou Code Directeur Requis)</h5>
 <div id="treasurerAuthArea" class="mb-3 p-3 bg-light rounded border">
@@ -1052,7 +1052,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
   </form>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeurer</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
 </div>
 
 <!-- CALENDRIER -->
@@ -2542,15 +2542,26 @@ function verifyDisciplineAccess() {
     }
 }
 
-// TRÉSORERIE
+// TRÉSORERIE (MODIFIÉ: Codes Trésorier ou Directeur autorisés, code enseignant catégoriquement refusé)
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
+    if (!code) { CommicoAlert("Veuillez saisir un code d'accès."); return; }
+
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     let treasurerCode = "";
     if(s.direction) {
         const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
         if(tr) treasurerCode = tr.treasurerCode;
+    }
+
+    // Vérifier si le code saisi correspond à un enseignant pour afficher un message d'interdiction explicite
+    const isTeacher = (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code.toUpperCase());
+
+    if(isTeacher) {
+        CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir la section Frais & Trésorerie.");
+        document.getElementById('treasurerSecretInput').value = '';
+        return;
     }
     
     if(code.toUpperCase() === validOwnerCode.toUpperCase() || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
@@ -3163,7 +3174,7 @@ function renderAdminCentralTable() {
 }
 
 function openDirectRegistrationModal() { CommicoAlert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret."); }
-function downloadSectionData(sec) { CommicoAlert("Téléchargement des données de la section " + sec + " en cours..."); }
+function downloadSectionData(sec) { CommicoAlert("Téléchargement de la section " + sec + " en cours..."); }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
