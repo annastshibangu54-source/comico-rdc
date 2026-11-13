@@ -1159,7 +1159,7 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 
-// Fonction personnalisée remplaçant le nom des alertes par "Commico-RDC"
+// Fonction personnalisée remplaçant le nom des alertes par "Commico-RDC" (sans URL GitHub)
 function CommicoAlert(msg) {
     alert("Commico-RDC : " + msg);
 }
@@ -1195,7 +1195,11 @@ window.onload = function() {
 function loadDataFromLocal() {
     const saved = localStorage.getItem('comico_appData');
     if (saved) {
-        appData = JSON.parse(saved);
+        try {
+            appData = JSON.parse(saved);
+        } catch(e) {
+            appData = { schools: [], adminRequests: [], jobApplications: [] };
+        }
     } else {
         appData = { schools: [], adminRequests: [], jobApplications: [] };
     }
@@ -2216,7 +2220,6 @@ function verifyTeacherAccess() {
         document.getElementById('teacherAccessCheckArea').style.display = 'none';
         document.getElementById('notesRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Propriétaire : Saisie des notes (Toutes les classes).';
         
-        // Permettre de choisir la classe via un sélecteur
         const classOpts = '<option value="">-- Choisir une classe --</option>' + (s.yearsData[s.activeYear].classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         document.getElementById('notesClassSelectorContainer').innerHTML = `<select id="notesClassSelectOwner" class="form-select" onchange="loadStudentsForNotesOwner(this.value)"><option value="">-- Choisir classe --</option>${classOpts.replace('<option value="">-- Choisir une Classe --</option>', '')}</select>`;
         CommicoAlert("Accès Propriétaire validé pour la saisie des notes.");
@@ -2249,7 +2252,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
@@ -2315,7 +2318,6 @@ function verifyBulletinAccess() {
         document.getElementById('bulletinAccessArea').style.display = 'none';
         document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-shield-alt me-1"></i> Mode Propriétaire : Accès complet (Toutes les classes et actions).';
         
-        // Activer tous les boutons
         document.querySelectorAll('.owner-action-btn').forEach(btn => btn.style.display = 'inline-block');
         
         const classOpts = '<option value="">-- Choisir classe --</option>' + (s.yearsData[s.activeYear].classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -2326,7 +2328,6 @@ function verifyBulletinAccess() {
         document.getElementById('bulletinAccessArea').style.display = 'none';
         document.getElementById('bulletinRoleNotice').innerHTML = '<i class="fa fa-user-lock me-1"></i> Mode Enseignant ("' + teacher.name + '") : Votre classe (« ' + teacher.classe + ' »). Seul le bouton Fermer est exécutable.';
         
-        // Masquer/désactiver tous les boutons sauf Fermer
         document.querySelectorAll('.owner-action-btn').forEach(btn => btn.style.display = 'none');
         
         document.getElementById('bulletinClassSelect').innerHTML = `<option value="${teacher.classe}">${teacher.classe} (Votre classe)</option>`;
@@ -2504,7 +2505,6 @@ function verifyPresenceAccess() {
         document.getElementById('presenceAuthArea').style.display = 'none';
         document.getElementById('presClassDisplay').value = "Toutes les Classes (Propriétaire)";
         
-        // Charger tous les élèves pour le propriétaire
         const allStudents = s.yearsData[s.activeYear].students || [];
         document.getElementById('presStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + allStudents.map(st => `<option value="${st.name}">${st.name} (${st.classe})</option>`).join('');
         renderPresenceTable();
@@ -2555,7 +2555,6 @@ function verifyTreasurerAccess() {
         if(tr) treasurerCode = tr.treasurerCode;
     }
 
-    // Vérifier si le code saisi correspond à un enseignant pour afficher un message d'interdiction explicite
     const isTeacher = (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code.toUpperCase());
 
     if(isTeacher) {
