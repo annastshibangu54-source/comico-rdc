@@ -45,6 +45,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 .file-viewer-body { flex: 1; padding: 15px; overflow: auto; background: #e5e7eb; display: flex; align-items: center; justify-content: center; }
 .file-viewer-body iframe, .file-viewer-body img { width: 100%; height: 100%; border: 0; object-fit: contain; background: #fff; border-radius: 6px; }
 
+/* MODALE PERSONNALISÉE POUR REMPLACER LES PROMPTS/ALERTS DU NAVIGATEUR */
+.commico-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 10500; }
+.commico-modal-card { background: #fff; padding: 25px; border-radius: 12px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+
 /* STYLE D'IMPRESSION PROPRE */
 @media print {
   body * { visibility: hidden; }
@@ -132,6 +136,21 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       <button class="btn btn-sm btn-light fw-bold" onclick="closeFileViewerModal()"><i class="fa fa-times"></i> Fermer</button>
     </div>
     <div class="file-viewer-body" id="fileViewerContentArea"></div>
+  </div>
+</div>
+
+<!-- MODALE COMMICO CUSTOM (REMPLACANT ALERT/PROMPT DOMAINE) -->
+<div id="commicoCustomModal" class="commico-modal-overlay">
+  <div class="commico-modal-card">
+    <h5 class="fw-bold text-primary mb-3"><i class="fa fa-info-circle me-1"></i> Commico-RDC</h5>
+    <p id="commicoModalMessage" class="text-muted small mb-3"></p>
+    <div id="commicoModalInputArea" class="mb-3" style="display:none;">
+      <input type="password" id="commicoModalInput" class="form-control form-control-sm text-center" placeholder="Saisir votre code...">
+    </div>
+    <div>
+      <button id="commicoModalBtnOk" class="btn btn-primary btn-sm fw-bold px-4 me-2">OK</button>
+      <button id="commicoModalBtnCancel" class="btn btn-secondary btn-sm fw-bold px-3" style="display:none;" onclick="closeCommicoModalCancel()">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -506,7 +525,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- 5. ELEVES / MEMBRES (MODIFIÉ: S'ouvre UNIQUEMENT avec le Code Propriétaire DIR-XXXX) -->
+<!-- 5. ELEVES / MEMBRES -->
 <div class="tab-pane" id="tab-eleves-reg">
 <h5 class="text-primary fw-bold mb-3">Inscription des Élèves & Étudiants</h5>
 <div id="studentsLockedContainer" class="text-center py-5">
@@ -563,7 +582,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- CARTE MEMBRE (MODIFIÉ: S'ouvre UNIQUEMENT avec le code secret propriétaire) -->
+<!-- CARTE MEMBRE -->
 <div class="tab-pane" id="tab-carte-eleve">
 <h5 class="text-primary fw-bold mb-3">Carte d'Élève / Étudiant</h5>
 <div id="cardLockedContainer" class="text-center py-5">
@@ -665,7 +684,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- NOTES / PERFORMANCES (MODIFIÉ: Répond aux deux codes enseignant ou propriétaire) -->
+<!-- NOTES / PERFORMANCES -->
 <div class="tab-pane" id="tab-notes">
 <h5 class="text-primary fw-bold mb-3">Saisie des Notes & Évaluations (Code Enseignant = sa classe | Code Propriétaire = tout voir)</h5>
 <div id="teacherAccessCheckArea" class="mb-3 p-3 bg-light rounded border">
@@ -688,7 +707,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- BULLETINS (MODIFIÉ: Propriétaire = tout faire | Enseignant = Ouvre sa classe et seul le bouton Fermer est exécutable) -->
+<!-- BULLETINS -->
 <div class="tab-pane" id="tab-bulletins">
 <h5 class="text-primary fw-bold mb-3 no-print">Bulletin Scolaire / Attestation</h5>
 <div id="bulletinAccessArea" class="mb-3 p-3 bg-light rounded border">
@@ -720,7 +739,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- RAPPORTS PÉRIODIQUES (MODIFIÉ: Respecte également les règles des boutons pour l'enseignant) -->
+<!-- RAPPORTS PÉRIODIQUES -->
 <div class="tab-pane" id="tab-bulletins-periodiques">
 <h5 class="text-primary fw-bold mb-3 no-print">Bulletin Périodique</h5>
 <div id="bulletinPerAccessArea" class="mb-3 p-3 bg-light rounded border">
@@ -760,9 +779,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- TRÉSORERIE & COTISATIONS (MODIFIÉ: Code Trésorier ou Propriétaire uniquement - Code Enseignant refusé) -->
+<!-- TRÉSORERIE & COTISATIONS (ŒUVRE ET FONCTIONNELLE) -->
 <div class="tab-pane" id="tab-frais">
-<h5 class="text-primary fw-bold mb-3">Frais Scolaires & Trésorerie (Code Trésorier ou Code Directeur Requis)</h5>
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-wallet me-2"></i>Frais & Trésorerie (Code Trésorier ou Code Directeur Requis)</h5>
 <div id="treasurerAuthArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Code Trésorier ou Code Directeur :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
@@ -848,7 +867,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- PRÉSENCES (MODIFIÉ: Répond parfaitement aux deux codes enseignant et propriétaire) -->
+<!-- PRÉSENCES -->
 <div class="tab-pane" id="tab-presences">
 <h5 class="text-primary fw-bold mb-3">Gestion de Présence aux Cours</h5>
 <div id="presenceAuthArea" class="mb-3 p-3 bg-light rounded border">
@@ -1025,7 +1044,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <table class="table table-bordered table-sm align-middle"><thead><tr><th>Date</th><th>Type</th><th>N° Doc</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Heure / Jour</th><th>Document</th><th class="no-print">Action</th></tr></thead><tbody id="courriersTableBody"></tbody></table>
 </div>
 
-<!-- DOSSIERS & ARCHIVES (Avec recherche instantanée par N° Doc) -->
+<!-- DOSSIERS & ARCHIVES -->
 <div class="tab-pane" id="tab-dossiers-archivage">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers (Recherche par N° Doc)</h5>
   <div class="row mb-3 no-print bg-light p-3 rounded">
@@ -1103,12 +1122,12 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
-<!-- STATISTIQUES (AVEC HORAIRES DE COURS AFFICHÉS JUSTE EN BAS) -->
+<!-- STATISTIQUES -->
 <div class="tab-pane" id="tab-statistiques">
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code Secret)</h5>
 <div class="row g-3 mb-4" id="statsContainer"></div>
 
-<!-- HORAIRES DES COURS (Placé juste en bas de statistiques analytique) -->
+<!-- HORAIRES DES COURS -->
 <div class="card shadow-sm border-0 mt-4 p-3 bg-light">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours & Publication</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
@@ -1159,9 +1178,39 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 
-// Fonction personnalisée remplaçant le nom des alertes par "Commico-RDC" (sans URL GitHub)
+// Remplacement des alertes système pour afficher "Commico-RDC" à la place du domaine GitHub
 function CommicoAlert(msg) {
-    alert("Commico-RDC : " + msg);
+    const modal = document.getElementById('commicoCustomModal');
+    document.getElementById('commicoModalMessage').innerText = msg;
+    document.getElementById('commicoModalInputArea').style.display = 'none';
+    document.getElementById('commicoModalBtnCancel').style.display = 'none';
+    const okBtn = document.getElementById('commicoModalBtnOk');
+    okBtn.innerText = "OK";
+    okBtn.onclick = function() { modal.style.display = 'none'; };
+    modal.style.display = 'flex';
+}
+
+function CommicoPrompt(msg, callback) {
+    const modal = document.getElementById('commicoCustomModal');
+    document.getElementById('commicoModalMessage').innerText = msg;
+    const inputArea = document.getElementById('commicoModalInputArea');
+    inputArea.style.display = 'block';
+    const inputField = document.getElementById('commicoModalInput');
+    inputField.value = '';
+    document.getElementById('commicoModalBtnCancel').style.display = 'inline-block';
+    const okBtn = document.getElementById('commicoModalBtnOk');
+    okBtn.innerText = "Valider";
+    okBtn.onclick = function() {
+        const val = inputField.value;
+        modal.style.display = 'none';
+        callback(val);
+    };
+    modal.style.display = 'flex';
+    setTimeout(() => inputField.focus(), 100);
+}
+
+function closeCommicoModalCancel() {
+    document.getElementById('commicoCustomModal').style.display = 'none';
 }
 
 const subDivisionsData = {
@@ -1460,23 +1509,27 @@ function renderPortalAnnouncements() {
 function promptLoginCode(id) {
     const s = appData.schools.find(x => x.id === id);
     if(!s) return;
-    const code = prompt("Entrez le code secret Madras (" + s.name + ") :");
-    if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
-        checkAndOpenSchoolDashboard(id);
-    } else if(code !== null) {
-        CommicoAlert("Code secret Madras incorrect.");
-    }
+    CommicoPrompt("Entrez le code secret Madras (" + s.name + ") :", function(code) {
+        if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+            checkAndOpenSchoolDashboard(id);
+        } else if(code !== null) {
+            CommicoAlert("Code secret Madras incorrect.");
+        }
+    });
 }
 
 function promptCentralDeleteSchool(id) {
-    const pass = prompt("Entrez le mot de passe Administrateur Central :");
-    if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
-        appData.schools = appData.schools.filter(x => x.id !== id);
-        saveData();
-        renderSchoolsList();
-        renderAdminCentralTable();
-        CommicoAlert("Madras supprimée.");
-    }
+    CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+            appData.schools = appData.schools.filter(x => x.id !== id);
+            saveData();
+            renderSchoolsList();
+            renderAdminCentralTable();
+            CommicoAlert("Madras supprimée.");
+        } else if(pass !== null) {
+            CommicoAlert("Mot de passe incorrect.");
+        }
+    });
 }
 
 function checkAndOpenSchoolDashboard(id) {
@@ -1560,17 +1613,18 @@ function switchSchoolYear(year) {
 
 function openNewSchoolYearWizard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const newYear = prompt("Nouvelle année (ex: 2026-2027) :");
-    if(newYear && !s.yearsData[newYear]) {
-        s.activeYear = newYear;
-        s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
-        saveData();
-        populateSchoolYearsSelect();
-        refreshAllDropdowns();
-        CommicoAlert("Nouvelle année ouverte et initialisée avec succès !");
-    } else if(newYear) {
-        CommicoAlert("Cette année existe déjà.");
-    }
+    CommicoPrompt("Nouvelle année (ex: 2026-2027) :", function(newYear) {
+        if(newYear && !s.yearsData[newYear]) {
+            s.activeYear = newYear;
+            s.yearsData[newYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
+            saveData();
+            populateSchoolYearsSelect();
+            refreshAllDropdowns();
+            CommicoAlert("Nouvelle année ouverte et initialisée avec succès !");
+        } else if(newYear) {
+            CommicoAlert("Cette année existe déjà.");
+        }
+    });
 }
 
 function toggleParamsSubmenu() {
@@ -1582,13 +1636,14 @@ function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const code = prompt("Sécurité Stricte : Entrez le Code Secret du Directeur (ex: DIR-XXXX) ou Code d'accès requis :");
-    if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase().startsWith("ENS-") || code.trim().toUpperCase().startsWith("TRS-"))) {
-        if(tabId === 'tab-profs') teachersUnlocked = true;
-        switchTab(tabId, element);
-    } else if(code !== null) {
-        CommicoAlert("Code d'accès incorrect ou non reconnu. Accès refusé.");
-    }
+    CommicoPrompt("Sécurité Stricte : Entrez le Code Secret du Directeur (ex: DIR-XXXX) ou Code d'accès requis :", function(code) {
+        if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase().startsWith("ENS-") || code.trim().toUpperCase().startsWith("TRS-"))) {
+            if(tabId === 'tab-profs') teachersUnlocked = true;
+            switchTab(tabId, element);
+        } else if(code !== null) {
+            CommicoAlert("Code d'accès incorrect ou non reconnu. Accès refusé.");
+        }
+    });
 }
 
 function verifyCalAccess() {
@@ -1606,7 +1661,6 @@ function verifyCalAccess() {
     }
 }
 
-/* 2. CARTE ÉLÈVE : Un enseignant ne peut pas ouvrir, sauf code secret propriétaire */
 function promptUnlockCard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('cardOwnerSecretInput').value.trim();
@@ -1914,7 +1968,6 @@ function deleteTeacher(index) {
     }
 }
 
-/* 1. INSCRIPTION ÉLÈVE : Ne s'ouvre qu'avec le code propriétaire (ni enseignant ni Madras) */
 function openOwnerStudentRegistration() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('studentOwnerSecretInput').value.trim();
@@ -2206,7 +2259,6 @@ function deleteCourse(cls, index) {
     renderCoursesTable();
 }
 
-/* 3. SAISIE DE NOTES : Répond aux deux codes (enseignant = sa classe, propriétaire = tout) */
 function verifyTeacherAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('teacherAuthCode').value.trim();
@@ -2305,7 +2357,6 @@ function handleSaveStudentNotesForm(e, mat) {
     CommicoAlert("Notes enregistrées avec succès !");
 }
 
-/* 4. BULLETIN : Propriétaire = tout | Enseignant = Ouvre sa classe et seul le bouton Fermer est exécutable */
 function verifyBulletinAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('bulletinAuthCode').value.trim();
@@ -2473,7 +2524,6 @@ function renderPeriodicBulletin() {
     `;
 }
 
-/* 5. CATÉGORIE (Trésorerie) : Élève affiche que les élèves, Enseignant affiche que les enseignants */
 function updateCaissePersonSelect() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -2491,7 +2541,6 @@ function updateCaissePersonSelect() {
     caisseSelect.innerHTML = pOpts;
 }
 
-/* 6. PRÉSENCES : Tous les codes (enseignant et propriétaire) répondent parfaitement */
 function verifyPresenceAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('presenceSecretInput').value.trim();
@@ -2542,7 +2591,7 @@ function verifyDisciplineAccess() {
     }
 }
 
-// TRÉSORERIE (MODIFIÉ: Codes Trésorier ou Directeur autorisés, code enseignant catégoriquement refusé)
+// TRÉSORERIE & FRAIS (SECTION PLEINEMENT OPÉRATIONNELLE)
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
@@ -2592,7 +2641,7 @@ function handleSaveCaissePaymentCustom(e) {
     renderCaisseTable();
     document.getElementById('formPaymentCustom').reset();
     updateCaissePersonSelect();
-    CommicoAlert("Paiement enregistré !");
+    CommicoAlert("Paiement enregistré avec succès dans la Trésorerie !");
 }
 
 function clearCaisseForm() { document.getElementById('formPaymentCustom').reset(); }
@@ -2612,7 +2661,7 @@ function renderCaisseTable() {
                 <button class="btn btn-sm btn-danger" onclick="deleteCaisseItem(${i})"><i class="fa fa-trash"></i> Suppr.</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune transaction.</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune transaction enregistrée.</td></tr>';
 }
 
 function deleteCaisseItem(index) {
@@ -3075,7 +3124,6 @@ function searchArchiveByNumDoc() {
 
 function printArchiveItem(numDoc) { window.print(); }
 
-// CALENDRIER SCOLAIRE
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -3142,13 +3190,14 @@ function renderStatistiques() {
 }
 
 function openAdminCentralPanel() {
-    const pass = prompt("Mot de passe Admin Central :");
-    if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
-        showSection('view-admin-central');
-        renderAdminCentralTable();
-    } else if(pass !== null) {
-        CommicoAlert("Mot de passe incorrect.");
-    }
+    CommicoPrompt("Mot de passe Admin Central :", function(pass) {
+        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+            showSection('view-admin-central');
+            renderAdminCentralTable();
+        } else if(pass !== null) {
+            CommicoAlert("Mot de passe incorrect.");
+        }
+    });
 }
 
 function renderAdminCentralTable() {
