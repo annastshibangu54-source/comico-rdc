@@ -1159,7 +1159,7 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 
-// Fonction personnalisée affichant des alertes propres sans la longue chaîne URL GitHub de provenance
+// Fonction personnalisée remplaçant le nom des alertes par "Commico-RDC"
 function CommicoAlert(msg) {
     alert("Commico-RDC : " + msg);
 }
@@ -2542,7 +2542,7 @@ function verifyDisciplineAccess() {
     }
 }
 
-// TRÉSORERIE (Vérification rigoureuse des codes Trésorier ou Directeur, interdiction formelle au code enseignant)
+// TRÉSORERIE (MODIFIÉ: Codes Trésorier ou Directeur autorisés, code enseignant catégoriquement refusé)
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
@@ -2555,7 +2555,7 @@ function verifyTreasurerAccess() {
         if(tr) treasurerCode = tr.treasurerCode;
     }
 
-    // Vérifier si le code saisi appartient à un enseignant pour rejeter explicitement l'accès
+    // Vérifier si le code saisi correspond à un enseignant pour afficher un message d'interdiction explicite
     const isTeacher = (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code.toUpperCase());
 
     if(isTeacher) {
