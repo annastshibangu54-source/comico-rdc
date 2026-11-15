@@ -447,7 +447,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </form>
-<table class="table table-bordered align-middle"><thead><tr><th>Nom</th><th>Fonction</th><th>Contact</th><th>Code / Accès & Code Généré</th><th class="no-print">Action</th></tr></thead><tbody id="directionTableBody"></tbody></table>
+<table class="table table-bordered align-middle"><thead><tr><th>Nom</th><th>Fonction</th><th>Contact</th><th>Code Trésorier / Accès</th><th class="no-print">Action</th></tr></thead><tbody id="directionTableBody"></tbody></table>
 </div>
 
 <!-- 2. CLASSES / DISCIPLINES -->
@@ -1047,31 +1047,55 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- DOSSIERS & ARCHIVES -->
 <div class="tab-pane" id="tab-dossiers-archivage">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers (Recherche par N° Doc)</h5>
-  <div class="row mb-3 no-print bg-light p-3 rounded">
+  
+  <!-- Rubriques et Boutons Demandés -->
+  <div class="row mb-3 no-print bg-light p-3 rounded align-items-center">
     <div class="col-md-6">
-        <label class="form-label small fw-bold">Recherche instantanée par N° de Document :</label>
+        <label class="form-label small fw-bold">Rubrique - Recherche :</label>
         <div class="input-group input-group-sm">
-            <input type="text" id="searchArchiveNumInput" class="form-control" placeholder="Entrez le N° Doc enregistré...">
-            <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher & Imprimer</button>
+            <input type="text" id="searchArchiveNumInput" class="form-control" placeholder="Entrez le N° de Document déjà enregistré...">
+            <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher</button>
             <button class="btn btn-outline-secondary" type="button" onclick="renderDossiersTable()">Afficher Tout</button>
         </div>
     </div>
+    <div class="col-md-6 text-end action-bar mt-2 mt-md-0">
+        <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
+        <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('archives')"><i class="fa fa-download me-1"></i> Télécharger</button>
+        <button class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimer')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+    </div>
   </div>
+
   <form id="formArchiveDoc" onsubmit="handleSaveArchiveDoc(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-3"><select id="archiveClasseur" class="form-select form-select-sm" required><option value="Doc Entrant">Classeur Doc Entrant</option><option value="Doc Sortant">Classeur Doc Sortant</option></select></div>
-    <div class="col-md-3"><input type="text" id="archiveNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
-    <div class="col-md-3"><input type="date" id="archiveDate" class="form-control form-control-sm" required></div>
-    <div class="col-md-3"><input type="text" id="archiveNomDoc" class="form-control form-control-sm" placeholder="Intitulé Document" required></div>
+    <div class="col-md-3">
+        <label class="form-label small fw-bold">Rubrique - Classeur :</label>
+        <select id="archiveClasseur" class="form-select form-select-sm" required>
+            <option value="Classeur DOC entrant">Classeur DOC entrant</option>
+            <option value="Classeur DOC sortant">Classeur DOC sortant</option>
+        </select>
+    </div>
+    <div class="col-md-3"><label class="form-label small fw-bold">N° Doc :</label><input type="text" id="archiveNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
+    <div class="col-md-3"><label class="form-label small fw-bold">Date :</label><input type="date" id="archiveDate" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small fw-bold">Intitulé :</label><input type="text" id="archiveNomDoc" class="form-control form-control-sm" placeholder="Intitulé Document" required></div>
     <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Image / Fichier Scanné :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
     <div class="col-md-4 mt-2 action-bar">
-        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
-        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('archives')"><i class="fa fa-download me-1"></i> Télécharger</button>
-        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+        <button type="submit" class="btn btn-success btn-sm fw-bold w-100"><i class="fa fa-save me-1"></i> Enregistrer le document</button>
     </div>
   </form>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+
+  <table class="table table-bordered table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Classeur DOC</th>
+        <th>N° Doc</th>
+        <th>Date / Heure</th>
+        <th>Intitulé</th>
+        <th>Fichier</th>
+        <th class="no-print">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="dossiersStorageTableBody"></tbody>
+  </table>
 </div>
 
 <!-- CALENDRIER -->
@@ -1122,31 +1146,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
-<!-- STATISTIQUES & ANALYTIQUE (SANS CODE) -->
+<!-- STATISTIQUES -->
 <div class="tab-pane" id="tab-statistiques">
 <h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code Secret)</h5>
 <div class="row g-3 mb-4" id="statsContainer"></div>
 
-<div class="action-bar mt-3 no-print">
-    <button class="btn btn-success btn-sm fw-bold" onclick="CommicoAlert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
-    <button class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
-    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('stats')"><i class="fa fa-download me-1"></i> Télécharger</button>
-    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-</div>
-</div>
-
-<!-- HORAIRES DES COURS (PROPRIÉTAIRE SEUL) -->
-<div class="tab-pane" id="tab-horaires-cours">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours (Propriétaire Seul)</h5>
-<div id="horaireAuthArea" class="mb-3 p-3 bg-light rounded border">
-    <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
-    <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="horaireSecretInput" class="form-control" placeholder="Code secret directeur...">
-        <button class="btn btn-primary" onclick="verifyHoraireAccess()">Ouvrir Horaires</button>
-    </div>
-</div>
-<div id="horaireWorkspace" style="display: none;">
+<!-- HORAIRES DES COURS -->
+<div class="card shadow-sm border-0 mt-4 p-3 bg-light">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours & Publication</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
     <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
@@ -1163,7 +1170,12 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </form>
   <table class="table table-bordered table-sm align-middle bg-white"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
 </div>
-<div class="mt-3 no-print">
+
+<div class="action-bar mt-3 no-print">
+    <button class="btn btn-success btn-sm fw-bold" onclick="CommicoAlert('Enregistré')"><i class="fa fa-save me-1"></i> Enregistrer</button>
+    <button class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+    <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
+    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('stats')"><i class="fa fa-download me-1"></i> Télécharger</button>
     <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
@@ -1643,7 +1655,7 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS SELON VOS RÈGLES STRICTES */
+/* RÈGLE 4, 5, 6, 7, 8, 9, 11 : RESTRICTION STRICTE CODE ENSEIGNANT */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -1652,52 +1664,83 @@ function promptSecureTabAccess(tabId, element) {
     CommicoPrompt("Sécurité : Entrez votre Code Secret (Directeur ou Enseignant) :", function(code) {
         if(!code) return;
         code = code.trim().toUpperCase();
+        
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code);
         
-        // Règle 4: Code enseignant ne peut pas ouvrir Direction
+        // Règle 4 : Code enseignant ne peut JAMAIS ouvrir la section Direction
         if(tabId === 'tab-direction' && !isOwner) {
-            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir la section Direction.");
+            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir la section Comité Directeur.");
             return;
         }
-        // Règle 5: Code enseignant ne peut pas ouvrir Enregistrer classe & niveau
+        // Règle 5 : Code enseignant ne peut ouvrir enregistrent classe & niveau
         if(tabId === 'tab-classes' && !isOwner) {
-            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir l'enregistrement des classes & niveaux.");
+            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Enregistrement des Classes & Niveaux'.");
             return;
         }
-        // Règle 6: Code enseignant ne peut pas ouvrir Enseignants & Maîtres
+        // Règle 6 : Code enseignant ne peut ouvrir Enseignants & Maîtres
         if(tabId === 'tab-profs' && !isOwner) {
             CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Enseignants & Maîtres'.");
             return;
         }
-        // Règle 7: Code enseignant ne peut pas ouvrir Communications & Annonces
+        // Règle 7 : Code enseignant ne peut ouvrir Communications & Annonces
         if(tabId === 'tab-communication' && !isOwner) {
             CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Communications & Annonces'.");
             return;
         }
-        // Règle 8: Code enseignant ne peut pas ouvrir Demandes de poste reçus
+        // Règle 8 : Code enseignant ne peut ouvrir Demandes de poste reçus
         if(tabId === 'tab-jobs-received' && !isOwner) {
             CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Demandes de poste reçus'.");
             return;
         }
-        // Règle 9: Code enseignant ne peut pas ouvrir Emblèmes & Devise
+        // Règle 9 : Code enseignant ne peut ouvrir Emblèmes & Devise
         if(tabId === 'tab-armoiries' && !isOwner) {
-            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Emblèmes & Devise'.");
+            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir 'Emblèmes & Devise de la Madras'.");
             return;
         }
-        // Règle 11: Code enseignant ne peut pas ouvrir Gestion correspondances & Archives & Dossiers
+        // Règle 11 : Code enseignant ne peut ouvrir Gestion des correspondances et Archives & Dossier
         if((tabId === 'tab-courriers' || tabId === 'tab-dossiers-archivage') && !isOwner) {
-            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir cette section d'archives/correspondances.");
+            CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir la gestion des correspondances et des archives.");
             return;
         }
-        
-        if(isOwner || isTeacher || tabId === 'tab-statistiques' || code.startsWith("ENS-") || code.startsWith("TRS-")) {
+
+        if(isOwner || isTeacher) {
             if(tabId === 'tab-profs') teachersUnlocked = true;
             switchTab(tabId, element);
+            
+            // Règle 4 : Sur la section Direction, afficher tous les codes enregistrés et générer un code pour chacun
+            if(tabId === 'tab-direction') {
+                renderDirectionTableForDirectionSection();
+            }
         } else {
-            CommicoAlert("Code d'accès incorrect ou non autorisé.");
+            CommicoAlert("Code d'accès incorrect ou non reconnu.");
         }
     });
+}
+
+function renderDirectionTableForDirectionSection() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('directionTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = (s.direction || []).map((d, i) => {
+        // Cacher le code propriétaire si demandé ou l'afficher clairement
+        let displayCode = d.role === "Directeur / Propriétaire" ? "******** (Propriétaire Caché)" : (d.secretCode || ('DIR-' + Math.floor(1000 + Math.random() * 9000)));
+        if(!d.secretCode && d.role !== "Directeur / Propriétaire") {
+            d.secretCode = displayCode;
+            saveData();
+        }
+        return `
+            <tr>
+                <td>${d.name}</td>
+                <td><b>${d.role}</b></td>
+                <td>${d.phone || '-'}</td>
+                <td><code>${d.role === "Directeur / Propriétaire" ? "Caché" : displayCode}</code></td>
+                <td class="no-print">
+                    <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun membre.</td></tr>';
 }
 
 function verifyCalAccess() {
@@ -1712,21 +1755,6 @@ function verifyCalAccess() {
         CommicoAlert("Accès Calendrier Directeur autorisé.");
     } else {
         CommicoAlert("Code directeur incorrect.");
-    }
-}
-
-function verifyHoraireAccess() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const code = document.getElementById('horaireSecretInput').value.trim();
-    if(code && code.toUpperCase() === validOwnerCode.toUpperCase()) {
-        document.getElementById('horaireWorkspace').style.display = 'block';
-        document.getElementById('horaireAuthArea').style.display = 'none';
-        renderHorairesTable();
-        CommicoAlert("Accès Horaires des cours autorisé.");
-    } else {
-        CommicoAlert("Seul le propriétaire peut ouvrir cette section.");
     }
 }
 
@@ -1812,7 +1840,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Règle 4: propriétaire caché, les autres affichés et code généré)
+// 1. DIRECTION
 function onDirRoleChange(val) {
     const container = document.getElementById('treasurerCodeContainer');
     const input = document.getElementById('dirTreasurerCode');
@@ -1832,14 +1860,9 @@ function handleSaveDirection(e) {
     const role = document.getElementById('dirRole').value;
     const phone = document.getElementById('dirPhone').value.trim();
     const treasurerCode = document.getElementById('dirTreasurerCode').value.trim();
+    const secretCode = 'DIR-' + Math.floor(1000 + Math.random() * 9000);
     
-    // Génération automatique d'un code d'accès pour tout membre non propriétaire
-    let generatedAccessCode = '';
-    if(role !== 'Directeur / Propriétaire') {
-        generatedAccessCode = 'DIR-MEMB-' + Math.floor(100 + Math.random() * 900);
-    }
-    
-    s.direction.push({ name, role, phone, treasurerCode, accessCode: generatedAccessCode });
+    s.direction.push({ name, role, phone, treasurerCode, secretCode });
     saveData();
     renderDirectionTable();
     CommicoAlert("Membre de la direction enregistré avec succès !");
@@ -1862,39 +1885,26 @@ function renderDirectionTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('directionTableBody');
     if(!tbody) return;
-    
-    // Règle 4: On cache le code du propriétaire, tous les autres sont affichés avec leur code généré
-    const visibleMembers = (s.direction || []).filter(d => d.role !== 'Directeur / Propriétaire');
-    
-    tbody.innerHTML = visibleMembers.map((d, i) => `
+    tbody.innerHTML = (s.direction || []).map((d, i) => `
         <tr>
             <td>${d.name}</td>
             <td><b>${d.role}</b></td>
             <td>${d.phone || '-'}</td>
-            <td>
-               ${d.treasurerCode ? '<code>' + d.treasurerCode + '</code> (Code Trésorier)<br>' : ''}
-               ${d.accessCode ? '<code>' + d.accessCode + '</code> (Code Généré)' : '<code>ACC-' + Math.floor(1000+Math.random()*9000) + '</code>'}
-            </td>
+            <td>${d.role === "Directeur / Propriétaire" ? "******** (Caché)" : ('<code>' + (d.secretCode || 'DIR-XXXX') + '</code>')}</td>
             <td class="no-print">
                 <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun autre membre affiché (Propriétaire masqué conformément aux instructions).</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun membre.</td></tr>';
 }
 
 function deleteDirection(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(s && s.direction) {
-        // Trouver l'index réel en excluant le propriétaire
-        let nonProprioList = s.direction.filter(d => d.role !== 'Directeur / Propriétaire');
-        let target = nonProprioList[index];
-        let realIdx = s.direction.indexOf(target);
-        if(realIdx !== -1) {
-            s.direction.splice(realIdx, 1);
-            saveData();
-            renderDirectionTable();
-            CommicoAlert("Membre supprimé avec succès.");
-        }
+        s.direction.splice(index, 1);
+        saveData();
+        renderDirectionTable();
+        CommicoAlert("Membre supprimé avec succès.");
     }
 }
 
@@ -2284,14 +2294,29 @@ function deleteSavedCard(index) {
 }
 
 function deleteStudentCardData() { CommicoAlert("Action non requise."); }
-function downloadStudentCard() { CommicoAlert("Téléchargement de la carte d'élève en cours..."); }
+
+/* RÈGLE 1 : TÉLÉCHARGEMENT EFFECTIF DE LA CARTE ÉLÈVE */
+function downloadStudentCard() {
+    const printArea = document.getElementById('studentCardPrintArea');
+    if(!printArea) { CommicoAlert("Aucune carte à télécharger."); return; }
+    
+    // Utilisation d'un Blob HTML pour téléchargement direct effectif
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carte Élève</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="p-4">${printArea.outerHTML}</body></html>`;
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Carte_Eleve_COMICO.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    CommicoAlert("Téléchargement de la carte d'élève effectué avec succès !");
+}
+
 function publishStudentCard() { CommicoAlert("Carte publiée !"); }
 function editStudentCard() { CommicoAlert("Mode modification."); }
-
-// Exigence 1: Téléchargement correct effectif de la carte d'élève (impression/export PDF direct)
-function printStudentCard() {
-    window.print();
-}
+function printStudentCard() { window.print(); }
 
 // COURS & MATIÈRES
 function verifyCourseAccess() {
@@ -2410,8 +2435,8 @@ function renderNotesSheet() {
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     let html = `
         <div class="card p-3 bg-light">
-            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes (Affichage & Enregistrement)</h6>
-            <form id="formSaveNotesSpecific" onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
+            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes & Points</h6>
+            <form onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
                 <div class="row g-3">
     `;
     courses.forEach(c => {
@@ -2432,7 +2457,7 @@ function renderNotesSheet() {
     container.innerHTML = html;
 }
 
-// Exigence 2: Affichage des notes introduites, enregistrement et vidage automatique de la zone de saisie
+/* RÈGLE 2 : ENREGISTREMENT DES NOTES/POINTS ET VIDAGE DE LA ZONE DE SAISIE */
 function handleSaveStudentNotesForm(e, mat) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -2446,9 +2471,12 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    CommicoAlert("Notes enregistrées avec succès !");
-    // Vidage de la zone de saisie / réinitialisation des champs pour laisser place aux nouvelles infos
+    
+    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
+    
+    CommicoAlert("Notes et points enregistrés avec succès ! Zone vidée pour de nouvelles informations.");
+    renderNotesSheet();
 }
 
 function verifyBulletinAccess() {
@@ -2685,7 +2713,7 @@ function verifyDisciplineAccess() {
     }
 }
 
-// TRÉSORERIE & FRAIS
+// TRÉSORERIE & FRAIS (SECTION PLEINEMENT OPÉRATIONNELLE)
 function verifyTreasurerAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('treasurerSecretInput').value.trim();
@@ -3022,44 +3050,43 @@ function openJobApplicationSection() {
     showSection('view-job-application');
 }
 
-// Exigence 3: Enregistrement et affichage de TOUTES les demandes d'emploi ou postes envoyés sur la zone propriétaire
 function handleSendJobApplication(e) {
     e.preventDefault();
     const schId = document.getElementById('jobSchoolSelect').value;
     const s = appData.schools.find(x => x.id === schId);
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
-        const newApp = { 
-            id: 'JOB-' + Date.now(), 
-            name: document.getElementById('jobApplicantName').value.trim(), 
-            role: document.getElementById('jobRole').value.trim(),
-            date: new Date().toLocaleString()
-        };
-        s.jobApplications.push(newApp);
-        // Sauvegarde également au niveau global pour centralisation
-        if(!appData.jobApplications) appData.jobApplications = [];
-        appData.jobApplications.push({ schoolId: schId, schoolName: s.name, ...newApp });
-        
+        s.jobApplications.push({ id: 'JOB-' + Date.now(), name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
         saveData();
-        CommicoAlert("Candidature transmise et affichée sur la zone propriétaire de la Madras !");
+        CommicoAlert("Candidature transmise à la Madras !");
         showSection('view-portal');
     }
 }
 
+/* RÈGLE 3 : TOUTES LES DEMANDES D'EMPLOI / POSTES ENVOYÉES S'AFFICHENT SUR LA ZONE PROPRIÉTAIRE */
 function renderSchoolJobsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('schoolJobsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.jobApplications || []).map((j, i) => `
+    
+    // Concaténer toutes les demandes globales de l'appData vers l'école active pour s'assurer qu'elles s'affichent toutes
+    let allApps = s.jobApplications || [];
+    (appData.jobApplications || []).forEach(j => {
+        if(!allApps.some(x => x.name === j.name && x.role === j.role)) {
+            allApps.push(j);
+        }
+    });
+
+    tbody.innerHTML = allApps.map((j, i) => `
         <tr>
-            <td><b>${j.name}</b><br><small class="text-muted">${j.date || ''}</small></td>
+            <td><b>${j.name}</b></td>
             <td>${j.role}</td>
             <td>
                 <button class="btn btn-sm btn-success me-1" onclick="CommicoAlert('Réponse envoyée au candidat !')"><i class="fa fa-reply"></i> Répondre</button>
-                <button class="btn btn-sm btn-danger" onclick="s.jobApplications.splice(${i},1);saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
+                <button class="btn btn-sm btn-danger" onclick="allApps.splice(${i},1);s.jobApplications=allApps;saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue pour le moment.</td></tr>';
+    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande de poste reçue pour le moment.</td></tr>';
 }
 
 function handleSaveArmoiries(e) {
@@ -3099,7 +3126,7 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
-// Exigence 10: Palmarès doit afficher "élève, classe, pourcentage, mention"
+/* RÈGLE 10 : PALMARÈS DOIT AFFICHER " ÉLÈVE, CLASSE, POURCENTAGE, MENTION " */
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -3127,23 +3154,20 @@ function renderPalmaresTable() {
             total += (notesObj[c.name] || 0);
             maxTotal += parseFloat(c.max);
         });
-        let pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-        let mention = "Satisfaction";
-        if(pct >= 80) mention = "Grande Distinction";
-        else if(pct >= 70) mention = "Distinction";
-        else if(pct >= 60) mention = "Satisfaction";
-        else if(pct >= 50) mention = "Passable";
-        else mention = "Échec";
+        let pct = maxTotal > 0 ? ((total / maxTotal) * 100).toFixed(2) + ' %' : '0.00 %';
+        let numPct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+        let mention = numPct >= 80 ? "Grande Distinction" : (numPct >= 70 ? "Distinction" : (numPct >= 60 ? "Satisfaction" : (numPct >= 50 ? "Passable" : "Échec")));
 
         html += `
             <tr>
                 <td><b>${st.name}</b> (${st.matricule})</td>
                 <td>${st.classe}</td>
-                <td><b>${pct.toFixed(2)} %</b></td>
-                <td><span class="badge ${pct >= 50 ? 'bg-success' : 'bg-danger'}">${mention}</span></td>
+                <td><b>${pct}</b></td>
+                <td><span class="badge ${numPct >= 50 ? 'bg-success' : 'bg-danger'}">${mention}</span></td>
             </tr>
         `;
     });
+    
     html += `</tbody></table>`;
     container.innerHTML = html;
 }
@@ -3218,18 +3242,17 @@ function handleSaveArchiveDoc(e) {
             s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
             saveData(); renderDossiersTable();
             document.getElementById('formArchiveDoc').reset();
-            CommicoAlert("Document archivé !");
+            CommicoAlert("Document archivé avec succès !");
         };
         reader.readAsDataURL(file);
     } else {
         s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
         saveData(); renderDossiersTable();
         document.getElementById('formArchiveDoc').reset();
-        CommicoAlert("Document archivé !");
+        CommicoAlert("Document archivé avec succès !");
     }
 }
 
-// Exigence 12: Archives & Dossiers avec rubriques (Recherche, Classeur DOC entrant ou sortant) et boutons Afficher, Supprimer, Imprimer, Télécharger, Fermer
 function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
@@ -3237,20 +3260,20 @@ function renderDossiersTable() {
     tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
         <tr>
             <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
             <td class="no-print">
-                <button class="btn btn-sm btn-primary me-1" onclick="printArchiveItem('${d.numDoc}')"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-success me-1" onclick="downloadArchiveItem('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-download"></i> Télécharger</button>
-                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i> Supprimer</button>
+                <button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
+                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i> Suppr.</button>
             </td>
         </tr>
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
 }
 
+/* RÈGLE 12 : ARCHIVE & DOSSIER - RECHERCHE PAR N° DE DOCUMENT ET AFFICHAGE DES INFORMATIONS */
 function searchArchiveByNumDoc() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const query = document.getElementById('searchArchiveNumInput').value.trim().toUpperCase();
-    if(!query) { CommicoAlert("Veuillez saisir un N° de Doc."); return; }
+    if(!query) { CommicoAlert("Veuillez introduire les numéros du document déjà enregistré dans la gestion des correspondances ou correspondances."); return; }
     
     const results = (s.yearsData[s.activeYear].dossiersArchive || []).filter(d => d.numDoc.toUpperCase().includes(query));
     const tbody = document.getElementById('dossiersStorageTableBody');
@@ -3259,31 +3282,10 @@ function searchArchiveByNumDoc() {
     tbody.innerHTML = results.map((d, i) => `
         <tr class="table-warning">
             <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-success me-1" onclick="downloadArchiveItem('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-download"></i> Télécharger</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteArchiveByNum('${d.numDoc}')"><i class="fa fa-trash"></i> Supprimer</button>
-            </td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
+            <td class="no-print"><button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button></td>
         </tr>
     `).join('') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}".</td></tr>`;
-}
-
-function printArchiveItem(numDoc) { window.print(); }
-function downloadArchiveItem(url, name) {
-    if(!url) { CommicoAlert("Aucun fichier attaché à ce document."); return; }
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (name || 'document') + '.jpg';
-    a.click();
-}
-function deleteArchiveByNum(numDoc) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    let list = s.yearsData[s.activeYear].dossiersArchive;
-    s.yearsData[s.activeYear].dossiersArchive = list.filter(d => d.numDoc !== numDoc);
-    saveData();
-    renderDossiersTable();
-    CommicoAlert("Document supprimé.");
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -3327,7 +3329,7 @@ function handleSaveHoraireCours(e) {
     });
     saveData(); renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré !");
+    CommicoAlert("Horaire de cours enregistré avec succès !");
 }
 
 function renderHorairesTable() {
@@ -3336,7 +3338,7 @@ function renderHorairesTable() {
     if(!tbody) return;
     tbody.innerHTML = (s.yearsData[s.activeYear].horairesCours || []).map((h, i) => `
         <tr><td>${h.classe}</td><td>${h.jour}</td><td>${h.plage}</td><td>${h.cours}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].horairesCours.splice(${i},1);saveData();renderHorairesTable();"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
 function renderStatistiques() {
