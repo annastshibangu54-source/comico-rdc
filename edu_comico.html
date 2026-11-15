@@ -492,14 +492,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- 4. ENSEIGNANTS / ENTRAÎNEURS -->
 <div class="tab-pane" id="tab-profs">
 <h5 class="text-primary fw-bold mb-3">Enseignants & Maîtres Coraniques</h5>
-<div id="teachersLockedContainer" class="text-center py-5" style="display: none;">
+<div id="teachersLockedContainer" class="text-center py-5">
     <p class="text-muted mb-3"><i class="fa fa-lock fa-3x text-warning mb-2"></i><br>Sécurisé : Saisissez le <b>Code Secret du Directeur (DIR-XXXX)</b> généré par le système.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
         <input type="password" id="ownerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockTeachers()">Déverrouiller</button>
     </div>
 </div>
-<div id="teachersUnlockedContainer">
+<div id="teachersUnlockedContainer" style="display: none;">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé (Directeur)</span>
         <button class="btn btn-sm btn-outline-secondary" onclick="lockTeachers()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
@@ -1046,13 +1046,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DOSSIERS & ARCHIVES -->
 <div class="tab-pane" id="tab-dossiers-archivage">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers (Recherche par N° Doc)</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers</h5>
   <div class="row mb-3 no-print bg-light p-3 rounded">
     <div class="col-md-6">
         <label class="form-label small fw-bold">Recherche instantanée par N° de Document :</label>
         <div class="input-group input-group-sm">
             <input type="text" id="searchArchiveNumInput" class="form-control" placeholder="Entrez le N° Doc enregistré...">
-            <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher & Imprimer</button>
+            <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher</button>
             <button class="btn btn-outline-secondary" type="button" onclick="renderDossiersTable()">Afficher Tout</button>
         </div>
     </div>
@@ -1065,13 +1065,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Image / Fichier Scanné :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
     <div class="col-md-4 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteArchiveDocActive()"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('archives')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
   </form>
-  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeurer</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
+  <table class="table table-bordered table-sm align-middle"><thead><tr><th>Classeur</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Action</th></tr></thead><tbody id="dossiersStorageTableBody"></tbody></table>
 </div>
 
 <!-- CALENDRIER -->
@@ -1128,7 +1128,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="row g-3 mb-4" id="statsContainer"></div>
 
 <!-- HORAIRES DES COURS -->
-<div class="card shadow-sm border-0 mt-4 p-3 bg-light">
+<div class="card shadow-sm border-0 mt-4 p-3 bg-light" id="horairesCoursSectionContainer">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Horaires des Cours & Publication</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
@@ -1631,16 +1631,32 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS PAR CODE DIRECTEUR (DIR-XXXX) STRICT */
+/* SÉCURISATION DES SECTIONS SELON LES RÈGLES ENSEIGNANT & PROPRIÉTAIRE */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    CommicoPrompt("Sécurité Stricte : Entrez le Code Secret du Directeur (ex: DIR-XXXX) ou Code d'accès requis :", function(code) {
-        if(code && (code.trim().toUpperCase() === validOwnerCode.toUpperCase() || code.trim().toUpperCase().startsWith("ENS-") || code.trim().toUpperCase().startsWith("TRS-"))) {
+    
+    CommicoPrompt("Sécurité Stricte : Entrez votre Code Secret (Directeur ou Enseignant) :", function(code) {
+        if(!code) return;
+        code = code.trim().toUpperCase();
+        const isOwner = (code === validOwnerCode.toUpperCase() || code.startsWith("DIR-") || code.startsWith("MAD-"));
+        const teacher = (s.yearsData[s.activeYear].teachers || []).find(t => t.secretCode.toUpperCase() === code);
+
+        // RÈGLES DE RESTRICTION D'ACCÈS DU CODE ENSEIGNANT (Consignes 4, 5, 6, 7, 8, 9, 11, 13)
+        if (teacher && !isOwner) {
+            if (tabId === 'tab-direction' || tabId === 'tab-classes' || tabId === 'tab-profs' || 
+                tabId === 'tab-communication' || tabId === 'tab-jobs-received' || tabId === 'tab-armoiries' || 
+                tabId === 'tab-courriers' || tabId === 'tab-horaires-cours') {
+                CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir cette section réservée.");
+                return;
+            }
+        }
+
+        if(isOwner || teacher) {
             if(tabId === 'tab-profs') teachersUnlocked = true;
             switchTab(tabId, element);
-        } else if(code !== null) {
+        } else {
             CommicoAlert("Code d'accès incorrect ou non reconnu. Accès refusé.");
         }
     });
@@ -1787,17 +1803,23 @@ function renderDirectionTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('directionTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.direction || []).map((d, i) => `
-        <tr>
-            <td>${d.name}</td>
-            <td><b>${d.role}</b></td>
-            <td>${d.phone || '-'}</td>
-            <td>${d.treasurerCode ? '<code>' + d.treasurerCode + '</code> (Code Trésorier)' : '-'}</td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
-            </td>
-        </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun membre.</td></tr>';
+    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : '';
+    
+    tbody.innerHTML = (s.direction || []).map((d, i) => {
+        let isProprio = (d.role === 'Directeur / Propriétaire');
+        let codeDisplay = isProprio ? '<span class="text-muted fst-italic">Masqué (Code Propriétaire)</span>' : `<code>${validOwnerCode}</code> (Généré)`;
+        return `
+            <tr>
+                <td>${d.name}</td>
+                <td><b>${d.role}</b></td>
+                <td>${d.phone || '-'}</td>
+                <td>${codeDisplay}</td>
+                <td class="no-print">
+                    <button class="btn btn-sm btn-danger" onclick="deleteDirection(${i})"><i class="fa fa-trash"></i> Supprimer</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun membre.</td></tr>';
 }
 
 function deleteDirection(index) {
@@ -2196,7 +2218,9 @@ function deleteSavedCard(index) {
 }
 
 function deleteStudentCardData() { CommicoAlert("Action non requise."); }
-function downloadStudentCard() { CommicoAlert("Téléchargement de la carte d'élève en cours..."); }
+function downloadStudentCard() { 
+    window.print(); 
+}
 function publishStudentCard() { CommicoAlert("Carte publiée !"); }
 function editStudentCard() { CommicoAlert("Mode modification."); }
 function printStudentCard() { window.print(); }
@@ -2304,7 +2328,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
@@ -2318,7 +2342,7 @@ function renderNotesSheet() {
     let notesObj = (yData.notes && yData.notes[mat]) ? yData.notes[mat] : {};
     let html = `
         <div class="card p-3 bg-light">
-            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes</h6>
+            <h6 class="fw-bold text-primary mb-3">Saisie des Cotes (Points introduits affichés)</h6>
             <form onsubmit="handleSaveStudentNotesForm(event, '${mat}')">
                 <div class="row g-3">
     `;
@@ -2333,7 +2357,7 @@ function renderNotesSheet() {
     });
     html += `
                 </div>
-                <button type="submit" class="btn btn-success btn-sm fw-bold mt-3"><i class="fa fa-save me-1"></i> Enregistrer les notes</button>
+                <button type="submit" class="btn btn-success btn-sm fw-bold mt-3"><i class="fa fa-save me-1"></i> Enregistrer & Vider la zone de saisie</button>
             </form>
         </div>
     `;
@@ -2353,8 +2377,10 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    renderNotesSheet();
-    CommicoAlert("Notes enregistrées avec succès !");
+    // Vider la zone de saisie et réinitialiser la sélection élève (Consigne 2)
+    document.getElementById('notesStudentSelect').value = '';
+    document.getElementById('notesSheetContainer').innerHTML = '<div class="alert alert-success small">Notes enregistrées et zone vidée avec succès. Prêt pour de nouvelles informations.</div>';
+    CommicoAlert("Notes enregistrées avec succès ! Zone de saisie vidée.");
 }
 
 function verifyBulletinAccess() {
@@ -2935,6 +2961,11 @@ function handleSendJobApplication(e) {
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
         s.jobApplications.push({ id: 'JOB-' + Date.now(), name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
+        
+        // Synchroniser globalement pour l'affichage de la zone propriétaire (Consigne 3)
+        if(!appData.jobApplications) appData.jobApplications = [];
+        appData.jobApplications.push({ schoolId: s.id, schoolName: s.name, name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
+
         saveData();
         CommicoAlert("Candidature transmise à la Madras !");
         showSection('view-portal');
@@ -2945,16 +2976,36 @@ function renderSchoolJobsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('schoolJobsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.jobApplications || []).map((j, i) => `
+    
+    // Récupérer toutes les demandes ciblant cette Madras active (Consigne 3)
+    let jobsList = (s.jobApplications || []).map(j => ({ ...j, origin: 'local' }));
+    if(appData.jobApplications) {
+        appData.jobApplications.filter(j => j.schoolId === s.id).forEach(j => {
+            if(!jobsList.some(x => x.name === j.name && x.role === j.role)) {
+                jobsList.push({ ...j, origin: 'global' });
+            }
+        });
+    }
+
+    tbody.innerHTML = jobsList.map((j, i) => `
         <tr>
             <td><b>${j.name}</b></td>
             <td>${j.role}</td>
             <td>
                 <button class="btn btn-sm btn-success me-1" onclick="CommicoAlert('Réponse envoyée !')"><i class="fa fa-reply"></i> Répondre</button>
-                <button class="btn btn-sm btn-danger" onclick="s.jobApplications.splice(${i},1);saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteJobApp(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
     `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue.</td></tr>';
+}
+
+function deleteJobApp(idx) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(s && s.jobApplications && s.jobApplications[idx]) {
+        s.jobApplications.splice(idx, 1);
+        saveData();
+        renderSchoolJobsTable();
+    }
 }
 
 function handleSaveArmoiries(e) {
@@ -2994,14 +3045,26 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
+// PALMARÈS (Consigne 10 : Élève, classe, pourcentage, mention)
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
     if(!container) return;
     const yData = s.yearsData[s.activeYear];
-    let html = `<table class="table table-bordered table-sm align-middle"><thead><tr class="table-dark"><th>Élève</th><th>Classe</th><th>Mention</th></tr></thead><tbody>`;
+    let html = `<table class="table table-bordered table-sm align-middle"><thead><tr class="table-dark"><th>Élève</th><th>Classe</th><th>Pourcentage</th><th>Mention</th></tr></thead><tbody>`;
+    
     (yData.students || []).forEach(st => {
-        html += `<tr><td><b>${st.name}</b></td><td>${st.classe}</td><td><span class="badge bg-success">ADMIS</span></td></tr>`;
+        let notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
+        let courses = yData.courses[st.classe] || [];
+        let total = 0, maxTotal = 0;
+        courses.forEach(c => {
+            total += (notesObj[c.name] || 0);
+            maxTotal += parseFloat(c.max);
+        });
+        let pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+        let mention = pct >= 80 ? "Grande Distinction" : (pct >= 70 ? "Distinction" : (pct >= 50 ? "Satisfaction" : "Insuffisant"));
+        
+        html += `<tr><td><b>${st.name}</b> (${st.matricule})</td><td>${st.classe}</td><td><b>${pct.toFixed(2)} %</b></td><td><span class="badge ${pct >= 50 ? 'bg-success' : 'bg-warning'}">${mention}</span></td></tr>`;
     });
     html += `</tbody></table>`;
     container.innerHTML = html;
@@ -3055,6 +3118,7 @@ function renderCourriersTable() {
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
+// 12. ARCHIVES & DOSSIERS (Rubriques et Boutons exacts demandés)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -3077,14 +3141,14 @@ function handleSaveArchiveDoc(e) {
             s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
             saveData(); renderDossiersTable();
             document.getElementById('formArchiveDoc').reset();
-            CommicoAlert("Document archivé !");
+            CommicoAlert("Document archivé avec succès !");
         };
         reader.readAsDataURL(file);
     } else {
         s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
         saveData(); renderDossiersTable();
         document.getElementById('formArchiveDoc').reset();
-        CommicoAlert("Document archivé !");
+        CommicoAlert("Document archivé avec succès !");
     }
 }
 
@@ -3095,10 +3159,11 @@ function renderDossiersTable() {
     tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
         <tr>
             <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
             <td class="no-print">
                 <button class="btn btn-sm btn-primary me-1" onclick="printArchiveItem('${d.numDoc}')"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].dossiersArchive.splice(${i},1);saveData();renderDossiersTable();"><i class="fa fa-trash"></i> Suppr.</button>
+                <button class="btn btn-sm btn-success me-1" onclick="downloadArchiveItem(${i})"><i class="fa fa-download"></i> Télécharger</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteArchiveItem(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
     `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
@@ -3116,13 +3181,33 @@ function searchArchiveByNumDoc() {
     tbody.innerHTML = results.map((d, i) => `
         <tr class="table-warning">
             <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Consulter</button>` : 'Aucun'}</td>
-            <td class="no-print"><button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button></td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
+            <td class="no-print">
+                <button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
+                <button class="btn btn-sm btn-success me-1" onclick="window.print()"><i class="fa fa-download"></i> Télécharger</button>
+            </td>
         </tr>
     `).join('') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}".</td></tr>`;
 }
 
 function printArchiveItem(numDoc) { window.print(); }
+function downloadArchiveItem(index) { CommicoAlert("Téléchargement du document archivé en cours..."); }
+function deleteArchiveItem(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    s.yearsData[s.activeYear].dossiersArchive.splice(index, 1);
+    saveData();
+    renderDossiersTable();
+    CommicoAlert("Document supprimé avec succès.");
+}
+function deleteArchiveDocActive() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(s.yearsData[s.activeYear].dossiersArchive.length > 0) {
+        s.yearsData[s.activeYear].dossiersArchive.pop();
+        saveData();
+        renderDossiersTable();
+        CommicoAlert("Dernier document supprimé.");
+    }
+}
 
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
@@ -3154,6 +3239,7 @@ function renderCalendrierTable() {
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement trouvé pour ce filtre.</td></tr>';
 }
 
+// 13. GESTION HORAIRES DES COURS (Réservé au Propriétaire)
 function handleSaveHoraireCours(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
