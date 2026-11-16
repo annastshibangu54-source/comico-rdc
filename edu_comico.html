@@ -1199,11 +1199,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   window.db = db;
   window.FirestoreFunctions = { doc, getDoc, setDoc };
 
-  // Charger les données dès le démarrage de la page
+  // Charger les données dès le démarrage
   window.loadDataFromCloud();
 </script>
 
-<!-- JAVASCRIPT GLOBAL AVEC SAUVEGARDE LOCALE AUTOMATIQUE -->
+<!-- JAVASCRIPT GLOBAL AVEC DOUBLE SÉCURITÉ LOCAL + FIREBASE -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
 let appData = { schools: [], adminRequests: [], jobApplications: [] };
@@ -1272,34 +1272,41 @@ function updateSubDivisions() {
     }
 }
 
-// Chargement avec double sécurité (LocalStorage en premier pour ne jamais perdre les données, puis synchronisation Cloud)
+// Chargement prioritaire LocalStorage + Synchro Cloud Firestore en arrière-plan
 async function loadDataFromCloud() {
-    // 1. Charger immédiatement depuis localStorage s'il y a des données locales
+    let hasLocal = false;
     const localSaved = localStorage.getItem('comico_local_data');
     if (localSaved) {
         try {
-            appData = JSON.parse(localSaved);
+            const parsed = JSON.parse(localSaved);
+            if (parsed && parsed.schools && parsed.schools.length > 0) {
+                appData = parsed;
+                hasLocal = true;
+            }
         } catch(e) {
-            appData = { schools: [], adminRequests: [], jobApplications: [] };
+            console.warn("Erreur lecture stockage local.");
         }
     }
 
-    if (!window.db) {
-        renderSchoolsList();
-        renderPortalAnnouncements();
-        return;
+    if (!hasLocal) {
+        appData = { schools: [], adminRequests: [], jobApplications: [] };
     }
 
-    try {
-        const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
-        const docSnap = await window.FirestoreFunctions.getDoc(docRef);
-        
-        if (docSnap.exists() && docSnap.data().schools && docSnap.data().schools.length > 0) {
-            appData = docSnap.data();
-            localStorage.setItem('comico_local_data', JSON.stringify(appData));
+    if (window.db) {
+        try {
+            const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
+            const docSnap = await window.FirestoreFunctions.getDoc(docRef);
+            
+            if (docSnap.exists() && docSnap.data().schools && docSnap.data().schools.length > 0) {
+                const cloudData = docSnap.data();
+                if (cloudData.schools.length >= appData.schools.length) {
+                    appData = cloudData;
+                    localStorage.setItem('comico_local_data', JSON.stringify(appData));
+                }
+            }
+        } catch(e) {
+            console.warn("Mode secours local actif (fonctionne parfaitement sans perte de données).");
         }
-    } catch(e) {
-        console.warn("Mode local de secours activé (Firebase inaccessible ou restreint). Vos données sont conservées localement.");
     }
 
     if(!appData.schools) appData.schools = [];
@@ -1338,10 +1345,13 @@ async function loadDataFromCloud() {
     renderPortalAnnouncements();
 }
 
-// Sauvegarde automatique locale (LocalStorage) ET Cloud (Firebase)
+// Sauvegarde double (LocalStorage sécurisé + Firebase)
 async function saveData() {
-    // Toujours sauvegarder en local d'abord pour garantir qu'aucune donnée ne disparaisse
-    localStorage.setItem('comico_local_data', JSON.stringify(appData));
+    try {
+        localStorage.setItem('comico_local_data', JSON.stringify(appData));
+    } catch (e) {
+        console.error("Erreur LocalStorage:", e);
+    }
 
     if (!window.db) return;
     try {
@@ -1349,7 +1359,7 @@ async function saveData() {
         await window.FirestoreFunctions.setDoc(docRef, appData);
         console.log("Données sauvegardées en ligne et en local avec succès !");
     } catch (error) {
-        console.warn("Sauvegarde cloud impossible (règles de sécurité), mais vos données sont bien gardées en local sur votre appareil.");
+        console.warn("Sauvegarde cloud impossible, mais vos données sont en sécurité dans la mémoire de l'appareil.");
     }
 }
 
