@@ -1656,6 +1656,7 @@ function promptSecureTabAccess(tabId, element) {
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code);
 
+        // RÈGLE STRICTE : CODE ENSEIGNANT NE PEUT PAS OUVRIR CES SECTIONS
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
             'tab-jobs-received', 'tab-armoiries', 'tab-courriers', 'tab-dossiers-archivage'
@@ -1738,6 +1739,7 @@ function switchTab(tabId, element) {
 function refreshAllDropdowns() {
     if(!activeSchoolId) return;
     const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s || !s.yearsData || !s.yearsData[s.activeYear]) return;
     const yData = s.yearsData[s.activeYear];
     
     const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -1764,7 +1766,8 @@ function refreshAllDropdowns() {
     renderDossiersTable();
     renderCalendrierTable();
     renderHorairesTable();
-    if(document.getElementById('jobsUnlockedContainer').style.display !== 'none') {
+    const jobsUnlocked = document.getElementById('jobsUnlockedContainer');
+    if(jobsUnlocked && jobsUnlocked.style.display !== 'none') {
         renderSchoolJobsTable();
     }
     renderArmoiriesDisplay();
@@ -1772,6 +1775,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
+// 1. DIRECTION (Propriétaire caché, reste visible et généré)
 function onDirRoleChange(val) {
     const container = document.getElementById('treasurerCodeContainer');
     const input = document.getElementById('dirTreasurerCode');
@@ -1848,6 +1852,7 @@ function deleteDirection(index) {
     }
 }
 
+// 2. CLASSES
 function handleSaveClass(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1896,6 +1901,7 @@ function deleteClass(index) {
     refreshAllDropdowns();
 }
 
+// 3. SALLE DE CLASSE
 function verifySalleClasseAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('salleClasseAuthInput').value.trim();
@@ -1926,6 +1932,7 @@ function verifySalleClasseAccess() {
     }
 }
 
+// 4. ENSEIGNANTS
 function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const input = document.getElementById('ownerSecretInput').value.trim();
@@ -2338,7 +2345,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
@@ -2387,6 +2394,7 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
+    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
@@ -3025,6 +3033,7 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
+// PALMARÈS : affiche élève, classe, pourcentage, mention
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -3098,6 +3107,7 @@ function renderCourriersTable() {
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
+// ARCHIVES & DOSSIERS (AVEC LES BOUTONS DEMANDÉS)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -3237,6 +3247,7 @@ function renderHorairesTable() {
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
+// STATISTIQUES SANS CODE
 function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
