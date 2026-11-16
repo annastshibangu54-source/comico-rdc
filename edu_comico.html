@@ -1,115 +1,53 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<title>COMICO-RDC Plateforme Intégrée de Gestion des Madras (Écoles Islamiques) en République Démocratique du Congo</title>
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
-<!-- Google Web Fonts-->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<!-- Icon Font Stylesheet -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
-<!-- Customized Bootstrap Stylesheet -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-.view-section { display: none; }
-.view-section.active { display: block; }
-body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
-.sidebar-menu .list-group-item { font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; margin-bottom: 4px; }
-.sidebar-menu .list-group-item.active { background-color: #ffc107; color: #000; }
-.school-logo-display { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #ffc107; }
-.params-submenu { padding-left: 10px; background-color: #f8f9fa; border-left: 3px solid #ffc107; margin-top: 5px; display: none; }
-.params-submenu.show { display: block; }
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-.action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-
-/* POPUP CODE SECRET DESIGN */
-.secret-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
-.secret-modal-card { background: #fff; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-.secret-code-badge { font-size: 26px; font-weight: 800; color: #ffc107; letter-spacing: 2px; background: #fff3cd; padding: 10px 20px; border-radius: 8px; border: 2px dashed #ffc107; display: inline-block; margin: 15px 0; }
-
-/* MODALE COMMICO CUSTOM */
-.commico-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 10500; }
-.commico-modal-card { background: #fff; padding: 25px; border-radius: 12px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-
-@media print {
-  body * { visibility: hidden; }
-  .tab-pane.active, .tab-pane.active * { visibility: visible; }
-  .tab-pane.active { position: absolute; left: 0; top: 0; width: 100%; background: #fff !important; padding: 0 !important; }
-  .no-print, .navbar, .sidebar-menu, .action-bar, form, .btn, .card-header { display: none !important; }
-}
-</style>
+    <meta charset="UTF-8">
+    <title>COMICO-RDC - Gestion en Ligne Firebase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-light">
 
-<!-- NAVIGATION -->
-<nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
-    <a href="#" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-        <h2 class="m-0 text-warning">COMICO-RDC (En Ligne Firebase)</h2>
-    </a>
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand mb-0 h1"><i class="fa fa-school me-2"></i> COMICO-RDC (Base de Données Firebase)</span>
 </nav>
 
-<!-- MODALE MESSAGE -->
-<div id="commicoCustomModal" class="commico-modal-overlay">
-  <div class="commico-modal-card">
-    <h5 class="fw-bold text-warning mb-3"><i class="fa fa-info-circle me-1"></i> Commico-RDC</h5>
-    <p id="commicoModalMessage" class="text-muted small mb-3"></p>
-    <div id="commicoModalInputArea" class="mb-3" style="display:none;">
-      <input type="password" id="commicoModalInput" class="form-control form-control-sm text-center" placeholder="Saisir votre code...">
+<div class="container my-5">
+    <div class="row">
+        <!-- Formulaire d'enregistrement -->
+        <div class="col-md-5 mb-4">
+            <div class="card shadow border-0 p-4">
+                <h4 class="text-warning fw-bold mb-3">Enregistrer une Madras</h4>
+                <form id="schoolForm" onsubmit="saveSchoolToFirebase(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nom de la Madras :</label>
+                        <input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Province :</label>
+                        <input type="text" id="schoolProvince" class="form-control" placeholder="Ex: Kinshasa" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold text-dark">
+                        <i class="fa fa-cloud-upload-alt me-1"></i> Enregistrer sur Firebase
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste affichée -->
+        <div class="col-md-7">
+            <div class="card shadow border-0 p-4">
+                <h4 class="text-dark fw-bold mb-3">Madras Enregistrées en Ligne</h4>
+                <div id="statusMessage" class="alert alert-info py-2 small">Connexion à Firebase en cours...</div>
+                <div id="schoolsList" class="list-group">
+                    <!-- Les écoles s'afficheront ici -->
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-      <button id="commicoModalBtnOk" class="btn btn-warning btn-sm fw-bold px-4 me-2 text-dark">OK</button>
-      <button id="commicoModalBtnCancel" class="btn btn-secondary btn-sm fw-bold px-3" style="display:none;" onclick="closeCommicoModalCancel()">Annuler</button>
-    </div>
-  </div>
 </div>
 
-<!-- HEADER -->
-<div class="container-fluid bg-warning py-5 mb-5">
-<div class="container py-5 text-center">
-<h1 class="display-3 text-dark fw-bold">Plateforme Connectée Firebase</h1>
-<p class="fs-4 text-dark">Base de données en ligne synchronisée en temps réel</p>
-</div>
-</div>
-
-<div class="container-fluid py-4 px-lg-5">
-<div class="row g-4 mb-4">
-<div class="col-md-6">
-<div class="card h-100 shadow-sm border-0 text-center p-4 bg-light">
-<i class="fa fa-school fa-3x text-warning mb-3"></i>
-<h4 class="fw-bold">Enregistrer une Madras en Ligne</h4>
-<p class="text-muted small">Les données seront envoyées directement sur votre serveur Firebase Cloud Firestore.</p>
-<button onclick="openSchoolForm()" class="btn btn-warning btn-sm mt-2 fw-bold text-dark">Créer une Madras</button>
-</div>
-</div>
-</div>
-
-<!-- LISTE DES ÉCOLES EN LIGNE -->
-<div class="text-center mt-4">
-<h1 class="mb-4">Liste des Madras Enregistrées en Ligne (Firebase)</h1>
-</div>
-<div id="schoolsListContainer" class="row g-3 mb-5"></div>
-
-<!-- FORMULAIRE CRÉATION -->
-<div id="view-create-school" class="view-section mt-4">
-<div class="card shadow-sm border-0">
-<div class="card-header bg-warning text-dark"><h4 class="m-0 text-dark fw-bold">Enregistrement Officiel (Firebase)</h4></div>
-<div class="card-body p-4">
-<form id="formCreateSchool" onsubmit="handleSaveSchool(event)">
-<div class="mb-3"><label class="form-label fw-bold">Nom Officiel de la Madras : *</label><input type="text" id="schoolName" class="form-control" placeholder="Ex: Madras Al-Rahma" required></div>
-<div class="mb-3"><label class="form-label fw-bold">Province : *</label><input type="text" id="schoolProvince" class="form-control" placeholder="Ex: Kinshasa" required></div>
-<button type="submit" class="btn btn-success fw-bold px-4"><i class="fa fa-save me-1"></i> Enregistrer sur Firebase</button>
-<button type="button" class="btn btn-secondary fw-bold px-4" onclick="location.reload()">Annuler</button>
-</form>
-</div>
-</div>
-</div>
-</div>
-
-<!-- FIREBASE SDK & LOGIQUE -->
+<!-- SDK Firebase (Modules officiels) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -126,93 +64,111 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // Rendre les fonctions globales pour le formulaire
   window.db = db;
-  window.FirestoreFunctions = { doc, getDoc, setDoc };
+  window.FirestoreTools = { doc, getDoc, setDoc };
 
-  // Charger les données depuis Firebase au démarrage
-  window.loadDataFromCloud();
+  // Charger les données dès l'ouverture
+  loadSchoolsFromFirebase();
 </script>
 
 <script>
-let appData = { schools: [] };
+  async function loadSchoolsFromFirebase() {
+    const statusDiv = document.getElementById('statusMessage');
+    const listDiv = document.getElementById('schoolsList');
 
-function CommicoAlert(msg) {
-    const modal = document.getElementById('commicoCustomModal');
-    document.getElementById('commicoModalMessage').innerText = msg;
-    document.getElementById('commicoModalInputArea').style.display = 'none';
-    document.getElementById('commicoModalBtnCancel').style.display = 'none';
-    const okBtn = document.getElementById('commicoModalBtnOk');
-    okBtn.innerText = "OK";
-    okBtn.onclick = function() { modal.style.display = 'none'; };
-    modal.style.display = 'flex';
-}
-
-function openSchoolForm() {
-    document.getElementById('view-create-school').style.display = 'block';
-}
-
-async function loadDataFromCloud() {
-    if (window.db) {
-        try {
-            const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
-            const docSnap = await window.FirestoreFunctions.getDoc(docRef);
-            if (docSnap.exists()) {
-                appData = docSnap.data();
-            }
-        } catch(e) {
-            console.error("Erreur de connexion Firebase :", e);
+    // Petite attente pour s'assurer que window.db est initialisé par le module
+    setTimeout(async () => {
+        if (!window.db) {
+            statusDiv.className = "alert alert-danger py-2 small";
+            statusDiv.innerText = "Erreur : Firebase n'a pas pu se charger (vérifiez votre connexion ou l'utilisation d'un serveur local type Live Server).";
+            return;
         }
-    }
-    if(!appData.schools) appData.schools = [];
-    renderSchoolsList();
-}
 
-async function saveData() {
-    if (!window.db) return;
-    try {
-        const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
-        await window.FirestoreFunctions.setDoc(docRef, appData);
-        CommicoAlert("Données sauvegardées en ligne sur Firebase avec succès !");
-    } catch (error) {
-        CommicoAlert("Erreur lors de l'enregistrement en ligne : " + error.message);
-    }
-}
+        try {
+            const docRef = window.FirestoreTools.doc(window.db, "comicoData", "mainStore");
+            const docSnap = await window.FirestoreTools.getDoc(docRef);
 
-async function handleSaveSchool(e) {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                renderList(data.schools || []);
+                statusDiv.className = "alert alert-success py-2 small";
+                statusDiv.innerText = "Connecté à Firebase - Données chargées avec succès.";
+            } else {
+                statusDiv.className = "alert alert-warning py-2 small";
+                statusDiv.innerText = "Connexion établie, mais aucune donnée enregistrée pour le moment.";
+                renderList([]);
+            }
+        } catch (error) {
+            statusDiv.className = "alert alert-danger py-2 small";
+            statusDiv.innerText = "Erreur de lecture Firebase : " + error.message;
+        }
+    }, 1000);
+  }
+
+  async function saveSchoolToFirebase(e) {
     e.preventDefault();
     const name = document.getElementById('schoolName').value.trim();
     const province = document.getElementById('schoolProvince').value.trim();
-    
-    if(!appData.schools) appData.schools = [];
-    appData.schools.push({
-        id: 'SCH-' + Date.now(),
-        name,
-        province,
-        secretCode: 'MAD-' + Math.floor(1000 + Math.random() * 9000)
-    });
-    
-    await saveData();
-    renderSchoolsList();
-    document.getElementById('view-create-school').style.display = 'none';
-}
+    const statusDiv = document.getElementById('statusMessage');
 
-function renderSchoolsList() {
-    const container = document.getElementById('schoolsListContainer');
-    if(!container) return;
-    if(!appData.schools || !appData.schools.length) {
-        container.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">Aucune Madras enregistrée en ligne.</div></div>';
+    if (!window.db) {
+        alert("Firebase n'est pas prêt.");
         return;
     }
-    container.innerHTML = appData.schools.map(s => `
-        <div class="col-md-6">
-            <div class="card shadow-sm border-start border-4 border-warning p-3 bg-light">
-                <h5 class="fw-bold text-warning mb-1">${s.name}</h5>
-                <p class="small text-muted mb-1"><b>Province :</b> ${s.province} | <b>Code :</b> <code>${s.secretCode}</code></p>
-            </div>
+
+    try {
+        statusDiv.className = "alert alert-info py-2 small";
+        statusDiv.innerText = "Enregistrement en cours sur Firebase...";
+
+        const docRef = window.FirestoreTools.doc(window.db, "comicoData", "mainStore");
+        
+        // Récupérer d'abord les données existantes
+        const docSnap = await window.FirestoreTools.getDoc(docRef);
+        let schools = [];
+        if (docSnap.exists() && docSnap.data().schools) {
+            schools = docSnap.data().schools;
+        }
+
+        // Ajouter la nouvelle école
+        schools.push({
+            id: 'SCH-' + Date.now(),
+            name: name,
+            province: province,
+            code: 'MAD-' + Math.floor(1000 + Math.random() * 9000)
+        });
+
+        // Sauvegarder dans Firestore
+        await window.FirestoreTools.setDoc(docRef, { schools: schools });
+
+        // Mettre à jour l'affichage
+        renderList(schools);
+        document.getElementById('schoolForm').reset();
+        statusDiv.className = "alert alert-success py-2 small";
+        statusDiv.innerText = "Madras enregistrée et sauvegardée en ligne sur Firebase avec succès !";
+    } catch (error) {
+        statusDiv.className = "alert alert-danger py-2 small";
+        statusDiv.innerText = "Erreur d'enregistrement : " + error.message;
+    }
+  }
+
+  function renderList(schools) {
+    const listDiv = document.getElementById('schoolsList');
+    if (!schools || schools.length === 0) {
+        listDiv.innerHTML = '<div class="text-muted text-center py-3">Aucune Madras enregistrée.</div>';
+        return;
+    }
+
+    listDiv.innerHTML = schools.map(s => `
+        <div class="list-group-item list-group-item-action mb-2 border rounded shadow-sm">
+            <h5 class="mb-1 text-warning fw-bold">${s.name}</h5>
+            <p class="mb-1 small text-muted"><b>Province :</b> ${s.province}</p>
+            <span class="badge bg-dark">Code : ${s.code}</span>
         </div>
     `).join('');
-}
+  }
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
