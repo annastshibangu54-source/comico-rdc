@@ -333,10 +333,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- DEMANDE EMPLOI / MISSION -->
+<!-- DEMANDE EMPLOI / MISSION / CANDIDATURE -->
 <div id="view-job-application" class="view-section">
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
-<div class="card shadow-sm border-0">
+<div class="card shadow-sm border-0 mb-4">
 <div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold">Soumettre une Candidature / Poste</h4></div>
 <div class="card-body p-4">
 <form onsubmit="handleSendJobApplication(event)">
@@ -345,11 +345,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="col-md-6"><label>Nom Complet :</label><input type="text" id="jobApplicantName" class="form-control" required></div>
 <div class="col-md-6"><label>Poste Sollicité / Fonction :</label><input type="text" id="jobRole" class="form-control" required></div>
 <div class="col-12">
-<button type="submit" class="btn btn-warning fw-bold"><i class="fa fa-paper-plane me-1"></i> Envoyer</button>
+<button type="submit" class="btn btn-warning fw-bold"><i class="fa fa-paper-plane me-1"></i> Envoyer ma candidature</button>
 <button type="button" class="btn btn-secondary fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
 </div>
 </form>
+</div>
+</div>
+
+<!-- SECTION VOIR LA RÉPONSE POUR LE CANDIDAT -->
+<div class="card shadow-sm border-0">
+<div class="card-header bg-info text-white"><h4 class="m-0 fw-bold text-white"><i class="fa fa-search me-2"></i>Voir la réponse (Suivi de Candidature)</h4></div>
+<div class="card-body p-4">
+<div class="input-group mb-3" style="max-width: 450px;">
+    <input type="text" id="applicantSecretCodeSearch" class="form-control" placeholder="Entrez votre code secret de suivi (ex: CAND-XXXX)...">
+    <button class="btn btn-primary fw-bold" type="button" onclick="checkCandidateResponse()"><i class="fa fa-eye me-1"></i> Consulter la réponse</button>
+</div>
+<div id="candidateResponseDisplayArea" class="mt-3"></div>
 </div>
 </div>
 </div>
@@ -392,8 +404,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
 </div>
@@ -982,7 +994,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
-    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Code Secret Candidat</th><th>Réponse du Propriétaire</th><th>Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
 </div>
 <div class="mt-3 no-print">
     <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -1134,13 +1146,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
-<!-- STATISTIQUES & ANALYTIQUE (SANS CODE) -->
-<div class="tab-pane" id="tab-statistiques">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code)</h5>
-<div class="row g-3 mb-4" id="statsContainer"></div>
-
-<!-- HORAIRES DES COURS (PROPRIÉTAIRE UNIQUEMENT) -->
-<div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light">
+<!-- HORAIRES DES COURS -->
+<div class="tab-pane" id="tab-horaires-cours">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Réservé au Propriétaire)</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
@@ -1157,7 +1164,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     </div>
   </form>
   <table class="table table-bordered table-sm align-middle bg-white"><thead><tr><th>Classe</th><th>Jour</th><th>Heure</th><th>Cours</th><th class="no-print">Action</th></tr></thead><tbody id="horairesTableBody"></tbody></table>
+
+  <div class="action-bar mt-3 no-print">
+      <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 </div>
+
+<!-- STATISTIQUES & ANALYTIQUE (SANS CODE) -->
+<div class="tab-pane" id="tab-statistiques">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-chart-pie me-2"></i>Tableau de Bord Analytique COMICO (Sans Code)</h5>
+<div class="row g-3 mb-4" id="statsContainer"></div>
 
 <div class="action-bar mt-3 no-print">
     <button class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -2337,7 +2353,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
@@ -2386,7 +2402,6 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
@@ -2965,10 +2980,45 @@ function handleSendJobApplication(e) {
     const s = appData.schools.find(x => x.id === schId);
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
-        s.jobApplications.push({ id: 'JOB-' + Date.now(), name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
+        const secretCode = 'CAND-' + Math.floor(1000 + Math.random() * 9000);
+        s.jobApplications.push({ 
+            id: 'JOB-' + Date.now(), 
+            name: document.getElementById('jobApplicantName').value.trim(), 
+            role: document.getElementById('jobRole').value.trim(),
+            secretCode: secretCode,
+            response: "En attente de traitement par le propriétaire..."
+        });
         saveData();
-        CommicoAlert("Candidature transmise à la Madras !");
+        CommicoAlert("Candidature transmise avec succès !\n\nVotre Code Secret de suivi est : " + secretCode + "\nConservez-le bien pour voir la réponse.");
         showSection('view-portal');
+    }
+}
+
+function checkCandidateResponse() {
+    const code = document.getElementById('applicantSecretCodeSearch').value.trim().toUpperCase();
+    const area = document.getElementById('candidateResponseDisplayArea');
+    if(!code) { CommicoAlert("Veuillez entrer votre code secret de suivi."); return; }
+    
+    let found = null;
+    appData.schools.forEach(s => {
+        if(s.jobApplications) {
+            const j = s.jobApplications.find(x => x.secretCode && x.secretCode.toUpperCase() === code);
+            if(j) { found = { schoolName: s.name, ...j }; }
+        }
+    });
+
+    if(found) {
+        area.innerHTML = `
+            <div class="card p-3 border-success bg-light">
+                <h6 class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i> Candidature trouvée (${found.schoolName})</h6>
+                <p class="mb-1"><b>Candidat :</b> ${found.name}</p>
+                <p class="mb-1"><b>Poste :</b> ${found.role}</p>
+                <hr>
+                <p class="mb-0"><b>Réponse de la Madras :</b> <span class="text-primary fw-bold">${found.response}</span></p>
+            </div>
+        `;
+    } else {
+        area.innerHTML = `<div class="alert alert-danger small">Aucune candidature ne correspond au code secret "${code}".</div>`;
     }
 }
 
@@ -2980,12 +3030,27 @@ function renderSchoolJobsTable() {
         <tr>
             <td><b>${j.name}</b></td>
             <td>${j.role}</td>
+            <td><code>${j.secretCode || 'CAND-XXXX'}</code></td>
+            <td><span class="text-primary">${j.response || 'En attente...'}</span></td>
             <td>
-                <button class="btn btn-sm btn-success me-1" onclick="CommicoAlert('Réponse envoyée !')"><i class="fa fa-reply"></i> Répondre</button>
+                <button class="btn btn-sm btn-success me-1" onclick="promptAnswerJobApplication('${s.id}', ${i})"><i class="fa fa-reply"></i> Valider & Répondre</button>
                 <button class="btn btn-sm btn-danger" onclick="s.jobApplications.splice(${i},1);saveData();renderSchoolJobsTable();"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
+}
+
+function promptAnswerJobApplication(schoolId, index) {
+    const s = appData.schools.find(x => x.id === schoolId);
+    const j = s.jobApplications[index];
+    CommicoPrompt("Écrivez la réponse pour le candidat " + j.name + " :", function(replyText) {
+        if(replyText !== null) {
+            j.response = replyText.trim() || "Candidature traitée.";
+            saveData();
+            renderSchoolJobsTable();
+            CommicoAlert("Réponse enregistrée et validée avec succès !");
+        }
+    });
 }
 
 function handleSaveArmoiries(e) {
