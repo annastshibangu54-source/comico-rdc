@@ -1199,11 +1199,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   window.db = db;
   window.FirestoreFunctions = { doc, getDoc, setDoc };
 
-  // Charger les données dès le démarrage de la page en ligne
+  // Charger les données dès le démarrage de la page
   window.loadDataFromCloud();
 </script>
 
-<!-- JAVASCRIPT GLOBAL ADAPTÉ FIREBASE -->
+<!-- JAVASCRIPT GLOBAL AVEC SAUVEGARDE LOCALE AUTOMATIQUE -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
 let appData = { schools: [], adminRequests: [], jobApplications: [] };
@@ -1272,24 +1272,34 @@ function updateSubDivisions() {
     }
 }
 
-// Chargement depuis Firebase Cloud Firestore
+// Chargement avec double sécurité (LocalStorage en premier pour ne jamais perdre les données, puis synchronisation Cloud)
 async function loadDataFromCloud() {
+    // 1. Charger immédiatement depuis localStorage s'il y a des données locales
+    const localSaved = localStorage.getItem('comico_local_data');
+    if (localSaved) {
+        try {
+            appData = JSON.parse(localSaved);
+        } catch(e) {
+            appData = { schools: [], adminRequests: [], jobApplications: [] };
+        }
+    }
+
     if (!window.db) {
-        setTimeout(loadDataFromCloud, 500);
+        renderSchoolsList();
+        renderPortalAnnouncements();
         return;
     }
+
     try {
         const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
         const docSnap = await window.FirestoreFunctions.getDoc(docRef);
         
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schools && docSnap.data().schools.length > 0) {
             appData = docSnap.data();
-        } else {
-            appData = { schools: [], adminRequests: [], jobApplications: [] };
+            localStorage.setItem('comico_local_data', JSON.stringify(appData));
         }
     } catch(e) {
-        console.error("Erreur chargement cloud:", e);
-        appData = { schools: [], adminRequests: [], jobApplications: [] };
+        console.warn("Mode local de secours activé (Firebase inaccessible ou restreint). Vos données sont conservées localement.");
     }
 
     if(!appData.schools) appData.schools = [];
@@ -1328,15 +1338,18 @@ async function loadDataFromCloud() {
     renderPortalAnnouncements();
 }
 
-// Sauvegarde en ligne sur Firebase Cloud Firestore
+// Sauvegarde automatique locale (LocalStorage) ET Cloud (Firebase)
 async function saveData() {
+    // Toujours sauvegarder en local d'abord pour garantir qu'aucune donnée ne disparaisse
+    localStorage.setItem('comico_local_data', JSON.stringify(appData));
+
     if (!window.db) return;
     try {
         const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
         await window.FirestoreFunctions.setDoc(docRef, appData);
-        console.log("Données synchronisées en ligne avec succès !");
+        console.log("Données sauvegardées en ligne et en local avec succès !");
     } catch (error) {
-        console.error("Erreur lors de la sauvegarde Firebase : ", error);
+        console.warn("Sauvegarde cloud impossible (règles de sécurité), mais vos données sont bien gardées en local sur votre appareil.");
     }
 }
 
