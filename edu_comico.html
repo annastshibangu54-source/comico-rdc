@@ -229,10 +229,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
+<!-- LISTE DES ÉCOLES ENREGISTRÉES -->
 <div class="text-center mt-4">
 <h1 class="mb-4">Liste des Madras Enregistrées</h1>
 </div>
-<div id="schoolsListContainer" class="row g-3"></div>
+<div id="schoolsListContainer" class="row g-3 mb-5"></div>
 </div>
 
 <!-- FORMULAIRE CRÉATION STRUCTURE / FÉDÉRATION -->
@@ -2402,7 +2403,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
