@@ -1199,8 +1199,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   window.db = db;
   window.FirestoreFunctions = { doc, getDoc, setDoc };
 
-  // Charger les données dès le démarrage de la page en ligne
-  window.loadDataFromCloud();
+  // Charger les données dès le démarrage de la page en ligne de manière sécurisée
+  (async function() {
+      await window.loadDataFromCloud();
+  })();
 </script>
 
 <!-- JAVASCRIPT GLOBAL ADAPTÉ FIREBASE -->
@@ -1275,7 +1277,7 @@ function updateSubDivisions() {
 // Chargement depuis Firebase Cloud Firestore avec sauvegarde locale de secours
 async function loadDataFromCloud() {
     try {
-        if (window.db) {
+        if (window.db && window.FirestoreFunctions) {
             const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
             const docSnap = await window.FirestoreFunctions.getDoc(docRef);
             
@@ -1329,6 +1331,8 @@ async function loadDataFromCloud() {
     renderPortalAnnouncements();
 }
 
+window.loadDataFromCloud = loadDataFromCloud;
+
 function checkLocalStorageFallback() {
     const local = localStorage.getItem("comico_backup_data");
     if (local) {
@@ -1341,7 +1345,7 @@ function checkLocalStorageFallback() {
 // Sauvegarde en ligne sur Firebase Cloud Firestore et stockage local de secours
 async function saveData() {
     localStorage.setItem("comico_backup_data", JSON.stringify(appData));
-    if (!window.db) return;
+    if (!window.db || !window.FirestoreFunctions) return;
     try {
         const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
         await window.FirestoreFunctions.setDoc(docRef, appData);
