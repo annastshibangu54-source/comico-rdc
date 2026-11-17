@@ -1272,24 +1272,25 @@ function updateSubDivisions() {
     }
 }
 
-// Chargement depuis Firebase Cloud Firestore
+// Chargement depuis Firebase Cloud Firestore avec sauvegarde locale de secours
 async function loadDataFromCloud() {
-    if (!window.db) {
-        setTimeout(loadDataFromCloud, 500);
-        return;
-    }
     try {
-        const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
-        const docSnap = await window.FirestoreFunctions.getDoc(docRef);
-        
-        if (docSnap.exists()) {
-            appData = docSnap.data();
+        if (window.db) {
+            const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
+            const docSnap = await window.FirestoreFunctions.getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                appData = docSnap.data();
+                localStorage.setItem("comico_backup_data", JSON.stringify(appData));
+            } else {
+                checkLocalStorageFallback();
+            }
         } else {
-            appData = { schools: [], adminRequests: [], jobApplications: [] };
+            checkLocalStorageFallback();
         }
     } catch(e) {
-        console.error("Erreur chargement cloud:", e);
-        appData = { schools: [], adminRequests: [], jobApplications: [] };
+        console.warn("Mode hors-ligne ou chargement local actif:", e);
+        checkLocalStorageFallback();
     }
 
     if(!appData.schools) appData.schools = [];
@@ -1328,15 +1329,25 @@ async function loadDataFromCloud() {
     renderPortalAnnouncements();
 }
 
-// Sauvegarde en ligne sur Firebase Cloud Firestore
+function checkLocalStorageFallback() {
+    const local = localStorage.getItem("comico_backup_data");
+    if (local) {
+        try { appData = JSON.parse(local); } catch(err) { appData = { schools: [], adminRequests: [], jobApplications: [] }; }
+    } else {
+        appData = { schools: [], adminRequests: [], jobApplications: [] };
+    }
+}
+
+// Sauvegarde en ligne sur Firebase Cloud Firestore et stockage local de secours
 async function saveData() {
+    localStorage.setItem("comico_backup_data", JSON.stringify(appData));
     if (!window.db) return;
     try {
         const docRef = window.FirestoreFunctions.doc(window.db, "comicoData", "mainStore");
         await window.FirestoreFunctions.setDoc(docRef, appData);
         console.log("Données synchronisées en ligne avec succès !");
     } catch (error) {
-        console.error("Erreur lors de la sauvegarde Firebase : ", error);
+        console.error("Erreur lors de la sauvegarde Firebase (données conservées localement) : ", error);
     }
 }
 
