@@ -15,6 +15,10 @@
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <!-- Template Stylesheet -->
 <link href="css/style.css" rel="stylesheet">
+<!-- Firebase App SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Firestore SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 .view-section { display: none; }
 .view-section.active { display: block; }
@@ -901,7 +905,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond au Code Secret Enseignant)</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond ao Code Secret Enseignant)</h5>
 <div id="disciplineAuthArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
@@ -1183,8 +1187,22 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- JAVASCRIPT GLOBAL -->
 <script>
+// Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBa_X5rgTc5SAD1Ddn4T-TtD5h82o3IeIY",
+  authDomain: "comico-rdc.firebaseapp.com",
+  projectId: "comico-rdc",
+  storageBucket: "comico-rdc.firebasestorage.app",
+  messagingSenderId: "664769138510",
+  appId: "1:664769138510:web:e9471ef2214a156284d81f"
+};
+
+// Initialisation de Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
-let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
+let appData = { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
 let currentCreatedDirectorCode = "";
@@ -1250,21 +1268,25 @@ function updateSubDivisions() {
     }
 }
 
-window.onload = function() {
-    loadDataFromLocal();
+window.onload = async function() {
+    await loadDataFromCloud();
 };
 
-function loadDataFromLocal() {
-    const saved = localStorage.getItem('comico_appData');
-    if (saved) {
-        try {
-            appData = JSON.parse(saved);
-        } catch(e) {
+async function loadDataFromCloud() {
+    try {
+        const docRef = db.collection("comico_data").doc("appState");
+        const doc = await docRef.get();
+        if (doc.exists) {
+            appData = doc.data();
+        } else {
             appData = { schools: [], adminRequests: [], jobApplications: [] };
+            await docRef.set(appData);
         }
-    } else {
+    } catch(e) {
+        console.error("Erreur de chargement Firebase:", e);
         appData = { schools: [], adminRequests: [], jobApplications: [] };
     }
+
     if(!appData.schools) appData.schools = [];
     if(!appData.adminRequests) appData.adminRequests = [];
     if(!appData.jobApplications) appData.jobApplications = [];
@@ -1301,8 +1323,12 @@ function loadDataFromLocal() {
     renderPortalAnnouncements();
 }
 
-function saveData() {
-    localStorage.setItem('comico_appData', JSON.stringify(appData));
+async function saveData() {
+    try {
+        await db.collection("comico_data").doc("appState").set(appData);
+    } catch (e) {
+        console.error("Erreur de sauvegarde Firebase:", e);
+    }
 }
 
 function showSection(id) {
@@ -2345,7 +2371,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
