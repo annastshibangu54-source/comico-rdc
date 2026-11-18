@@ -15,10 +15,28 @@
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <!-- Template Stylesheet -->
 <link href="css/style.css" rel="stylesheet">
-<!-- Firebase App SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Firestore SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- NOUVEAU SDK FIREBASE MODULAIRE (Version 13.4.0) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBn3TUVeEoRoaeugU5wTy6cXfckDOSuB3A",
+    authDomain: "comico-rdc-ceffe.firebaseapp.com",
+    projectId: "comico-rdc-ceffe",
+    storageBucket: "comico-rdc-ceffe.firebasestorage.app",
+    messagingSenderId: "590115125383",
+    appId: "1:590115125383:web:9c20c1ef21b0c897cb6022"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.cloudDb = db;
+  window.firebaseModules = { doc, getDoc, setDoc };
+</script>
+
 <style>
 .view-section { display: none; }
 .view-section.active { display: block; }
@@ -1187,21 +1205,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- JAVASCRIPT GLOBAL -->
 <script>
-// Configuration Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBa_X5rgTc5SAD1Ddn4T-TtD5h82o3IeIY",
-  authDomain: "comico-rdc.firebaseapp.com",
-  projectId: "comico-rdc",
-  storageBucket: "comico-rdc.firebasestorage.app",
-  messagingSenderId: "664769138510",
-  appId: "1:664769138510:web:e9471ef2214a156284d81f"
-};
-
-// Initialisation de Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
 let appData = { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
@@ -1274,13 +1277,14 @@ window.onload = async function() {
 
 async function loadDataFromCloud() {
     try {
-        const docRef = db.collection("comico_data").doc("appState");
-        const doc = await docRef.get();
-        if (doc.exists) {
-            appData = doc.data();
+        const { doc, getDoc, setDoc } = window.firebaseModules || {};
+        const docRef = doc(window.cloudDb, "comico_data", "appState");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            appData = docSnap.data();
         } else {
             appData = { schools: [], adminRequests: [], jobApplications: [] };
-            await docRef.set(appData);
+            await setDoc(docRef, appData);
         }
     } catch(e) {
         console.error("Erreur de chargement Firebase:", e);
@@ -1325,7 +1329,8 @@ async function loadDataFromCloud() {
 
 async function saveData() {
     try {
-        await db.collection("comico_data").doc("appState").set(appData);
+        const { doc, setDoc } = window.firebaseModules || {};
+        await setDoc(doc(window.cloudDb, "comico_data", "appState"), appData);
     } catch (e) {
         console.error("Erreur de sauvegarde Firebase:", e);
     }
@@ -1479,7 +1484,7 @@ function renderSchoolChatMessages() {
 
 function openAdminNotificationsPanel() {
     const pass = document.getElementById('adminCentralNotificationCodeInput').value.trim();
-    if(pass !== ADMIN_MASTER_PASSWORD) { CommicoAlert("Code Admin Central incorrect."); return; }
+    if(pass !== "ADMIN-2026") { CommicoAlert("Code Admin Central incorrect."); return; }
     document.getElementById('adminNotificationsListArea').style.display = 'block';
 }
 
@@ -1559,7 +1564,7 @@ function promptLoginCode(id) {
 
 function promptCentralDeleteSchool(id) {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if (pass && pass.trim() === "ADMIN-2026") {
             appData.schools = appData.schools.filter(x => x.id !== id);
             saveData();
             renderSchoolsList();
@@ -1670,7 +1675,6 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
-/* SÉCURISATION DES SECTIONS AVEC RESTRICTION STRICTE ENSEIGNANT */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -1682,7 +1686,6 @@ function promptSecureTabAccess(tabId, element) {
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code);
 
-        // RÈGLE STRICTE : CODE ENSEIGNANT NE PEUT PAS OUVRIR CES SECTIONS
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
             'tab-jobs-received', 'tab-armoiries', 'tab-courriers', 'tab-dossiers-archivage'
@@ -1801,7 +1804,6 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Propriétaire caché, reste visible et généré)
 function onDirRoleChange(val) {
     const container = document.getElementById('treasurerCodeContainer');
     const input = document.getElementById('dirTreasurerCode');
@@ -1878,7 +1880,6 @@ function deleteDirection(index) {
     }
 }
 
-// 2. CLASSES
 function handleSaveClass(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1927,7 +1928,6 @@ function deleteClass(index) {
     refreshAllDropdowns();
 }
 
-// 3. SALLE DE CLASSE
 function verifySalleClasseAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('salleClasseAuthInput').value.trim();
@@ -1958,7 +1958,6 @@ function verifySalleClasseAccess() {
     }
 }
 
-// 4. ENSEIGNANTS
 function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const input = document.getElementById('ownerSecretInput').value.trim();
@@ -2420,7 +2419,6 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
@@ -3059,7 +3057,6 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
-// PALMARÈS : affiche élève, classe, pourcentage, mention
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -3133,7 +3130,6 @@ function renderCourriersTable() {
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-// ARCHIVES & DOSSIERS (AVEC LES BOUTONS DEMANDÉS)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -3273,7 +3269,6 @@ function renderHorairesTable() {
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
-// STATISTIQUES SANS CODE
 function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
@@ -3288,7 +3283,7 @@ function renderStatistiques() {
 
 function openAdminCentralPanel() {
     CommicoPrompt("Mot de passe Admin Central :", function(pass) {
-        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if(pass && pass.trim() === "ADMIN-2026") {
             showSection('view-admin-central');
             renderAdminCentralTable();
         } else if(pass !== null) {
