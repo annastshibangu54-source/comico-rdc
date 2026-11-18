@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -15,26 +16,6 @@
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <!-- Template Stylesheet -->
 <link href="css/style.css" rel="stylesheet">
-
-<!-- CONFIGURATION FIREBASE OFFICIELLE -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBn3TUVeEoRoaeugU5wTy6cXfckDOSuB3A",
-    authDomain: "comico-rdc-ceffe.firebaseapp.com",
-    projectId: "comico-rdc-ceffe",
-    storageBucket: "comico-rdc-ceffe.firebasestorage.app",
-    messagingSenderId: "590115125383",
-    appId: "1:590115125383:web:9c20c1ef21b0c897cb6022"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  window.db = db;
-</script>
-
 <style>
 .view-section { display: none; }
 .view-section.active { display: block; }
