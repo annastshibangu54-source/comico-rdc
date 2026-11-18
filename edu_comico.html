@@ -16,10 +16,10 @@
 <!-- Template Stylesheet -->
 <link href="css/style.css" rel="stylesheet">
 
-<!-- NOUVEAU SDK FIREBASE MODULAIRE (Version 13.4.0) -->
+<!-- CONFIGURATION FIREBASE OFFICIELLE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBn3TUVeEoRoaeugU5wTy6cXfckDOSuB3A",
@@ -32,9 +32,7 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
-  window.cloudDb = db;
-  window.firebaseModules = { doc, getDoc, setDoc };
+  window.db = db;
 </script>
 
 <style>
@@ -923,7 +921,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
-<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond ao Code Secret Enseignant)</h5>
+<h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond au Code Secret Enseignant)</h5>
 <div id="disciplineAuthArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
@@ -957,14 +955,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- COMMUNICATION -->
 <div class="tab-pane" id="tab-communication">
 <h5 class="text-primary fw-bold mb-3">Communication & Annonces (Directeur - Validité 72h)</h5>
-<div id="commAuthArea" class="mb-3 p-3 bg-light rounded border">
+<div id="commAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
     <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="commSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary" onclick="verifyCommAccess()">Ouvrir Communication</button>
     </div>
 </div>
-<div id="commWorkspace" style="display: none;">
+<div id="commWorkspace">
 <textarea id="announcementText" class="form-control mb-2 no-print" rows="3" placeholder="Saisir une communication officielle..."></textarea>
 <div class="mb-2"><label class="form-label small fw-bold">Images de l'événement (Format normal, adapté A3 / A4) :</label><input type="file" id="commImageInput" class="form-control form-control-sm" accept="image/*" multiple></div>
 <div class="action-bar mb-3 no-print">
@@ -986,14 +984,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- DEMANDES REÇUES -->
 <div class="tab-pane" id="tab-jobs-received">
 <h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues (Zone Propriétaire)</h5>
-<div id="jobsLockedContainer" class="text-center py-5">
+<div id="jobsLockedContainer" class="text-center py-5" style="display: none;">
     <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Sécurisé : Saisissez le Code Secret du Directeur de la Madras.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
         <input type="password" id="jobOwnerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockJobs()">Déverrouiller</button>
     </div>
 </div>
-<div id="jobsUnlockedContainer" style="display: none;">
+<div id="jobsUnlockedContainer">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé</span>
         <button class="btn btn-sm btn-outline-secondary" onclick="lockJobs()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
@@ -1205,7 +1203,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- JAVASCRIPT GLOBAL -->
 <script>
-let appData = { schools: [], adminRequests: [], jobApplications: [] };
+const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
+let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
 let currentCreatedDirectorCode = "";
@@ -1271,26 +1270,21 @@ function updateSubDivisions() {
     }
 }
 
-window.onload = async function() {
-    await loadDataFromCloud();
+window.onload = function() {
+    loadDataFromLocal();
 };
 
-async function loadDataFromCloud() {
-    try {
-        const { doc, getDoc, setDoc } = window.firebaseModules || {};
-        const docRef = doc(window.cloudDb, "comico_data", "appState");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            appData = docSnap.data();
-        } else {
+function loadDataFromLocal() {
+    const saved = localStorage.getItem('comico_appData');
+    if (saved) {
+        try {
+            appData = JSON.parse(saved);
+        } catch(e) {
             appData = { schools: [], adminRequests: [], jobApplications: [] };
-            await setDoc(docRef, appData);
         }
-    } catch(e) {
-        console.error("Erreur de chargement Firebase:", e);
+    } else {
         appData = { schools: [], adminRequests: [], jobApplications: [] };
     }
-
     if(!appData.schools) appData.schools = [];
     if(!appData.adminRequests) appData.adminRequests = [];
     if(!appData.jobApplications) appData.jobApplications = [];
@@ -1327,13 +1321,8 @@ async function loadDataFromCloud() {
     renderPortalAnnouncements();
 }
 
-async function saveData() {
-    try {
-        const { doc, setDoc } = window.firebaseModules || {};
-        await setDoc(doc(window.cloudDb, "comico_data", "appState"), appData);
-    } catch (e) {
-        console.error("Erreur de sauvegarde Firebase:", e);
-    }
+function saveData() {
+    localStorage.setItem('comico_appData', JSON.stringify(appData));
 }
 
 function showSection(id) {
@@ -1484,7 +1473,7 @@ function renderSchoolChatMessages() {
 
 function openAdminNotificationsPanel() {
     const pass = document.getElementById('adminCentralNotificationCodeInput').value.trim();
-    if(pass !== "ADMIN-2026") { CommicoAlert("Code Admin Central incorrect."); return; }
+    if(pass !== ADMIN_MASTER_PASSWORD) { CommicoAlert("Code Admin Central incorrect."); return; }
     document.getElementById('adminNotificationsListArea').style.display = 'block';
 }
 
@@ -1564,7 +1553,7 @@ function promptLoginCode(id) {
 
 function promptCentralDeleteSchool(id) {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if (pass && pass.trim() === "ADMIN-2026") {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             appData.schools = appData.schools.filter(x => x.id !== id);
             saveData();
             renderSchoolsList();
@@ -1675,6 +1664,7 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
+/* SÉCURISATION DES SECTIONS AVEC RESTRICTION STRICTE ENSEIGNANT */
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -1686,6 +1676,7 @@ function promptSecureTabAccess(tabId, element) {
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code);
 
+        // RÈGLE STRICTE : CODE ENSEIGNANT NE PEUT PAS OUVRIR CES SECTIONS
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
             'tab-jobs-received', 'tab-armoiries', 'tab-courriers', 'tab-dossiers-archivage'
@@ -1804,6 +1795,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
+// 1. DIRECTION (Propriétaire caché, reste visible et généré)
 function onDirRoleChange(val) {
     const container = document.getElementById('treasurerCodeContainer');
     const input = document.getElementById('dirTreasurerCode');
@@ -1880,6 +1872,7 @@ function deleteDirection(index) {
     }
 }
 
+// 2. CLASSES
 function handleSaveClass(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -1928,6 +1921,7 @@ function deleteClass(index) {
     refreshAllDropdowns();
 }
 
+// 3. SALLE DE CLASSE
 function verifySalleClasseAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const code = document.getElementById('salleClasseAuthInput').value.trim();
@@ -1958,6 +1952,7 @@ function verifySalleClasseAccess() {
     }
 }
 
+// 4. ENSEIGNANTS
 function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const input = document.getElementById('ownerSecretInput').value.trim();
@@ -2419,6 +2414,7 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
+    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
@@ -3057,6 +3053,7 @@ function deleteArmoiries() {
     saveData(); renderArmoiriesDisplay();
 }
 
+// PALMARÈS : affiche élève, classe, pourcentage, mention
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -3130,6 +3127,7 @@ function renderCourriersTable() {
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
+// ARCHIVES & DOSSIERS (AVEC LES BOUTONS DEMANDÉS)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -3269,6 +3267,7 @@ function renderHorairesTable() {
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
+// STATISTIQUES SANS CODE
 function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
@@ -3283,7 +3282,7 @@ function renderStatistiques() {
 
 function openAdminCentralPanel() {
     CommicoPrompt("Mot de passe Admin Central :", function(pass) {
-        if(pass && pass.trim() === "ADMIN-2026") {
+        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             showSection('view-admin-central');
             renderAdminCentralTable();
         } else if(pass !== null) {
