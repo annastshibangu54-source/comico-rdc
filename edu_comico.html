@@ -957,14 +957,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- COMMUNICATION -->
 <div class="tab-pane" id="tab-communication">
 <h5 class="text-primary fw-bold mb-3">Communication & Annonces (Directeur - Validité 72h)</h5>
-<div id="commAuthArea" class="mb-3 p-3 bg-light rounded border" style="display: none;">
+<div id="commAuthArea" class="mb-3 p-3 bg-light rounded border">
     <label class="form-label small fw-bold">Code Secret Directeur Requis :</label>
     <div class="input-group input-group-sm" style="max-width: 350px;">
         <input type="password" id="commSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary" onclick="verifyCommAccess()">Ouvrir Communication</button>
     </div>
 </div>
-<div id="commWorkspace">
+<div id="commWorkspace" style="display: none;">
 <textarea id="announcementText" class="form-control mb-2 no-print" rows="3" placeholder="Saisir une communication officielle..."></textarea>
 <div class="mb-2"><label class="form-label small fw-bold">Images de l'événement (Format normal, adapté A3 / A4) :</label><input type="file" id="commImageInput" class="form-control form-control-sm" accept="image/*" multiple></div>
 <div class="action-bar mb-3 no-print">
@@ -986,14 +986,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- DEMANDES REÇUES -->
 <div class="tab-pane" id="tab-jobs-received">
 <h5 class="text-primary fw-bold mb-3">Demandes de Poste Reçues (Zone Propriétaire)</h5>
-<div id="jobsLockedContainer" class="text-center py-5" style="display: none;">
+<div id="jobsLockedContainer" class="text-center py-5">
     <p class="text-muted"><i class="fa fa-lock fa-3x text-danger mb-2"></i><br>Sécurisé : Saisissez le Code Secret du Directeur de la Madras.</p>
     <div class="input-group input-group-sm mx-auto" style="max-width: 300px;">
         <input type="password" id="jobOwnerSecretInput" class="form-control" placeholder="Code secret directeur...">
         <button class="btn btn-primary fw-bold" onclick="promptUnlockJobs()">Déverrouiller</button>
     </div>
 </div>
-<div id="jobsUnlockedContainer">
+<div id="jobsUnlockedContainer" style="display: none;">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="badge bg-success"><i class="fa fa-unlock me-1"></i> Déverrouillé</span>
         <button class="btn btn-sm btn-outline-secondary" onclick="lockJobs()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
@@ -2370,7 +2370,7 @@ function loadStudentsForNotes() {
 function renderNotesSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const yData = s.yearsData[s.activeYear];
-    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner'].value : '');
+    const cls = authenticatedTeacher ? authenticatedTeacher.classe : (document.getElementById('notesClassSelectOwner') ? document.getElementById('notesClassSelectOwner').value : '');
     const mat = document.getElementById('notesStudentSelect').value;
     const container = document.getElementById('notesSheetContainer');
     if(!mat || !cls) { container.innerHTML = ''; return; }
