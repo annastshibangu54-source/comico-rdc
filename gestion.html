@@ -27,6 +27,10 @@
         <!-- Template Stylesheet -->
         <link href="css/style.css" rel="stylesheet">
 
+        <!-- Firebase SDKs Compat -->
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
         <!-- Styles spécifiques pour l'application de gestion intégrée -->
         <style>
             :root{--g:#0b6b4b;--g2:#e6f2ed;--ink:#1d2a25;--mut:#66756e;--line:#dbe3df;--bg:#f4f6f5;--red:#b3261e;--amber:#8a5a00}
@@ -829,6 +833,21 @@
         <script>
         'use strict';
         const KEY = 'comico_gestion_v1';
+
+        // Configuration Firebase (compatible avec votre page Madras)
+        const firebaseConfig = {
+          apiKey: "AIzaSy...votre-cle...",
+          authDomain: "comico-rdc.firebaseapp.com",
+          projectId: "comico-rdc",
+          storageBucket: "comico-rdc.appspot.com",
+          messagingSenderId: "...",
+          appId: "..."
+        };
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        const cloudDb = firebase.firestore();
+
         const MODS = ['dashboard','entities','mosques','members','leaders','finance','events','acts','audit','admin'];
         const TITLES = {
           dashboard:'Tableau de bord', entities:'Structure et organes', mosques:'Mosquées', members:'Membres',
@@ -865,14 +884,33 @@
         const money = (n, c) => { try { return new Intl.NumberFormat('fr-FR', {style:'currency', currency:c || 'USD'}).format(n || 0); } catch (e) { return (n || 0) + ' ' + c; } };
         const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-        const blank = () => ({entities:[], mosques:[], members:[], leaders:[], finance:[], events:[], acts:[], audit:[], users:[], seq:{}});
-        let db = (() => {
-          try { const d = JSON.parse(localStorage.getItem(KEY)); return d ? Object.assign(blank(), d) : blank(); }
-          catch (e) { return blank(); }
-        })();
-        function save() {
-          try { localStorage.setItem(KEY, JSON.stringify(db)); }
-          catch (e) { toast('Enregistrement impossible : stockage plein ou bloqué', 'err'); }
+        const blank = () => ({entities:[], mosques:[], members:[], leaders:[], finance:[], events:[], acts:[], audit:[], users:[], recoveryRequests:[], seq:{}});
+        let db = blank();
+
+        // Chargement depuis Firebase (avec fallback localStorage)
+        async function loadDataFromCloud() {
+          try {
+            const doc = await cloudDb.collection("comico_data").doc("appState").get();
+            if (doc.exists) {
+              db = Object.assign(blank(), doc.data());
+            } else {
+              const local = JSON.parse(localStorage.getItem(KEY));
+              if (local) db = Object.assign(blank(), local);
+            }
+          } catch (e) {
+            const local = JSON.parse(localStorage.getItem(KEY));
+            if (local) db = Object.assign(blank(), local);
+          }
+          start();
+        }
+
+        async function save() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify(db));
+            await cloudDb.collection("comico_data").doc("appState").set(db);
+          } catch (e) {
+            toast('Enregistrement cloud impossible', 'err');
+          }
         }
         function nextNo(prefix) {
           const y = new Date().getFullYear(), k = prefix + y;
@@ -1150,7 +1188,8 @@
             <label>Identifiant<input name="username" required autocomplete="username"></label>
             <label>Mot de passe${first ? ' (6 caractères minimum)' : ''}<input name="pw" type="password" required minlength="${first ? 6 : 1}" autocomplete="${first ? 'new-password' : 'current-password'}"></label>
             <button type="submit" class="btn-app">${first ? 'Créer et entrer' : 'Se connecter'}</button>
-            <p class="note" style="margin-top:14px">Données sécurisées dans ce navigateur.</p>
+            ${!first ? '<p style="margin-top:12px;text-align:center"><a href="#" data-act="forgot" style="color:var(--g);font-size:13px;text-decoration:underline">Code ou mot de passe oublié ?</a></p>' : ''}
+            <p class="note" style="margin-top:14px">Données synchronisées avec Firebase.</p>
           </form>`;
         }
         async function doSetup(f) {
@@ -1394,7 +1433,13 @@
         }
 
         function viewAdmin() {
-          return `<div class="card-gestion"><h3>Utilisateurs</h3>
+          const recoveryList = db.recoveryRequests || [];
+          return `<div class="card-gestion"><h3>Demandes de récupération de code / mot de passe</h3>
+            <div class="tw"><table><thead><tr><th>Date</th><th>Identifiant</th><th>Motif</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+            ${recoveryList.length ? recoveryList.map(r => `<tr><td>${esc(new Date(r.createdAt).toLocaleString('fr-FR'))}</td><td><b>${esc(r.username)}</b></td><td>${esc(r.reason)}</td><td>${esc(r.status)}</td>
+              <td class="act">${r.status === 'En attente' ? `<button type="button" class="btn-app sm" data-act="gennewcode" data-id="${r.id}">Générer nouveau code</button>` : 'Traité'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty">Aucune demande de récupération en attente.</td></tr>'}
+            </tbody></table></div></div>
+          <div class="card-gestion"><h3>Utilisateurs</h3>
             <div class="tw"><table><thead><tr><th>Identifiant</th><th>Nom</th><th>Rôle</th><th></th></tr></thead><tbody>
             ${db.users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.name)}</td><td>${esc(ROLES[u.role] ? ROLES[u.role].label : u.role)}</td>
               <td class="act"><button type="button" class="btn-app ghost sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button>
@@ -1412,6 +1457,7 @@
               <input type="file" id="rf" accept="application/json,.json" hidden></div></div>
           <div class="card-gestion"><h3>Zone dangereuse</h3><button type="button" class="btn-app red" data-act="wipe">Effacer toutes les données</button></div>`;
         }
+
         function openUserForm() {
           modal(`<form data-form="user"><h2>Nouvel utilisateur</h2><div class="grid">
             <label><span>Nom complet *</span><input name="name" required></label>
@@ -1476,6 +1522,37 @@
             }
             case 'seed': return canWrite('entities') && seedDemo();
             case 'adduser': return canWrite('admin') && openUserForm();
+            case 'forgot': {
+              modal(`<form data-form="forgot_req"><h2>Demande de récupération de code</h2>
+                <label><span>Votre Identifiant *</span><input name="username" required></label>
+                <label><span>Motif / Explication *</span><textarea name="reason" rows="3" required placeholder="Ex: J'ai perdu mon mot de passe, merci de m'en générer un nouveau."></textarea></label>
+                <div class="bar"><button type="button" class="btn-app ghost" data-act="close">Fermer</button><button type="submit" class="btn-app">Envoyer à l'Admin</button></div></form>`);
+              return;
+            }
+            case 'gennewcode': {
+              if (!canWrite('admin')) return;
+              db.recoveryRequests = db.recoveryRequests || [];
+              const reqItem = db.recoveryRequests.find(x => x.id === id);
+              if (!reqItem) return;
+              const u = db.users.find(x => x.username === reqItem.username);
+              if (!u) return toast('Utilisateur introuvable dans la base', 'err');
+              const newPw = 'Comico' + Math.floor(1000 + Math.random() * 9000);
+              makeUser(u.username, u.name, u.role, newPw).then(n => {
+                u.salt = n.salt; u.alg = n.alg; u.hash = n.hash;
+                reqItem.status = 'Traité';
+                reqItem.resolvedBy = session.username;
+                reqItem.resolvedAt = new Date().toISOString();
+                log('Récupération de code traitée', 'admin', u.username);
+                save();
+                renderShell();
+                modal(`<div class="sheet"><h3>Nouveau code généré avec succès</h3>
+                  <p>Utilisateur : <b>${esc(u.username)}</b> (${esc(u.name)})</p>
+                  <p>Nouveau mot de passe temporaire : <b style="font-size:18px;color:var(--g)">${esc(newPw)}</b></p>
+                  <p class="note">Transmettez ce code de manière sécurisée au demandeur.</p></div>
+                  <div class="bar"><button type="button" class="btn-app" data-act="close">Fermer</button></div>`);
+              });
+              return;
+            }
             case 'deluser': {
               if (!canWrite('admin')) return;
               const u = db.users.find(x => x.id === id); if (!u || u.username === session.username) return;
@@ -1528,10 +1605,25 @@
           if (k === 'setup') doSetup(f);
           else if (k === 'login') doLogin(f);
           else if (k === 'user') submitUser(f);
+          else if (k === 'forgot_req') {
+            const fd = new FormData(f);
+            db.recoveryRequests = db.recoveryRequests || [];
+            db.recoveryRequests.unshift({
+              id: uid(),
+              username: String(fd.get('username')).trim(),
+              reason: String(fd.get('reason')).trim(),
+              status: 'En attente',
+              createdAt: new Date().toISOString()
+            });
+            save();
+            closeModal();
+            toast('Votre demande de récupération a été envoyée à l\'Admin Central.', 'ok');
+          }
           else if (SCHEMA[k]) submitCrud(f);
         });
 
-        start();
+        // Chargement initial depuis Firebase
+        loadDataFromCloud();
         </script>
     </body>
 
