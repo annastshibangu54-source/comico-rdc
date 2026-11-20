@@ -1181,49 +1181,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="container py-5"><div class="copyright text-center">&copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.</div></div>
 </div>
 
-<!-- INTÉGRATION FIREBASE SDK 13.4.0 -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBn3TUVeEoRoaeugU5wTy6cXfckDOSuB3A",
-    authDomain: "comico-rdc-ceffe.firebaseapp.com",
-    projectId: "comico-rdc-ceffe",
-    storageBucket: "comico-rdc-ceffe.firebasestorage.app",
-    messagingSenderId: "590115125383",
-    appId: "1:590115125383:web:9c20c1ef21b0c897cb6022"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const stateDocRef = doc(db, "comico_appData", "main");
-
-  window.firebaseSync = {
-    async loadFromCloud() {
-      try {
-        const snap = await getDoc(stateDocRef);
-        if (snap.exists() && snap.data() && snap.data().payload) {
-          return JSON.parse(snap.data().payload);
-        }
-      } catch (err) {
-        console.warn("Firebase load fallback to localStorage:", err);
-      }
-      return null;
-    },
-    async saveToCloud(dataObj) {
-      try {
-        await setDoc(stateDocRef, {
-          payload: JSON.stringify(dataObj),
-          updatedAt: new Date().toISOString()
-        });
-      } catch (err) {
-        console.warn("Firebase save warning:", err);
-      }
-    }
-  };
-</script>
-
 <!-- JAVASCRIPT GLOBAL -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
@@ -1293,13 +1250,26 @@ function updateSubDivisions() {
     }
 }
 
-function normalizeAndHydrateAppData(rawData) {
-    let parsed = rawData || { schools: [], adminRequests: [], jobApplications: [] };
-    if(!parsed.schools) parsed.schools = [];
-    if(!parsed.adminRequests) parsed.adminRequests = [];
-    if(!parsed.jobApplications) parsed.jobApplications = [];
+window.onload = function() {
+    loadDataFromLocal();
+};
 
-    parsed.schools.forEach(s => {
+function loadDataFromLocal() {
+    const saved = localStorage.getItem('comico_appData');
+    if (saved) {
+        try {
+            appData = JSON.parse(saved);
+        } catch(e) {
+            appData = { schools: [], adminRequests: [], jobApplications: [] };
+        }
+    } else {
+        appData = { schools: [], adminRequests: [], jobApplications: [] };
+    }
+    if(!appData.schools) appData.schools = [];
+    if(!appData.adminRequests) appData.adminRequests = [];
+    if(!appData.jobApplications) appData.jobApplications = [];
+
+    appData.schools.forEach(s => {
         if(!s.activeYear) s.activeYear = "2025-2026";
         if(s.paiementStatut === undefined) s.paiementStatut = "A jour";
         if(!s.chatMessages) s.chatMessages = [];
@@ -1326,34 +1296,6 @@ function normalizeAndHydrateAppData(rawData) {
             };
         }
     });
-    return parsed;
-}
-
-window.onload = async function() {
-    await loadDataFromLocal();
-};
-
-async function loadDataFromLocal() {
-    const saved = localStorage.getItem('comico_appData');
-    if (saved) {
-        try {
-            appData = JSON.parse(saved);
-        } catch(e) {
-            appData = { schools: [], adminRequests: [], jobApplications: [] };
-        }
-    } else {
-        appData = { schools: [], adminRequests: [], jobApplications: [] };
-    }
-
-    if (window.firebaseSync && typeof window.firebaseSync.loadFromCloud === 'function') {
-        const cloudData = await window.firebaseSync.loadFromCloud();
-        if (cloudData) {
-            appData = cloudData;
-            localStorage.setItem('comico_appData', JSON.stringify(appData));
-        }
-    }
-
-    appData = normalizeAndHydrateAppData(appData);
 
     renderSchoolsList();
     renderPortalAnnouncements();
@@ -1361,9 +1303,6 @@ async function loadDataFromLocal() {
 
 function saveData() {
     localStorage.setItem('comico_appData', JSON.stringify(appData));
-    if (window.firebaseSync && typeof window.firebaseSync.saveToCloud === 'function') {
-        window.firebaseSync.saveToCloud(appData);
-    }
 }
 
 function showSection(id) {
