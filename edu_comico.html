@@ -1194,26 +1194,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   }
 -->
 <script type="module">
+  // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
   import {
     getFirestore,
-    collection,
     doc,
     getDoc,
-    setDoc,
-    deleteDoc
+    setDoc
   } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-  export const FIRESTORE_RULES_NO_EXPIRY = `rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}`;
-
+  // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyDzUpWidubpSyFTjO9nQGPvrQuJeXgistQ",
     authDomain: "comico-rdc-8b0cc.firebaseapp.com",
@@ -1223,6 +1215,7 @@ service cloud.firestore {
     appId: "1:732104672517:web:077e5e3eb1b0e9b51c636c"
   };
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const mainDocRef = doc(db, "comico_platform", "main_state");
@@ -2450,7 +2443,6 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
