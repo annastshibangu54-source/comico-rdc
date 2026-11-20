@@ -1181,10 +1181,68 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="container py-5"><div class="copyright text-center">&copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.</div></div>
 </div>
 
-<!-- JAVASCRIPT GLOBAL -->
+<!-- FIREBASE & JAVASCRIPT GLOBAL (SANS STOCKAGE LOCAL) -->
+<!--
+  Règles Cloud Firestore sans délai (à copier dans Firebase Console -> Firestore Database -> Règles) :
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /{document=**} {
+        allow read, write: if true;
+      }
+    }
+  }
+-->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    doc,
+    getDoc,
+    setDoc,
+    deleteDoc
+  } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+  export const FIRESTORE_RULES_NO_EXPIRY = `rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`;
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzUpWidubpSyFTjO9nQGPvrQuJeXgistQ",
+    authDomain: "comico-rdc-8b0cc.firebaseapp.com",
+    projectId: "comico-rdc-8b0cc",
+    storageBucket: "comico-rdc-8b0cc.firebasestorage.app",
+    messagingSenderId: "732104672517",
+    appId: "1:732104672517:web:077e5e3eb1b0e9b51c636c"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const mainDocRef = doc(db, "comico_platform", "main_state");
+
+  window.firebaseLoadAppData = async function () {
+    const snap = await getDoc(mainDocRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return { schools: [], adminRequests: [], jobApplications: [] };
+  };
+
+  window.firebaseSaveAppData = async function (dataObj) {
+    const cleanData = JSON.parse(JSON.stringify(dataObj));
+    await setDoc(mainDocRef, cleanData);
+  };
+</script>
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
-let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
+let appData = { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
 let currentCreatedDirectorCode = "";
@@ -1251,18 +1309,14 @@ function updateSubDivisions() {
 }
 
 window.onload = function() {
-    loadDataFromLocal();
+    loadDataFromFirebase();
 };
 
-function loadDataFromLocal() {
-    const saved = localStorage.getItem('comico_appData');
-    if (saved) {
-        try {
-            appData = JSON.parse(saved);
-        } catch(e) {
-            appData = { schools: [], adminRequests: [], jobApplications: [] };
-        }
-    } else {
+async function loadDataFromFirebase() {
+    try {
+        const remote = await window.firebaseLoadAppData();
+        appData = remote || { schools: [], adminRequests: [], jobApplications: [] };
+    } catch(e) {
         appData = { schools: [], adminRequests: [], jobApplications: [] };
     }
     if(!appData.schools) appData.schools = [];
@@ -1302,7 +1356,9 @@ function loadDataFromLocal() {
 }
 
 function saveData() {
-    localStorage.setItem('comico_appData', JSON.stringify(appData));
+    if (typeof window.firebaseSaveAppData === "function") {
+        window.firebaseSaveAppData(appData).catch(() => {});
+    }
 }
 
 function showSection(id) {
