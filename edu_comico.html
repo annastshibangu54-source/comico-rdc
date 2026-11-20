@@ -132,7 +132,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="fileViewerModal" class="file-viewer-overlay">
   <div class="file-viewer-card">
     <div class="file-viewer-header">
-      <h5 class="m-0 text-white"><i class="fa fa-file-alt me-2"></i>Consultation du Document Scanné</h5>
+      <h5 class="m-0 text-white" id="fileViewerTitle"><i class="fa fa-file-alt me-2"></i>Consultation du Document Scanné</h5>
       <button class="btn btn-sm btn-light fw-bold" onclick="closeFileViewerModal()"><i class="fa fa-times"></i> Fermer</button>
     </div>
     <div class="file-viewer-body" id="fileViewerContentArea"></div>
@@ -1237,6 +1237,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </script>
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
+const MAX_DOC_FILE_BYTES = 650 * 1024; // Limite sécurisée pour éviter de dépasser 1 Mo par document Firestore
 let appData = { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
@@ -1395,11 +1396,15 @@ async function loadDataFromFirebase() {
     renderPortalAnnouncements();
 }
 
-function saveData() {
+function saveData(onSuccess) {
     if (typeof window.firebaseSaveAppData === "function") {
-        window.firebaseSaveAppData(appData).catch(() => {
-            CommicoAlert("Erreur de synchronisation avec Cloud Firestore.");
-        });
+        window.firebaseSaveAppData(appData)
+            .then(() => {
+                if (typeof onSuccess === "function") onSuccess();
+            })
+            .catch(() => {
+                CommicoAlert("Erreur de synchronisation avec Cloud Firestore (vérifiez la taille des images/documents ou votre connexion).");
+            });
     }
 }
 
@@ -1420,23 +1425,74 @@ function openSchoolForm() {
     showSection('view-create-school');
 }
 
-function compressAndResizeImage(file, callback) {
+function compressAndResizeImage(file, callback, maxDim, quality, fallbackUrl) {
+    const targetMax = maxDim || 180;
+    const targetQuality = quality || 0.65;
+    const fallback = fallbackUrl || "https://via.placeholder.com/70";
     if (!file) {
-        callback("https://via.placeholder.com/70");
+        callback(fallback);
         return;
     }
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
+            let width = img.width || targetMax;
+            let height = img.height || targetMax;
+            if (width > height) {
+                if (width > targetMax) {
+                    height = Math.round((height * targetMax) / width);
+                    width = targetMax;
+                }
+            } else {
+                if (height > targetMax) {
+                    width = Math.round((width * targetMax) / height);
+                    height = targetMax;
+                }
+            }
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 150;
-            canvas.height = 150;
-            ctx.drawImage(img, 0, 0, 150, 150);
-            callback(canvas.toDataURL('image/jpeg', 0.6));
+            canvas.width = Math.max(1, width);
+            canvas.height = Math.max(1, height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            callback(canvas.toDataURL('image/jpeg', targetQuality));
+        };
+        img.onerror = function() {
+            callback(fallback);
         };
         img.src = e.target.result;
+    };
+    reader.onerror = function() {
+        callback(fallback);
+    };
+    reader.readAsDataURL(file);
+}
+
+function readAttachedDocumentFile(file, onReady) {
+    if (!file) {
+        onReady("");
+        return;
+    }
+    if (file.type && file.type.startsWith("image/")) {
+        compressAndResizeImage(file, function(compressedDataUrl) {
+            if (compressedDataUrl.length > MAX_DOC_FILE_BYTES) {
+                CommicoAlert("Image trop volumineuse après compression pour Firestore.");
+                return;
+            }
+            onReady(compressedDataUrl);
+        }, 900, 0.72, "");
+        return;
+    }
+    if (file.size > MAX_DOC_FILE_BYTES) {
+        CommicoAlert("Le document sélectionné dépasse la taille maximale autorisée (650 Ko) pour un stockage direct dans Firestore.");
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        onReady(evt.target.result || "");
+    };
+    reader.onerror = function() {
+        CommicoAlert("Impossible de lire le fichier sélectionné.");
     };
     reader.readAsDataURL(file);
 }
@@ -1464,7 +1520,7 @@ function handleSaveSchool(e) {
 
     compressAndResizeImage(file, function(compressedLogo) {
         finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, compressedLogo);
-    });
+    }, 180, 0.65, "https://via.placeholder.com/70");
 }
 
 function finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, logoUrl) {
@@ -1576,14 +1632,26 @@ function renderAdminNotifications() {
 
 function closeFileViewerModal() {
     document.getElementById('fileViewerModal').style.display = 'none';
+    document.getElementById('fileViewerContentArea').innerHTML = '';
 }
 
 function viewDocumentModal(url, title) {
     const area = document.getElementById('fileViewerContentArea');
-    if(url.startsWith('data:image') || url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-        area.innerHTML = `<img src="${url}" alt="${escapeHtml(title || 'Document')}">`;
+    const titleEl = document.getElementById('fileViewerTitle');
+    if (titleEl) {
+        titleEl.innerHTML = `<i class="fa fa-file-alt me-2"></i>${escapeHtml(title || 'Consultation du Document Scanné')}`;
+    }
+    if (!url) {
+        area.innerHTML = '<div class="alert alert-warning m-0">Aucun document joint disponible.</div>';
+        document.getElementById('fileViewerModal').style.display = 'flex';
+        return;
+    }
+    const safeUrl = escapeHtml(url);
+    const safeAlt = escapeHtml(title || 'Document');
+    if (url.startsWith('data:image') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+        area.innerHTML = `<img src="${safeUrl}" alt="${safeAlt}">`;
     } else {
-        area.innerHTML = `<iframe src="${url}"></iframe>`;
+        area.innerHTML = `<iframe src="${safeUrl}" title="${safeAlt}"></iframe>`;
     }
     document.getElementById('fileViewerModal').style.display = 'flex';
 }
@@ -1598,13 +1666,13 @@ function renderSchoolsList() {
     container.innerHTML = appData.schools.map(s => `
         <div class="col-md-6">
             <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center gap-3">
-                <img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo">
+                <img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/70')}" class="school-logo-display" alt="Logo">
                 <div class="flex-grow-1">
                     <h5 class="fw-bold text-primary mb-1">${escapeHtml(s.name)}</h5>
                     <div class="small text-muted mb-1"><b>Prov :</b> ${escapeHtml(s.province)} | <b>Statut :</b> <span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></div>
                     <div class="mt-2 d-flex gap-2">
-                        <button class="btn btn-primary btn-sm fw-bold" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open me-1"></i> Ouvrir</button>
-                        <button class="btn btn-danger btn-sm fw-bold" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="promptLoginCode('${escapeHtml(s.id)}')"><i class="fa fa-folder-open me-1"></i> Ouvrir</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="promptCentralDeleteSchool('${escapeHtml(s.id)}')"><i class="fa fa-trash me-1"></i> Supprimer</button>
                     </div>
                 </div>
             </div>
@@ -1631,7 +1699,7 @@ function renderPortalAnnouncements() {
         <div class="alert alert-light border-start border-4 border-warning mb-2 py-2">
             <strong>${escapeHtml(item.schoolName)}</strong> <small class="text-muted">(${escapeHtml(item.date)})</small>
             <div class="small fw-bold">${escapeHtml(item.message)}</div>
-            ${item.images && item.images.length ? `<div class="mt-2 d-flex gap-2">${item.images.map(img => `<img src="${img}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain;" class="border">`).join('')}</div>` : ''}
+            ${item.images && item.images.length ? `<div class="mt-2 d-flex flex-wrap gap-2">${item.images.map(img => `<img src="${escapeHtml(img)}" alt="Annonce" onclick="viewDocumentModal('${escapeHtml(img)}', 'Annonce - ${escapeHtml(item.schoolName)}')" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="border">`).join('')}</div>` : ''}
         </div>
     `).join('') || '<p class="text-muted small mb-0">Aucune annonce active (les annonces expirent après 72h).</p>';
 }
@@ -2337,9 +2405,9 @@ function toggleCardFace(face) {
 function previewStudentCardPhoto(e) {
     const file = e.target.files[0];
     if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { document.getElementById('cardPhotoPreview').src = evt.target.result; };
-        reader.readAsDataURL(file);
+        compressAndResizeImage(file, function(compressedPhoto) {
+            document.getElementById('cardPhotoPreview').src = compressedPhoto;
+        }, 240, 0.7, "https://via.placeholder.com/80");
     }
 }
 
@@ -2405,9 +2473,13 @@ function consultCard(id) {
         document.getElementById('cardNomVal').innerText = c.name;
         document.getElementById('cardSexeVal').innerText = c.sex;
         document.getElementById('cardClasseVal').innerText = c.classe;
-        document.getElementById('cardAdresseVal').innerText = c.adresse;
+        document.getElementById('cardAdresseVal').innerText = c.adresse || s.address || 'Adresse Madras';
         document.getElementById('cardMotVal').innerText = c.mot;
-        document.getElementById('cardPhotoPreview').src = c.photo;
+        document.getElementById('cardPhotoPreview').src = c.photo || 'https://via.placeholder.com/80';
+        document.getElementById('cardSchoolName').innerText = s.name;
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
+        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/160';
+        document.getElementById('cardVersoMadrasName').innerText = s.name;
         window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 }
@@ -3145,13 +3217,11 @@ function handleSaveCommunication() {
     if(files && files.length > 0) {
         const count = Math.min(files.length, 2);
         for(let i=0; i<count; i++) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                images.push(e.target.result);
+            compressAndResizeImage(files[i], function(compressedImg) {
+                images.push(compressedImg);
                 processed++;
                 if(processed === count) { finishCommSave(s, text, images, now); }
-            };
-            reader.readAsDataURL(files[i]);
+            }, 800, 0.7, "");
         }
     } else {
         finishCommSave(s, text, [], now);
@@ -3179,7 +3249,7 @@ function renderCommTable() {
         <tr>
             <td>${escapeHtml(c.date)}</td>
             <td>${escapeHtml(c.message)}</td>
-            <td>${c.images && c.images.length ? c.images.map(img => `<img src="${img}" style="max-height:120px; width:auto; border-radius:4px; margin-right:4px;" class="border">`).join('') : 'Aucune'}</td>
+            <td>${c.images && c.images.length ? c.images.map(img => `<img src="${escapeHtml(img)}" alt="Annonce" onclick="viewDocumentModal('${escapeHtml(img)}', 'Image Annonce')" style="max-height:120px; width:auto; border-radius:4px; margin-right:4px; cursor:pointer;" class="border">`).join('') : 'Aucune'}</td>
             <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
         </tr>
     `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
@@ -3245,14 +3315,13 @@ function handleSaveArmoiries(e) {
     s.devise = document.getElementById('schoolDeviseInput').value.trim();
     const file = document.getElementById('schoolArmoiriesFile').files[0];
     if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            s.armoiries = evt.target.result;
+        compressAndResizeImage(file, function(compressedArmoiries) {
+            s.armoiries = compressedArmoiries;
             saveData();
             renderArmoiriesDisplay();
+            document.getElementById('schoolArmoiriesFile').value = '';
             CommicoAlert("Emblèmes et devise enregistrés !");
-        };
-        reader.readAsDataURL(file);
+        }, 400, 0.72, s.armoiries || "");
     } else {
         saveData();
         renderArmoiriesDisplay();
@@ -3266,7 +3335,7 @@ function renderArmoiriesDisplay() {
     const container = document.getElementById('armoiriesDisplayContainer');
     if(!container) return;
     container.innerHTML = `
-        ${s.armoiries ? `<img src="${s.armoiries}" style="max-height:120px;" class="mb-3"><br>` : ''}
+        ${s.armoiries ? `<img src="${escapeHtml(s.armoiries)}" alt="Emblème" style="max-height:120px; cursor:pointer;" onclick="viewDocumentModal('${escapeHtml(s.armoiries)}', 'Emblème - ${escapeHtml(s.name)}')" class="mb-3"><br>` : ''}
         <h4 class="fw-bold text-primary">" ${escapeHtml(s.devise || 'Aucune devise renseignée')} "</h4>
     `;
 }
@@ -3323,22 +3392,14 @@ function handleSaveCourrier(e) {
         fileUrl: ''
     };
 
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            saveObj.fileUrl = evt.target.result;
-            s.yearsData[s.activeYear].courriers.push(saveObj);
-            saveData(); renderCourriersTable();
-            document.getElementById('formCourrier').reset();
-            CommicoAlert("Correspondance enregistrée !");
-        };
-        reader.readAsDataURL(file);
-    } else {
+    readAttachedDocumentFile(file, function(fileDataUrl) {
+        saveObj.fileUrl = fileDataUrl;
         s.yearsData[s.activeYear].courriers.push(saveObj);
-        saveData(); renderCourriersTable();
+        saveData();
+        renderCourriersTable();
         document.getElementById('formCourrier').reset();
         CommicoAlert("Correspondance enregistrée !");
-    }
+    });
 }
 
 function renderCourriersTable() {
@@ -3349,10 +3410,18 @@ function renderCourriersTable() {
     tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).map((c, i) => `
         <tr>
             <td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.type)}</td><td><code>${escapeHtml(c.numDoc || '-')}</code></td><td>${escapeHtml(c.exp)}</td><td>${escapeHtml(c.dest || '-')}</td><td>${escapeHtml(c.objet)}</td><td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
-            <td>${c.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${c.fileUrl}', '${escapeHtml(c.objet)}')"><i class="fa fa-eye"></i> Aperçu</button>` : 'Aucun'}</td>
+            <td>${c.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewCourrierItem(${i})"><i class="fa fa-eye"></i> Aperçu</button>` : 'Aucun'}</td>
             <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
         </tr>
     `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
+}
+
+function viewCourrierItem(index) {
+    const s = getActiveSchool();
+    if(!s || !s.yearsData[s.activeYear].courriers) return;
+    const item = s.yearsData[s.activeYear].courriers[index];
+    if(!item) return;
+    viewDocumentModal(item.fileUrl, item.objet || ('Courrier ' + (item.numDoc || '')));
 }
 
 function deleteCourrierItem(index) {
@@ -3380,22 +3449,14 @@ function handleSaveArchiveDoc(e) {
         fileUrl: ''
     };
 
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            saveObj.fileUrl = evt.target.result;
-            s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
-            saveData(); renderDossiersTable();
-            document.getElementById('formArchiveDoc').reset();
-            CommicoAlert("Document archivé avec succès !");
-        };
-        reader.readAsDataURL(file);
-    } else {
+    readAttachedDocumentFile(file, function(fileDataUrl) {
+        saveObj.fileUrl = fileDataUrl;
         s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
-        saveData(); renderDossiersTable();
+        saveData();
+        renderDossiersTable();
         document.getElementById('formArchiveDoc').reset();
         CommicoAlert("Document archivé avec succès !");
-    }
+    });
 }
 
 function renderDossiersTable() {
@@ -3406,7 +3467,7 @@ function renderDossiersTable() {
     tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
         <tr>
             <td><b>${escapeHtml(d.classeur)}</b></td><td><code>${escapeHtml(d.numDoc)}</code></td><td>${escapeHtml(d.date)} ${escapeHtml(d.heure || '')}</td><td>${escapeHtml(d.nomDoc)}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${escapeHtml(d.nomDoc)}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewArchiveItem('${escapeHtml(d.numDoc)}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
             <td class="no-print">
                 <button class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${escapeHtml(d.numDoc)}')"><i class="fa fa-eye"></i> Afficher</button>
                 <button class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItem(${i})"><i class="fa fa-trash"></i> Supprimer</button>
@@ -3432,7 +3493,7 @@ function searchArchiveByNumDoc() {
     tbody.innerHTML = results.map(({ d, realIdx }) => `
         <tr class="table-warning">
             <td><b>${escapeHtml(d.classeur)}</b></td><td><code>${escapeHtml(d.numDoc)}</code></td><td>${escapeHtml(d.date)}</td><td>${escapeHtml(d.nomDoc)}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${escapeHtml(d.nomDoc)}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
+            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewArchiveItem('${escapeHtml(d.numDoc)}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
             <td class="no-print">
                 <button class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${escapeHtml(d.numDoc)}')"><i class="fa fa-eye"></i> Afficher</button>
                 <button class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItem(${realIdx})"><i class="fa fa-trash"></i> Supprimer</button>
@@ -3582,14 +3643,14 @@ function renderAdminCentralTable() {
         let dirCode = (s.direction && s.direction.length > 0) ? `<code>${escapeHtml(s.direction[0].secretCode)}</code>` : '<span class="text-danger">Non défini</span>';
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
+                <td><img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/70')}" class="school-logo-display" alt="Logo"></td>
                 <td><b>${escapeHtml(s.name)}</b><br><small class="text-muted">${escapeHtml(s.regime || '')}</small></td>
                 <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision || '-')}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
                 <td><b>Madras:</b> <code>${escapeHtml(s.secretCode)}</code><br><b>Directeur:</b> <span class="text-success">${dirCode}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${s.id}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
-                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${s.id}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${escapeHtml(s.id)}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
+                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${escapeHtml(s.id)}')"><i class="fa fa-trash"></i> Supprimer</button>
                 </td>
             </tr>
         `;
