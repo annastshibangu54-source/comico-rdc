@@ -63,9 +63,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
     <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
       <span id="mainNavLogoWrap" class="me-3 d-inline-flex align-items-center justify-content-center rounded-circle overflow-hidden border border-primary bg-white" style="width: 45px; height: 45px; min-width: 45px; flex-shrink: 0;">
-        <img id="mainNavLogo" src="/img/logo1.jpg" alt="Logo COMICO-RDC" class="navbar-brand-logo" style="width: 45px; height: 45px; object-fit: cover; display: block;"
-          onload="this.style.display='block'; document.getElementById('mainNavFallbackSvg').style.display='none';"
-          onerror="this.style.display='none'; document.getElementById('mainNavFallbackSvg').style.display='block';">
+        <img id="mainNavLogo" src="img/logo1.jpg" alt="Logo COMICO-RDC" class="navbar-brand-logo" style="width: 45px; height: 45px; object-fit: cover; display: block;">
         <svg id="mainNavFallbackSvg" viewBox="0 0 48 48" width="42" height="42" style="display: none;" aria-hidden="true">
           <circle cx="24" cy="24" r="22" fill="#0d6efd"/>
           <path d="M24 10c-6.5 0-12 5.2-12 11.8 0 4.8 2.9 9 7.2 10.9-.5-1.5-.8-3.2-.8-4.9 0-7.2 5.2-13.2 12.2-14.5-1.9-2-4.1-3.3-6.6-3.3z" fill="#ffffff" opacity="0.9"/>
@@ -621,7 +619,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                           <div style="font-size: 10px;"><b>Adresse :</b> <span id="cardAdresseVal">-</span></div>
                         </div>
                         <div class="col-4 text-end">
-                          <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
+                          <img id="cardPhotoPreview" src="" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
                         </div>
                       </div>
                       <div class="mt-2 text-center" style="font-size: 7.5px; font-weight: bold; border-top: 1px dashed #0d6efd; padding-top: 3px;">
@@ -1078,8 +1076,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                 </div>
                 <div class="alert alert-info py-2 small">
                   <b>Repères officiels :</b> <br>
-                  • Calendrier Chrétien / Solaire : <b>22 Novembre 2026</b><br>
-                  • Calendrier Lunaire / Islamique (Hégirien, 12 mois de 29 ou 30 jours) : <b>12 Joumada al-Oula 1448 H</b>
+                  • Calendrier Chrétien / Solaire : <b>23 Novembre 2026</b><br>
+                  • Calendrier Lunaire / Islamique (Hégirien, 12 mois de 29 ou 30 jours) : <b>13 Joumada al-Oula 1448 H</b>
                 </div>
                 <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
                   <input type="hidden" id="calEditIndex">
@@ -1315,6 +1313,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
     const FIRESTORE_SAFE_DOC_LIMIT = 1048576 - 24576;
     const MAX_DIRECT_DOC_CHARS = 360000;
+    const DEFAULT_AVATAR_DATA_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#e9ecef"/><circle cx="40" cy="30" r="14" fill="#adb5bd"/><ellipse cx="40" cy="64" rx="24" ry="15" fill="#adb5bd"/></svg>'
+    );
 
     let appData = {
       directory: [],
@@ -1328,24 +1329,66 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     let currentActiveStudentClass = null;
     let firebaseInitialized = false;
 
-    function ensureBrandLogoFallback() {
+    function getCandidateLogoUrls() {
+      const urls = ["img/logo1.jpg", "/img/logo1.jpg"];
+      if (window.location.hostname.endsWith("github.io")) {
+        const parts = window.location.pathname.split("/").filter(Boolean);
+        if (parts.length > 0) {
+          urls.push("/" + parts[0] + "/img/logo1.jpg");
+        }
+      }
+      return urls;
+    }
+
+    function applyNavLogoState(loaded) {
       const navLogo = document.getElementById('mainNavLogo');
       const fallbackSvg = document.getElementById('mainNavFallbackSvg');
-      if (navLogo) {
-        navLogo.onerror = function() {
-          if (!this.dataset.repoAttempted && window.location.hostname.endsWith("github.io")) {
-            this.dataset.repoAttempted = "1";
-            const parts = window.location.pathname.split("/").filter(Boolean);
-            if (parts.length > 0 && !this.src.includes("/" + parts[0] + "/img/logo1.jpg")) {
-              this.src = "/" + parts[0] + "/img/logo1.jpg";
-              return;
-            }
-          }
-          this.style.display = "none";
-          if (fallbackSvg) fallbackSvg.style.display = "block";
-        };
+      if (!navLogo) return;
+      if (loaded) {
+        navLogo.style.display = "block";
+        if (fallbackSvg) fallbackSvg.style.display = "none";
+      } else {
+        navLogo.style.display = "none";
+        if (fallbackSvg) fallbackSvg.style.display = "block";
       }
     }
+
+    function ensureBrandLogoFallback() {
+      const navLogo = document.getElementById('mainNavLogo');
+      if (!navLogo) return;
+
+      const candidates = getCandidateLogoUrls();
+      let idx = parseInt(navLogo.dataset.logoIdx || "0", 10);
+      if (Number.isNaN(idx) || idx < 0) idx = 0;
+
+      navLogo.onload = function() {
+        applyNavLogoState(true);
+      };
+
+      navLogo.onerror = function() {
+        idx += 1;
+        this.dataset.logoIdx = String(idx);
+        if (idx < candidates.length) {
+          this.src = candidates[idx];
+        } else {
+          applyNavLogoState(false);
+        }
+      };
+
+      if (navLogo.complete) {
+        if (navLogo.naturalWidth > 0) {
+          applyNavLogoState(true);
+        } else if (idx < candidates.length) {
+          idx += 1;
+          navLogo.dataset.logoIdx = String(idx);
+          navLogo.src = candidates[idx];
+        } else {
+          applyNavLogoState(false);
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", ensureBrandLogoFallback);
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return "";
@@ -1582,6 +1625,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
     window.onload = function() {
       ensureBrandLogoFallback();
+      const cardPhoto = document.getElementById('cardPhotoPreview');
+      if (cardPhoto && !cardPhoto.getAttribute('src')) {
+        cardPhoto.src = DEFAULT_AVATAR_DATA_URL;
+      }
       if (typeof window.firebaseLoadPlatformData === "function" && !firebaseInitialized) {
         firebaseInitialized = true;
         loadDataFromFirebase();
@@ -1703,7 +1750,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     function compressAndResizeImage(file, callback, maxDim, quality, fallbackUrl, maxDataUrlChars, schoolRef) {
       const targetMax = maxDim || 240;
       const initialQuality = quality || 0.65;
-      const fallback = fallbackUrl || "https://via.placeholder.com/70";
+      const fallback = fallbackUrl || DEFAULT_AVATAR_DATA_URL;
       const maxChars = maxDataUrlChars || 180000;
 
       if (!file) {
@@ -1830,7 +1877,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
       compressAndResizeImage(file, function(compressedLogo) {
         finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, compressedLogo);
-      }, 140, 0.58, "https://via.placeholder.com/70", 45000, null);
+      }, 140, 0.58, DEFAULT_AVATAR_DATA_URL, 45000, null);
     }
 
     function finishSavingSchool(name, province, division, subDivision, commune, address, regime, nif, rccm, idNat, secope, phone, agrement, secretCode, logoUrl) {
@@ -1988,7 +2035,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       container.innerHTML = list.map(s => `
         <div class="col-md-6">
           <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center gap-3">
-            <img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/70')}" class="school-logo-display" alt="Logo">
+            <img src="${escapeHtml(s.logoUrl || DEFAULT_AVATAR_DATA_URL)}" class="school-logo-display" alt="Logo">
             <div class="flex-grow-1">
               <h5 class="fw-bold text-primary mb-1">${escapeHtml(s.name)}</h5>
               <div class="small text-muted mb-1"><b>Prov :</b> ${escapeHtml(s.province)} | <b>Statut :</b> <span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></div>
@@ -2126,7 +2173,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       ensureSchoolYearStructure(s);
       document.getElementById('dashSchoolTitle').innerText = s.name;
       document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
-      document.getElementById('dashSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/70';
+      document.getElementById('dashSchoolLogo').src = s.logoUrl || DEFAULT_AVATAR_DATA_URL;
 
       populateSchoolYearsSelect();
       refreshAllDropdowns();
@@ -2818,8 +2865,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         document.getElementById('cardClasseVal').innerText = st.classe;
         document.getElementById('cardAdresseVal').innerText = s.address || 'Adresse Madras';
         document.getElementById('cardSchoolName').innerText = s.name;
-        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
-        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/160';
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || DEFAULT_AVATAR_DATA_URL;
+        document.getElementById('cardBgLogo').src = s.logoUrl || DEFAULT_AVATAR_DATA_URL;
         document.getElementById('cardVersoMadrasName').innerText = s.name;
       }
     }
@@ -2842,7 +2889,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (file) {
         compressAndResizeImage(file, function(compressedPhoto) {
           document.getElementById('cardPhotoPreview').src = compressedPhoto;
-        }, 160, 0.62, "https://via.placeholder.com/80", 45000, s);
+        }, 160, 0.62, DEFAULT_AVATAR_DATA_URL, 45000, s);
       }
     }
 
@@ -2862,7 +2909,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         sex: student ? student.sex : document.getElementById('cardSexeVal').innerText.trim(),
         adresse: s.address,
         mot: document.getElementById('cardMotInput').value,
-        photo: document.getElementById('cardPhotoPreview').src
+        photo: document.getElementById('cardPhotoPreview').src || DEFAULT_AVATAR_DATA_URL
       };
 
       if (!yData.savedCards) yData.savedCards = [];
@@ -2917,10 +2964,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         document.getElementById('cardClasseVal').innerText = c.classe;
         document.getElementById('cardAdresseVal').innerText = c.adresse || s.address || 'Adresse Madras';
         document.getElementById('cardMotVal').innerText = c.mot;
-        document.getElementById('cardPhotoPreview').src = c.photo || 'https://via.placeholder.com/80';
+        document.getElementById('cardPhotoPreview').src = c.photo || DEFAULT_AVATAR_DATA_URL;
         document.getElementById('cardSchoolName').innerText = s.name;
-        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
-        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/160';
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || DEFAULT_AVATAR_DATA_URL;
+        document.getElementById('cardBgLogo').src = s.logoUrl || DEFAULT_AVATAR_DATA_URL;
         document.getElementById('cardVersoMadrasName').innerText = s.name;
         window.scrollTo({ top: 200, behavior: 'smooth' });
       }
@@ -4035,8 +4082,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!tbody) return;
       const jobs = s.jobApplications || [];
       tbody.innerHTML = jobs.map((j, i) => `
-        <tr><td>${escapeHtml(j.applicant)}</td><td>${escapeHtml(j.role)}</td><td><button type="button" class="btn btn-sm btn-danger" onclick="deleteSchoolJob(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-      `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune candidature reçue.</td></tr>';
+        <tr><td>${escapeHtml(j.applicant)}</td><td>${escapeHtml(j.role)}</td><td><button type="button" class="btn btn-sm btn-danger" onclick="deleteJobApp(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+      `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande.</td></tr>';
     }
 
     function clearAllJobApplications() {
@@ -4045,11 +4092,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       s.jobApplications = [];
       saveSchoolData(s, () => {
         renderSchoolJobsTable();
-        CommicoAlert("Toutes les candidatures ont été supprimées.");
+        CommicoAlert("Toutes les demandes ont été supprimées.");
       });
     }
 
-    function deleteSchoolJob(index) {
+    function deleteJobApp(index) {
       const s = getActiveSchool();
       if (!s || !s.jobApplications) return;
       s.jobApplications.splice(index, 1);
@@ -4063,21 +4110,19 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const devise = document.getElementById('schoolDeviseInput').value.trim();
       const file = document.getElementById('schoolArmoiriesFile').files[0];
 
-      if (file) {
-        compressAndResizeImage(file, function(compressedArm) {
-          s.armoiries = compressedArm;
-          s.devise = devise || s.devise;
-          saveSchoolData(s, () => {
-            renderArmoiriesDisplay();
-            CommicoAlert("Emblème et devise enregistrés !");
-          });
-        }, 200, 0.62, s.armoiries || "", 60000, s);
-      } else {
-        s.devise = devise || s.devise;
+      const commitSave = (logoOrArmoiries) => {
+        s.armoiries = logoOrArmoiries || s.armoiries || '';
+        if (devise) s.devise = devise;
         saveSchoolData(s, () => {
           renderArmoiriesDisplay();
-          CommicoAlert("Devise enregistrée !");
+          CommicoAlert("Emblème et devise enregistrés avec succès !");
         });
+      };
+
+      if (file) {
+        compressAndResizeImage(file, commitSave, 220, 0.62, s.armoiries || '', 75000, s);
+      } else {
+        commitSave(s.armoiries || '');
       }
     }
 
@@ -4086,6 +4131,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s) return;
       s.armoiries = '';
       s.devise = '';
+      document.getElementById('schoolDeviseInput').value = '';
       saveSchoolData(s, () => {
         renderArmoiriesDisplay();
         CommicoAlert("Emblème et devise supprimés.");
@@ -4094,12 +4140,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
     function renderArmoiriesDisplay() {
       const s = getActiveSchool();
+      if (!s) return;
       const container = document.getElementById('armoiriesDisplayContainer');
-      if (!container || !s) return;
-      container.innerHTML = `
-        ${s.armoiries ? `<img src="${escapeHtml(s.armoiries)}" alt="Emblème" onclick="viewDocumentModal('${escapeArg(s.armoiries)}', '${encodeArg('Emblème - ' + s.name)}')" style="max-height:140px; width:auto; border-radius:8px; object-fit:contain; cursor:pointer;" class="mb-2 border">` : '<p class="text-muted small">Aucun emblème défini.</p>'}
-        <h5 class="fw-bold text-primary mt-2">"${escapeHtml(s.devise || 'Devise non définie')}"</h5>
-      `;
+      if (!container) return;
+      let html = '';
+      if (s.armoiries) html += `<img src="${escapeHtml(s.armoiries)}" alt="Emblème" style="max-height:180px; width:auto; border-radius:8px; object-fit:contain;" class="mb-3 d-block mx-auto border p-2 bg-white">`;
+      if (s.devise) html += `<h4 class="fw-bold text-primary">"${escapeHtml(s.devise)}"</h4>`;
+      container.innerHTML = html || '<p class="text-muted">Aucun emblème ou devise enregistrée.</p>';
     }
 
     function renderPalmaresTable() {
@@ -4108,38 +4155,45 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s || !yData) return;
       const container = document.getElementById('palmaresTableContainer');
       if (!container) return;
-
       const students = yData.students || [];
       let rows = [];
+
       students.forEach(st => {
         const cls = st.classe;
         const courses = yData.courses[cls] || [];
         const notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
         let total = 0, maxTotal = 0;
         courses.forEach(c => {
-          total += (parseFloat(notesObj[c.name]) || 0);
+          total += parseFloat(notesObj[c.name]) || 0;
           maxTotal += parseFloat(c.max) || 0;
         });
-        const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-        rows.push({ matricule: st.matricule, name: st.name, classe: cls, total, maxTotal, pct });
+        const percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+        rows.push({
+          matricule: st.matricule,
+          name: st.name,
+          classe: cls,
+          total, maxTotal, percentage,
+          mention: percentage >= 70 ? 'Grande Distinction' : (percentage >= 50 ? 'Satisfaction' : 'Échec / Ajourné')
+        });
       });
 
-      rows.sort((a, b) => b.pct - a.pct);
+      rows.sort((a, b) => b.percentage - a.percentage);
 
       container.innerHTML = `
-        <table class="table table-bordered table-sm align-middle">
-          <thead><tr class="table-primary"><th>Rang</th><th>Matricule</th><th>Élève</th><th>Classe</th><th>Total</th><th>Pourcentage</th></tr></thead>
+        <table class="table table-bordered table-striped align-middle">
+          <thead><tr class="table-primary"><th>Rang</th><th>Matricule</th><th>Élève</th><th>Classe</th><th>Total</th><th>Pourcentage</th><th>Mention</th></tr></thead>
           <tbody>
             ${rows.map((r, i) => `
               <tr>
-                <td><b>#${i + 1}</b></td>
+                <td><b>${i + 1}</b></td>
                 <td>${escapeHtml(r.matricule)}</td>
-                <td>${escapeHtml(r.name)}</td>
+                <td><b>${escapeHtml(r.name)}</b></td>
                 <td>${escapeHtml(r.classe)}</td>
                 <td>${r.total} / ${r.maxTotal}</td>
-                <td><b>${r.pct.toFixed(2)} %</b></td>
+                <td><b>${r.percentage.toFixed(2)} %</b></td>
+                <td><span class="badge ${r.percentage >= 50 ? 'bg-success' : 'bg-danger'}">${escapeHtml(r.mention)}</span></td>
               </tr>
-            `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune note enregistrée pour le moment.</td></tr>'}
+            `).join('') || '<tr><td colspan="7" class="text-center text-muted">Aucun élève ou aucune note enregistrée.</td></tr>'}
           </tbody>
         </table>
       `;
@@ -4150,10 +4204,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
       yData.notes = {};
-      yData.periodicNotes = {};
       saveSchoolData(s, () => {
         renderPalmaresTable();
-        CommicoAlert("Toutes les notes du palmarès ont été supprimées.");
+        CommicoAlert("Notes et palmarès réinitialisés.");
       });
     }
 
@@ -4172,43 +4225,47 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const objet = document.getElementById('courrierObjet').value.trim();
       const file = document.getElementById('courrierFileInput').files[0];
 
-      const saveCourrierRecord = (fileData) => {
+      const commitCourrier = (fileUrl) => {
         if (editIdxRaw !== "") {
           const idx = parseInt(editIdxRaw, 10);
           if (yData.courriers[idx]) {
             yData.courriers[idx] = {
               ...yData.courriers[idx],
               type, numDoc, date, exp, dest, objet,
-              fileData: fileData || yData.courriers[idx].fileData || ''
+              fileUrl: fileUrl || yData.courriers[idx].fileUrl || ''
             };
           }
           document.getElementById('courrierEditIndex').value = "";
           saveSchoolData(s, () => {
             renderCourriersTable();
             document.getElementById('formCourrier').reset();
-            CommicoAlert("Correspondance modifiée !");
+            CommicoAlert("Correspondance modifiée avec succès !");
           });
           return;
         }
 
         yData.courriers.push({
-          type, numDoc, date, exp, dest, objet,
-          fileData: fileData || '',
+          type, numDoc, date, exp, dest, objet, fileUrl,
           heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           jour: now.toLocaleDateString('fr-FR', { weekday: 'long' })
         });
         saveSchoolData(s, () => {
           renderCourriersTable();
           document.getElementById('formCourrier').reset();
-          CommicoAlert("Correspondance enregistrée !");
+          CommicoAlert("Correspondance enregistrée avec succès !");
         });
       };
 
       if (file) {
-        readAttachedDocumentFile(file, saveCourrierRecord, s);
+        readAttachedDocumentFile(file, commitCourrier, s);
       } else {
-        saveCourrierRecord('');
+        commitCourrier("");
       }
+    }
+
+    function clearCourrierForm() {
+      document.getElementById('formCourrier').reset();
+      document.getElementById('courrierEditIndex').value = "";
     }
 
     function editCourrierMode() {
@@ -4230,11 +4287,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       CommicoAlert("Dernière correspondance chargée. Modifiez puis cliquez sur Enregistrer.");
     }
 
-    function clearCourrierForm() {
-      document.getElementById('formCourrier').reset();
-      document.getElementById('courrierEditIndex').value = "";
-    }
-
     function renderCourriersTable() {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
@@ -4250,8 +4302,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
           <td>${escapeHtml(c.dest)}</td>
           <td>${escapeHtml(c.objet)}</td>
           <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
-          <td>${c.fileData ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeArg(c.fileData)}', '${encodeArg(c.numDoc + ' - ' + c.objet)}')"><i class="fa fa-eye"></i> Voir</button>` : '-'}</td>
-          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i></button></td>
+          <td>${c.fileUrl ? `<button type="button" class="btn btn-sm btn-info text-white" onclick="openSavedDoc('${escapeArg(c.fileUrl)}', '${escapeArg('Correspondance ' + c.numDoc)}')">Consulter</button>` : '-'}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
         </tr>
       `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
     }
@@ -4262,6 +4314,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s || !yData) return;
       yData.courriers.splice(index, 1);
       saveSchoolData(s, () => { renderCourriersTable(); });
+    }
+
+    function openSavedDoc(encodedUrl, encodedTitle) {
+      const url = decodeArg(encodedUrl);
+      const title = decodeArg(encodedTitle);
+      if (!url) { CommicoAlert("Aucun document joint."); return; }
+      viewDocumentModal(url, title);
     }
 
     function handleSaveArchiveDoc(e) {
@@ -4276,7 +4335,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const nomDoc = document.getElementById('archiveNomDoc').value.trim();
       const file = document.getElementById('archiveFileInput').files[0];
 
-      const saveArchiveRecord = (fileData) => {
+      const commitArchive = (fileData) => {
         if (editIdxRaw !== "") {
           const idx = parseInt(editIdxRaw, 10);
           if (yData.dossiersArchive[idx]) {
@@ -4290,28 +4349,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
           saveSchoolData(s, () => {
             renderDossiersTable();
             document.getElementById('formArchiveDoc').reset();
-            CommicoAlert("Document d'archive modifié !");
+            CommicoAlert("Document modifié dans les archives !");
           });
           return;
         }
 
-        if (!yData.dossiersArchive) yData.dossiersArchive = [];
-        yData.dossiersArchive.push({
-          classeur, numDoc, date, nomDoc,
-          fileData: fileData || '',
-          heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-        });
+        yData.dossiersArchive.push({ classeur, numDoc, date, nomDoc, fileData });
         saveSchoolData(s, () => {
           renderDossiersTable();
           document.getElementById('formArchiveDoc').reset();
-          CommicoAlert("Document archivé avec succès !");
+          CommicoAlert("Document classé et archivé avec succès !");
         });
       };
 
       if (file) {
-        readAttachedDocumentFile(file, saveArchiveRecord, s);
+        readAttachedDocumentFile(file, commitArchive, s);
       } else {
-        saveArchiveRecord('');
+        commitArchive("");
       }
     }
 
@@ -4319,7 +4373,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!yData || !yData.dossiersArchive || yData.dossiersArchive.length === 0) {
-        CommicoAlert("Aucun document d'archive à modifier.");
+        CommicoAlert("Aucun document archivé à modifier.");
         return;
       }
       const lastIdx = yData.dossiersArchive.length - 1;
@@ -4329,18 +4383,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       document.getElementById('archiveNumDoc').value = item.numDoc || '';
       document.getElementById('archiveDate').value = item.date || '';
       document.getElementById('archiveNomDoc').value = item.nomDoc || '';
-      CommicoAlert("Dernier document d'archive chargé. Modifiez puis cliquez sur Enregistrer.");
-    }
-
-    function searchArchiveByNumDoc() {
-      const val = document.getElementById('searchArchiveNumInput').value.trim().toLowerCase();
-      if (!val) { renderDossiersTable(); return; }
-      renderDossiersTable(val);
-    }
-
-    function resetArchiveSearch() {
-      document.getElementById('searchArchiveNumInput').value = '';
-      renderDossiersTable();
+      CommicoAlert("Dernier document chargé. Modifiez puis cliquez sur Enregistrer.");
     }
 
     function renderDossiersTable(filterNum) {
@@ -4349,17 +4392,17 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s || !yData) return;
       const tbody = document.getElementById('dossiersStorageTableBody');
       if (!tbody) return;
-      const list = (yData.dossiersArchive || []).map((item, idx) => ({ item, idx }));
-      const filtered = filterNum ? list.filter(x => x.item.numDoc && x.item.numDoc.toLowerCase().includes(filterNum)) : list;
+      const docs = yData.dossiersArchive || [];
+      const filtered = docs.map((item, realIdx) => ({ item, realIdx })).filter(entry => !filterNum || (entry.item.numDoc && entry.item.numDoc.toLowerCase().includes(filterNum.toLowerCase())));
 
-      tbody.innerHTML = filtered.map(({ item: d, idx }) => `
+      tbody.innerHTML = filtered.map(({ item: d, realIdx }) => `
         <tr>
-          <td><span class="badge ${d.classeur === 'Doc Entrant' ? 'bg-info' : 'bg-warning'}">${escapeHtml(d.classeur)}</span></td>
+          <td><span class="badge bg-primary">${escapeHtml(d.classeur)}</span></td>
           <td><b>${escapeHtml(d.numDoc)}</b></td>
-          <td>${escapeHtml(d.date)} (${escapeHtml(d.heure || '')})</td>
+          <td>${escapeHtml(d.date)}</td>
           <td>${escapeHtml(d.nomDoc)}</td>
-          <td>${d.fileData ? `<button type="button" class="btn btn-sm btn-primary" onclick="viewDocumentModal('${escapeArg(d.fileData)}', '${encodeArg(d.numDoc + ' - ' + d.nomDoc)}')"><i class="fa fa-eye"></i> Voir Document</button>` : 'Aucun fichier'}</td>
-          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveDoc(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
+          <td>${d.fileData ? `<button type="button" class="btn btn-sm btn-info text-white" onclick="openSavedDoc('${escapeArg(d.fileData)}', '${escapeArg(d.nomDoc || d.numDoc)}')">Consulter</button>` : '-'}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveDoc(${realIdx})"><i class="fa fa-trash"></i> Suppr.</button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
     }
@@ -4372,18 +4415,28 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       saveSchoolData(s, () => { renderDossiersTable(); });
     }
 
+    function searchArchiveByNumDoc() {
+      const num = document.getElementById('searchArchiveNumInput').value.trim();
+      renderDossiersTable(num);
+    }
+
+    function resetArchiveSearch() {
+      document.getElementById('searchArchiveNumInput').value = '';
+      renderDossiersTable('');
+    }
+
     function handleSaveCalendrierScolaire(e) {
       e.preventDefault();
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
-      if (!Array.isArray(yData.calendrierVacances)) yData.calendrierVacances = [];
-      const editIdxRaw = document.getElementById('calEditIndex').value;
       const type = document.getElementById('calType').value;
       const titre = document.getElementById('calTitre').value.trim();
       const debut = document.getElementById('calDebut').value.trim();
       const fin = document.getElementById('calFin').value.trim();
+      const editIdxRaw = document.getElementById('calEditIndex').value;
 
+      if (!yData.calendrierVacances) yData.calendrierVacances = [];
       if (editIdxRaw !== "") {
         const idx = parseInt(editIdxRaw, 10);
         if (yData.calendrierVacances[idx]) yData.calendrierVacances[idx] = { type, titre, debut, fin };
@@ -4391,7 +4444,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         saveSchoolData(s, () => {
           renderCalendrierTable();
           document.getElementById('formCalendrierScolaire').reset();
-          CommicoAlert("Événement modifié !");
+          CommicoAlert("Événement mis à jour !");
         });
         return;
       }
@@ -4400,7 +4453,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       saveSchoolData(s, () => {
         renderCalendrierTable();
         document.getElementById('formCalendrierScolaire').reset();
-        CommicoAlert("Événement enregistré !");
+        CommicoAlert("Événement enregistré au calendrier !");
       });
     }
 
@@ -4410,14 +4463,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s || !yData) return;
       const tbody = document.getElementById('calendrierTableBody');
       if (!tbody) return;
-      const filterEl = document.getElementById('calendarFilterSelect');
-      const filterVal = filterEl ? filterEl.value : 'Tous';
+      const filterSelect = document.getElementById('calendarFilterSelect');
+      const filterVal = filterSelect ? filterSelect.value : "Tous";
+      const list = (yData.calendrierVacances || []).filter(item => filterVal === "Tous" || item.type === filterVal);
 
-      const list = (yData.calendrierVacances || []).map((item, idx) => ({ item, idx }));
-      const filtered = filterVal === 'Tous' ? list : list.filter(x => x.item.type === filterVal);
-
-      tbody.innerHTML = filtered.map(({ item: c, idx }) => `
-        <tr><td><span class="badge ${c.type.includes('Islamique') ? 'bg-success' : 'bg-primary'}">${escapeHtml(c.type)}</span></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+      tbody.innerHTML = list.map((item, i) => `
+        <tr>
+          <td><span class="badge ${item.type.includes('Islamique') ? 'bg-success' : 'bg-primary'}">${escapeHtml(item.type)}</span></td>
+          <td><b>${escapeHtml(item.titre)}</b></td>
+          <td>${escapeHtml(item.debut)}</td>
+          <td>${escapeHtml(item.fin)}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
       `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
     }
 
@@ -4434,16 +4491,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
-      if (!Array.isArray(yData.horairesCours)) yData.horairesCours = [];
       const editIdxRaw = document.getElementById('horaireEditIndex').value;
       const classe = document.getElementById('horaireClassSelect').value;
       const jour = document.getElementById('horaireJour').value;
       const plage = document.getElementById('horairePlage').value.trim();
-      const coursNom = document.getElementById('horaireCoursNom').value.trim();
+      const cours = document.getElementById('horaireCoursNom').value.trim();
 
+      if (!yData.horairesCours) yData.horairesCours = [];
       if (editIdxRaw !== "") {
         const idx = parseInt(editIdxRaw, 10);
-        if (yData.horairesCours[idx]) yData.horairesCours[idx] = { classe, jour, plage, coursNom };
+        if (yData.horairesCours[idx]) yData.horairesCours[idx] = { classe, jour, plage, cours };
         document.getElementById('horaireEditIndex').value = "";
         saveSchoolData(s, () => {
           renderHorairesTable();
@@ -4453,11 +4510,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         return;
       }
 
-      yData.horairesCours.push({ classe, jour, plage, coursNom });
+      yData.horairesCours.push({ classe, jour, plage, cours });
       saveSchoolData(s, () => {
         renderHorairesTable();
         document.getElementById('formHoraireCours').reset();
-        CommicoAlert("Horaire enregistré !");
+        CommicoAlert("Horaire ajouté avec succès !");
       });
     }
 
@@ -4479,7 +4536,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       document.getElementById('horaireClassSelect').value = item.classe || '';
       document.getElementById('horaireJour').value = item.jour || 'Lundi';
       document.getElementById('horairePlage').value = item.plage || '';
-      document.getElementById('horaireCoursNom').value = item.coursNom || '';
+      document.getElementById('horaireCoursNom').value = item.cours || '';
       CommicoAlert("Dernier horaire chargé. Modifiez puis cliquez sur Enregistrer.");
     }
 
@@ -4490,7 +4547,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const tbody = document.getElementById('horairesTableBody');
       if (!tbody) return;
       tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td><b>${escapeHtml(h.jour)}</b></td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.coursNom)}</td><td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+        <tr>
+          <td><b>${escapeHtml(h.classe)}</b></td>
+          <td>${escapeHtml(h.jour)}</td>
+          <td>${escapeHtml(h.plage)}</td>
+          <td>${escapeHtml(h.cours)}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
       `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
     }
 
@@ -4509,88 +4572,60 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const container = document.getElementById('statsContainer');
       if (!container) return;
 
-      const nbClasses = (yData.classes || []).length;
-      const nbProfs = (yData.teachers || []).length;
-      const nbStudents = (yData.students || []).length;
-      const nbCaisse = (yData.caisse || []).length;
+      const totalEleves = (yData.students || []).length;
+      const totalProfs = (yData.teachers || []).length;
+      const totalClasses = (yData.classes || []).length;
+
+      let totalUsd = 0, totalFc = 0;
+      (yData.caisse || []).forEach(c => {
+        const val = parseFloat(c.montant) || 0;
+        if (c.devise === 'FC') totalFc += val;
+        else totalUsd += val;
+      });
+      (yData.studentPayments || []).forEach(m => {
+        totalUsd += parseFloat(m.amount) || 0;
+      });
 
       container.innerHTML = `
-        <div class="col-md-3"><div class="card p-3 bg-primary text-white text-center shadow-sm"><h6>Classes</h6><h3 class="m-0">${nbClasses}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-success text-white text-center shadow-sm"><h6>Enseignants</h6><h3 class="m-0">${nbProfs}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-info text-white text-center shadow-sm"><h6>Élèves</h6><h3 class="m-0">${nbStudents}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-warning text-dark text-center shadow-sm"><h6>Paiements</h6><h3 class="m-0">${nbCaisse}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-primary"><h6>Total Élèves</h6><h3>${totalEleves}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-success"><h6>Total Enseignants</h6><h3>${totalProfs}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-info"><h6>Total Classes</h6><h3>${totalClasses}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-warning"><h6>Recettes Trésorerie</h6><div class="fw-bold small">USD: $${totalUsd.toFixed(2)}<br>FC: ${totalFc.toFixed(0)} FC</div></div></div>
       `;
     }
 
-    function downloadSectionData(sectionName) {
-      const s = getActiveSchool();
-      const yData = getActiveYearData(s);
-      if (!s || !yData) return;
-      let dataObj = {};
-      if (sectionName === 'direction') dataObj = s.direction;
-      else if (sectionName === 'classes') dataObj = yData.classes;
-      else if (sectionName === 'profs') dataObj = yData.teachers;
-      else if (sectionName === 'eleves') dataObj = yData.students;
-      else if (sectionName === 'caisse') dataObj = yData.caisse;
-      else if (sectionName === 'momo') dataObj = yData.studentPayments;
-      else if (sectionName === 'presences') dataObj = yData.presenceStudents;
-      else if (sectionName === 'discipline') dataObj = yData.discipline;
-      else if (sectionName === 'comm') dataObj = s.communications;
-      else if (sectionName === 'armoiries') dataObj = { armoiries: s.armoiries, devise: s.devise };
-      else if (sectionName === 'palmares') dataObj = yData.notes;
-      else if (sectionName === 'courriers') dataObj = yData.courriers;
-      else if (sectionName === 'horaires') dataObj = yData.horairesCours;
-      else if (sectionName === 'bulletins') dataObj = { students: yData.students, notes: yData.notes };
-      else if (sectionName === 'periodic') dataObj = { students: yData.students, periodicNotes: yData.periodicNotes, notes: yData.notes };
-
-      const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${s.name.replace(/[^a-z0-9]/gi, '_')}_${sectionName}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
     async function openAdminCentralPanel() {
-      CommicoPrompt("Entrez le mot de passe Administrateur Central :", async function(pass) {
-        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
-          await loadAllSchoolsForAdmin();
-          renderAdminCentralTable();
-          showSection('view-admin-central');
-        } else if (pass !== null) {
-          CommicoAlert("Mot de passe incorrect.");
-        }
-      });
+      await loadAllSchoolsForAdmin();
+      showSection('view-admin-central');
+      renderAdminCentralTable();
     }
 
     function renderAdminCentralTable() {
       const tbody = document.getElementById('adminSchoolsTableBody');
       if (!tbody) return;
       tbody.innerHTML = (appData.schools || []).map(s => {
-        const dirMember = (s.direction || []).find(d => d.role === 'Directeur / Propriétaire');
-        const dirCode = dirMember ? dirMember.secretCode : (s.direction && s.direction[0] ? s.direction[0].secretCode : 'Non généré');
+        const ownerCode = getOwnerCode(s) || 'Non généré';
         return `
           <tr>
-            <td><img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/45')}" style="width:45px; height:45px; border-radius:50%; object-fit:cover;" alt="Logo"></td>
+            <td><img src="${escapeHtml(s.logoUrl || DEFAULT_AVATAR_DATA_URL)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="Logo"></td>
             <td><b>${escapeHtml(s.name)}</b></td>
-            <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
+            <td>${escapeHtml(s.province)} / ${escapeHtml(s.commune)}</td>
             <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-            <td><code>${escapeHtml(s.secretCode)}</code> / <code>${escapeHtml(dirCode)}</code></td>
+            <td><code class="fw-bold">${escapeHtml(s.secretCode)}</code><br><small class="text-muted">Dir: <code>${escapeHtml(ownerCode)}</code></small></td>
             <td>
-              <button type="button" class="btn btn-sm btn-warning fw-bold me-1" onclick="toggleSchoolPaymentStatus('${encodeArg(s.id)}')">Bloquer / Débloquer</button>
-              <button type="button" class="btn btn-sm btn-danger fw-bold" onclick="deleteSchoolAdmin('${encodeArg(s.id)}')">Supprimer</button>
+              <button type="button" class="btn btn-sm btn-warning fw-bold me-1" onclick="toggleSchoolBlockStatus('${encodeArg(s.id)}')"><i class="fa fa-ban"></i> Bloquer / Débloquer</button>
+              <button type="button" class="btn btn-sm btn-danger fw-bold" onclick="promptCentralDeleteSchool('${encodeArg(s.id)}')"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
           </tr>
         `;
       }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
     }
 
-    async function toggleSchoolPaymentStatus(encodedId) {
+    async function toggleSchoolBlockStatus(encodedId) {
       const id = decodeArg(encodedId);
       const s = await ensureFullSchoolLoaded(id);
       if (!s) return;
-      s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
+      s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué (Litige / Retard)' : 'A jour';
       saveSchoolData(s, () => {
         renderAdminCentralTable();
         renderSchoolsList();
@@ -4598,21 +4633,43 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       });
     }
 
-    async function deleteSchoolAdmin(encodedId) {
-      const id = decodeArg(encodedId);
-      if (typeof window.firebaseDeleteSchool === "function") {
-        appData.directory = await window.firebaseDeleteSchool(id, appData.directory);
+    function downloadSectionData(type) {
+      const s = getActiveSchool();
+      const yData = getActiveYearData(s);
+      if (!s || !yData) return;
+      let dataObj = {};
+      if (type === 'direction') dataObj = s.direction;
+      else if (type === 'classes') dataObj = yData.classes;
+      else if (type === 'profs') dataObj = yData.teachers;
+      else if (type === 'eleves') dataObj = yData.students;
+      else if (type === 'caisse') dataObj = yData.caisse;
+      else if (type === 'momo') dataObj = yData.studentPayments;
+      else if (type === 'presences') dataObj = yData.presenceStudents;
+      else if (type === 'discipline') dataObj = yData.discipline;
+      else if (type === 'comm') dataObj = s.communications;
+      else if (type === 'armoiries') dataObj = { armoiries: s.armoiries, devise: s.devise };
+      else if (type === 'palmares') dataObj = yData.notes;
+      else if (type === 'courriers') dataObj = yData.courriers;
+      else if (type === 'horaires') dataObj = yData.horairesCours;
+      else if (type === 'bulletins') dataObj = { notes: yData.notes, courses: yData.courses };
+      else if (type === 'periodic') dataObj = { periodicNotes: yData.periodicNotes, notes: yData.notes };
+
+      const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `commico_${type}_${s.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function openDirectRegistrationModal() {
+      if (!activeSchoolId) {
+        CommicoAlert("Veuillez d'abord ouvrir le tableau de bord de votre Madras (en cliquant sur « Ouvrir » sur votre Madras et en saisissant votre code secret) pour inscrire des élèves.");
+        return;
       }
-      appData.schools = appData.schools.filter(x => x.id !== id);
-      if (activeSchoolId === id) {
-        activeSchoolId = null;
-        authenticatedTeacher = null;
-        currentActiveStudentClass = null;
-      }
-      renderAdminCentralTable();
-      renderSchoolsList();
-      renderPortalAnnouncements();
-      CommicoAlert("Madras supprimée du registre.");
+      showSection('view-school-dashboard');
+      switchTab('tab-eleves-reg');
     }
   </script>
 </body>
