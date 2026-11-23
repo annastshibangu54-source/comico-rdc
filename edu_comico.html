@@ -1143,14 +1143,150 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
     import {
-      getPayloadByteLength,
-      assertWithinFirestoreLimit,
-      loadInitialPlatformData,
-      loadSchoolDocument,
-      saveSingleSchool,
-      deleteSingleSchool
-    } from "./js/firebase-service.js";
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      deleteDoc,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzUpWidubpSyFTjO9nQGPvrQuJeXgistQ",
+      authDomain: "comico-rdc-8b0cc.firebaseapp.com",
+      projectId: "comico-rdc-8b0cc",
+      storageBucket: "comico-rdc-8b0cc.firebasestorage.app",
+      messagingSenderId: "732104672517",
+      appId: "1:732104672517:web:077e5e3eb1b0e9b51c636c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const directoryDocRef = doc(db, "comico_platform", "directory");
+    const schoolsCollectionRef = collection(db, "madras");
+    const FIRESTORE_DOC_MAX_BYTES = 1048576;
+
+    function sanitizeValue(val, fallback) {
+      return JSON.parse(JSON.stringify(val ?? fallback, (_k, v) => (
+        typeof v === "function" || typeof v === "symbol" || typeof v === "undefined" ? null : v
+      )));
+    }
+
+    function getPayloadByteLength(obj) {
+      try {
+        return new Blob([JSON.stringify(sanitizeValue(obj, {}))]).size;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    function assertWithinFirestoreLimit(obj, label = "Document") {
+      const bytes = getPayloadByteLength(obj);
+      if (bytes > FIRESTORE_DOC_MAX_BYTES) {
+        const kb = Math.round(bytes / 1024);
+        throw new Error(`${label} trop volumineux (${kb} Ko / 1024 Ko max Firestore). Réduisez ou supprimez des images/fichiers.`);
+      }
+      return bytes;
+    }
+
+    function buildSchoolSummary(school) {
+      const comms = Array.isArray(school.communications)
+        ? school.communications.slice(-5).map(c => ({
+            date: c.date || "",
+            message: c.message || "",
+            timestamp: c.timestamp || Date.now(),
+            images: Array.isArray(c.images) ? c.images.slice(0, 2) : []
+          }))
+        : [];
+      return {
+        id: school.id,
+        name: school.name || "",
+        province: school.province || "",
+        division: school.division || "",
+        subDivision: school.subDivision || "",
+        commune: school.commune || "",
+        address: school.address || "",
+        regime: school.regime || "",
+        secretCode: school.secretCode || "",
+        logoUrl: school.logoUrl || "",
+        activeYear: school.activeYear || "2025-2026",
+        paiementStatut: school.paiementStatut || "A jour",
+        communications: comms
+      };
+    }
+
+    async function loadInitialPlatformData() {
+      const [dirSnap, schoolsSnap] = await Promise.all([
+        getDoc(directoryDocRef),
+        getDocs(schoolsCollectionRef)
+      ]);
+
+      const schoolsById = {};
+      schoolsSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data && typeof data === "object") {
+          const schoolId = data.id || docSnap.id;
+          schoolsById[schoolId] = { ...data, id: schoolId };
+        }
+      });
+
+      const loadedSchools = Object.values(schoolsById);
+      const directory = (dirSnap.exists() && Array.isArray(dirSnap.data()?.schools) && dirSnap.data().schools.length > 0)
+        ? dirSnap.data().schools
+        : loadedSchools.map(buildSchoolSummary);
+
+      return { directory, schoolsById };
+    }
+
+    async function loadSchoolDocument(schoolId) {
+      if (!schoolId) return null;
+      const snap = await getDoc(doc(db, "madras", schoolId));
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      return { ...data, id: data.id || schoolId };
+    }
+
+    async function saveSingleSchool(school, currentDirectory = []) {
+      const cleanSchool = sanitizeValue(school, {});
+      if (!cleanSchool.id) {
+        throw new Error("Identifiant de Madras manquant.");
+      }
+      assertWithinFirestoreLimit(cleanSchool, `Fiche Madras (${cleanSchool.name || cleanSchool.id})`);
+
+      const summary = buildSchoolSummary(cleanSchool);
+      const baseDir = Array.isArray(currentDirectory) ? currentDirectory : [];
+      const existsInDir = baseDir.some(item => item && item.id === cleanSchool.id);
+      const nextDirectory = existsInDir
+        ? baseDir.map(item => (item && item.id === cleanSchool.id ? summary : item))
+        : [...baseDir, summary];
+
+      const cleanDirPayload = sanitizeValue({ schools: nextDirectory }, { schools: [] });
+      assertWithinFirestoreLimit(cleanDirPayload, "Annuaire COMICO");
+
+      await Promise.all([
+        setDoc(doc(db, "madras", cleanSchool.id), cleanSchool),
+        setDoc(directoryDocRef, cleanDirPayload, { merge: true })
+      ]);
+
+      return nextDirectory;
+    }
+
+    async function deleteSingleSchool(schoolId, currentDirectory = []) {
+      if (!schoolId) return Array.isArray(currentDirectory) ? currentDirectory : [];
+      const filteredDirectory = (Array.isArray(currentDirectory) ? currentDirectory : [])
+        .filter(item => item && item.id !== schoolId);
+      const cleanDirPayload = sanitizeValue({ schools: filteredDirectory }, { schools: [] });
+
+      await Promise.all([
+        deleteDoc(doc(db, "madras", schoolId)),
+        setDoc(directoryDocRef, cleanDirPayload, { merge: true })
+      ]);
+
+      return filteredDirectory;
+    }
 
     window.firebaseGetPayloadSize = getPayloadByteLength;
     window.firebaseAssertLimit = assertWithinFirestoreLimit;
@@ -1495,10 +1631,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       return (currentSize + extraBytes) < FIRESTORE_SAFE_DOC_LIMIT;
     }
 
-    /**
-     * Sauvegarde séparée : enregistre uniquement la Madras concernée dans `madras/{id}`
-     * et met à jour l'annuaire léger `comico_platform/directory`.
-     */
     function saveSchoolData(school, onSuccess) {
       const targetSchool = normalizeSchoolObject(school || getActiveSchool());
       if (!targetSchool) {
