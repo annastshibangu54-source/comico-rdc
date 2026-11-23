@@ -21,7 +21,7 @@
 body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 .sidebar-menu .list-group-item { font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; margin-bottom: 4px; }
 .sidebar-menu .list-group-item.active { background-color: #0d6efd; color: #fff; }
-.school-logo-display { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #0d6efd; }
+.school-logo-display { width: 70px; height: 70px; object-fit: contain; background-color: #ffffff; border-radius: 50%; border: 2px solid #0d6efd; padding: 2px; }
 .params-submenu { padding-left: 10px; background-color: #f8f9fa; border-left: 3px solid #0d6efd; margin-top: 5px; display: none; }
 .params-submenu.show { display: block; }
 .tab-pane { display: none; }
@@ -65,8 +65,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
             <img id="navBrandLogo"
                  src="img/logo1.jpg"
                  alt="Logo COMICO-RDC"
-                 class="me-3 rounded-circle"
-                 style="width: 45px; height: 45px; object-fit: cover; display: inline-block;"
+                 class="me-3 rounded-circle border"
+                 style="width: 45px; height: 45px; object-fit: contain; background:#fff; display: inline-block;"
                  onerror="handleLogoFallback(this, 45, 'CR');">
             <h2 class="m-0 text-primary">COMICO-RDC</h2>
         </a>
@@ -614,7 +614,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <div id="cardRectoView">
             <div class="text-center mb-2 pb-2 border-bottom">
                 <div class="d-flex align-items-center justify-content-start mb-1">
-                    <img id="cardSchoolLogo" src="img/logo1.jpg" alt="Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;" class="me-2" onerror="handleLogoFallback(this, 35, 'CR');">
+                    <img id="cardSchoolLogo" src="img/logo1.jpg" alt="Logo" style="width: 35px; height: 35px; object-fit: contain; background:#fff; border-radius: 50%;" class="me-2 border" onerror="handleLogoFallback(this, 35, 'CR');">
                     <div style="font-size: 10px; font-weight: 700; text-align: left;">République Démocratique du Congo<br><span id="cardSchoolName" class="text-primary fw-bold">-</span></div>
                 </div>
                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">Communauté Islamique en République Démocratique du Congo en sigle "COMICO"</div>
@@ -1203,14 +1203,26 @@ let currentActiveStudentClass = null;
 function createFallbackLogoDataUrl(size, label) {
     const px = size || 64;
     const text = (label || 'CR').slice(0, 3);
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${px} ${px}"><circle cx="${px/2}" cy="${px/2}" r="${px/2}" fill="#0d6efd"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="${Math.max(10, Math.round(px*0.32))}" font-weight="bold">${text}</text></svg>`;
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    const fontSize = Math.max(10, Math.round(px * 0.34));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${px} ${px}"><circle cx="${px / 2}" cy="${px / 2}" r="${px / 2}" fill="#0d6efd"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="${fontSize}" font-weight="bold">${text}</text></svg>`;
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return 'data:image/svg+xml;base64,' + base64;
 }
 
 function handleLogoFallback(imgEl, size, label) {
     if (!imgEl || imgEl.dataset.fallbackApplied === "1") return;
     imgEl.dataset.fallbackApplied = "1";
     imgEl.src = createFallbackLogoDataUrl(size || 64, label || 'CR');
+}
+
+function applyImageSrcSafe(imgEl, src, size, label) {
+    if (!imgEl) return;
+    imgEl.dataset.fallbackApplied = "0";
+    if (!src || (typeof src === 'string' && src.trim() === '')) {
+        handleLogoFallback(imgEl, size, label);
+        return;
+    }
+    imgEl.src = src;
 }
 
 function isPdfOrImageUrl(url, fileType) {
@@ -1323,6 +1335,9 @@ function loadDataFromLocal() {
     if(!appData.jobApplications) appData.jobApplications = [];
 
     appData.schools.forEach(s => {
+        if(!s.logoUrl || typeof s.logoUrl !== 'string' || s.logoUrl.trim() === '') {
+            s.logoUrl = "img/logo1.jpg";
+        }
         if(!s.activeYear) s.activeYear = "2025-2026";
         if(s.paiementStatut === undefined) s.paiementStatut = "A jour";
         if(!s.chatMessages) s.chatMessages = [];
@@ -1388,12 +1403,22 @@ function compressAndResizeImage(file, callback) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
+            const maxDim = 200;
+            let width = img.width || maxDim;
+            let height = img.height || maxDim;
+            if (width > maxDim || height > maxDim) {
+                const ratio = Math.min(maxDim / width, maxDim / height);
+                width = Math.max(1, Math.round(width * ratio));
+                height = Math.max(1, Math.round(height * ratio));
+            }
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 150;
-            canvas.height = 150;
-            ctx.drawImage(img, 0, 0, 150, 150);
-            callback(canvas.toDataURL('image/jpeg', 0.6));
+            canvas.width = width;
+            canvas.height = height;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', 0.75));
         };
         img.onerror = function() {
             callback("img/logo1.jpg");
@@ -1665,8 +1690,7 @@ function proceedToDashboardOpen(id) {
     document.getElementById('dashSchoolTitle').innerText = s.name;
     document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
     const dashLogo = document.getElementById('dashSchoolLogo');
-    dashLogo.dataset.fallbackApplied = "0";
-    dashLogo.src = s.logoUrl || 'img/logo1.jpg';
+    applyImageSrcSafe(dashLogo, s.logoUrl, 70, 'MD');
     
     populateSchoolYearsSelect();
     refreshAllDropdowns();
@@ -2209,8 +2233,8 @@ function populateCardFromSelectedStudent() {
         document.getElementById('cardClasseVal').innerText = st.classe;
         document.getElementById('cardAdresseVal').innerText = s.address || 'Adresse Madras';
         document.getElementById('cardSchoolName').innerText = s.name;
-        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'img/logo1.jpg';
-        document.getElementById('cardBgLogo').src = s.logoUrl || 'img/logo1.jpg';
+        applyImageSrcSafe(document.getElementById('cardSchoolLogo'), s.logoUrl, 35, 'CR');
+        applyImageSrcSafe(document.getElementById('cardBgLogo'), s.logoUrl, 160, 'CR');
         document.getElementById('cardVersoMadrasName').innerText = s.name;
     }
 }
@@ -2235,8 +2259,7 @@ function previewStudentCardPhoto(e) {
         readFileAsDataUrl(file, function(res) {
             if (res.dataUrl) {
                 const photoEl = document.getElementById('cardPhotoPreview');
-                photoEl.dataset.fallbackApplied = "0";
-                photoEl.src = res.dataUrl;
+                applyImageSrcSafe(photoEl, res.dataUrl, 65, 'EL');
             }
         });
     }
@@ -2303,8 +2326,7 @@ function consultCard(id) {
         document.getElementById('cardAdresseVal').innerText = c.adresse;
         document.getElementById('cardMotVal').innerText = c.mot;
         const photoEl = document.getElementById('cardPhotoPreview');
-        photoEl.dataset.fallbackApplied = "0";
-        photoEl.src = c.photo || 'img/logo1.jpg';
+        applyImageSrcSafe(photoEl, c.photo, 65, 'EL');
         window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 }
