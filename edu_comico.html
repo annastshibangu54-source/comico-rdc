@@ -207,7 +207,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                     <div class="card-body bg-white" style="max-height: 250px; overflow-y: auto;" id="blockedSchoolMessagesContainer"></div>
                     <div class="card-footer bg-light p-2">
                       <div class="input-group input-group-sm mb-2">
-                        <input type="text" id="schoolChatMessageInput" class="form-control" placeholder="Écrire un message à l'Admin Central...">
+                        <input type="text" id="schoolChatMessageInput" class="form-control" placeholder="Écrire un message à l'Admin Central..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendSchoolChatMessage();}">
                         <button class="btn btn-primary" type="button" onclick="sendSchoolChatMessage()"><i class="fa fa-paper-plane"></i></button>
                       </div>
                     </div>
@@ -313,7 +313,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
       <div class="card shadow-sm border-0 border-start border-4 border-danger mb-4">
         <div class="card-header bg-dark text-white"><h4 class="m-0 text-white">Espace Administrateur Central - Registre des Madras & Gestion COMICO</h4></div>
-        <div class="card-body p-4">
+        <div class="card-body p-4 table-responsive">
           <table class="table table-bordered align-middle">
             <thead><tr><th>Logo</th><th>Madras</th><th>Province / Antenne</th><th>Statut Paiement / Échéance</th><th>Code Madras / Code Directeur</th><th>Actions Administration Centrale</th></tr></thead>
             <tbody id="adminSchoolsTableBody"></tbody>
@@ -395,7 +395,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                 <h6 class="m-0 text-primary fw-bold"><i class="fa fa-calendar-alt me-2"></i>Gestion des Années Scolaires</h6>
                 <div>
                   <button type="button" id="btnUnlockSchoolYears" class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="promptUnlockSchoolYears()"><i class="fa fa-key me-1"></i> Déverrouiller les Années</button>
-                  <div id="schoolYearsSectionsContainer" class="d-flex align-items-center gap-2" style="display: none !important;">
+                  <div id="schoolYearsSectionsContainer" class="align-items-center gap-2" style="display: none;">
                     <div style="font-size: 13px; font-weight: bold;">Année :</div>
                     <select id="globalSchoolYearSelect" class="form-select form-select-sm" style="width: 140px;" onchange="switchSchoolYear(this.value)"></select>
                     <button type="button" class="btn btn-outline-success btn-sm fw-bold text-nowrap" onclick="openNewSchoolYearWizard()" title="Ouvrir une nouvelle année"><i class="fa fa-plus-circle me-1"></i> Nouvelle Année</button>
@@ -870,9 +870,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
             <div class="tab-pane" id="tab-discipline">
               <h5 class="text-primary fw-bold mb-3">Discipline & Sanctions</h5>
               <div id="disciplineAuthArea" class="mb-3 p-3 bg-light rounded border">
-                <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant :</label>
+                <label class="form-label small fw-bold">Saisissez votre Code Secret Enseignant ou Directeur :</label>
                 <div class="input-group input-group-sm" style="max-width: 350px;">
-                  <input type="password" id="disciplineSecretInput" class="form-control" placeholder="Code secret enseignant...">
+                  <input type="password" id="disciplineSecretInput" class="form-control" placeholder="Code secret...">
                   <button type="button" class="btn btn-primary" onclick="verifyDisciplineAccess()">Ouvrir Discipline</button>
                 </div>
               </div>
@@ -1433,10 +1433,25 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
     function getOwnerCode(school) {
       if (!school) return "";
-      if (Array.isArray(school.direction) && school.direction.length > 0 && school.direction[0].secretCode) {
-        return school.direction[0].secretCode;
+      if (Array.isArray(school.direction)) {
+        const dirMember = school.direction.find(d => d && d.role === "Directeur / Propriétaire" && d.secretCode);
+        if (dirMember) return dirMember.secretCode;
+        if (school.direction.length > 0 && school.direction[0].secretCode) {
+          return school.direction[0].secretCode;
+        }
       }
       return school.secretCode || "";
+    }
+
+    function isAuthorizedTreasurerOrOwner(school, code) {
+      if (!school || !code) return false;
+      const normalized = code.trim().toUpperCase();
+      const validOwnerCode = getOwnerCode(school);
+      if (validOwnerCode && normalized === validOwnerCode.toUpperCase()) return true;
+      if (Array.isArray(school.direction)) {
+        return school.direction.some(d => d && d.treasurerCode && d.treasurerCode.trim().toUpperCase() === normalized);
+      }
+      return false;
     }
 
     function resetAuthWorkspacesForNewSchool() {
@@ -1477,6 +1492,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (cardUnl) cardUnl.style.display = 'none';
       if (cardLok) cardLok.style.display = 'block';
 
+      lockSchoolYears();
       switchTab('defaultWelcomeMessage');
     }
 
@@ -2115,13 +2131,17 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     }
 
     function promptUnlockSchoolYears() {
-      document.getElementById('schoolYearsSectionsContainer').setAttribute('style', 'display: flex !important;');
-      document.getElementById('btnUnlockSchoolYears').style.display = 'none';
+      const container = document.getElementById('schoolYearsSectionsContainer');
+      const btn = document.getElementById('btnUnlockSchoolYears');
+      if (container) container.style.display = 'flex';
+      if (btn) btn.style.display = 'none';
     }
 
     function lockSchoolYears() {
-      document.getElementById('schoolYearsSectionsContainer').setAttribute('style', 'display: none !important;');
-      document.getElementById('btnUnlockSchoolYears').style.display = 'inline-block';
+      const container = document.getElementById('schoolYearsSectionsContainer');
+      const btn = document.getElementById('btnUnlockSchoolYears');
+      if (container) container.style.display = 'none';
+      if (btn) btn.style.display = 'inline-block';
     }
 
     function switchSchoolYear(year) {
@@ -2818,24 +2838,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
-      const mat = document.getElementById('cardStudentSelect').value;
-      if (!mat) { CommicoAlert("Veuillez sélectionner un élève."); return; }
+      const mat = document.getElementById('cardStudentSelect').value || document.getElementById('cardMatVal').innerText.trim();
+      if (!mat || mat === "-") { CommicoAlert("Veuillez sélectionner ou consulter un élève."); return; }
 
       const student = (yData.students || []).find(x => x.matricule === mat);
-      if (!student) { CommicoAlert("Élève introuvable."); return; }
       const cardData = {
         id: 'CARD-' + Date.now(),
-        matricule: student.matricule,
-        name: student.name,
-        classe: student.classe,
-        sex: student.sex,
+        matricule: student ? student.matricule : mat,
+        name: student ? student.name : document.getElementById('cardNomVal').innerText.trim(),
+        classe: student ? student.classe : document.getElementById('cardClasseVal').innerText.trim(),
+        sex: student ? student.sex : document.getElementById('cardSexeVal').innerText.trim(),
         adresse: s.address,
         mot: document.getElementById('cardMotInput').value,
         photo: document.getElementById('cardPhotoPreview').src
       };
 
       if (!yData.savedCards) yData.savedCards = [];
-      const existingIdx = yData.savedCards.findIndex(c => c.matricule === student.matricule);
+      const existingIdx = yData.savedCards.findIndex(c => c.matricule === cardData.matricule);
       if (existingIdx !== -1) {
         yData.savedCards[existingIdx] = { ...cardData, id: yData.savedCards[existingIdx].id };
       } else {
@@ -3423,13 +3442,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const code = document.getElementById('treasurerSecretInput').value.trim();
       if (!code) { CommicoAlert("Veuillez saisir un code d'accès."); return; }
 
-      const validOwnerCode = getOwnerCode(s);
-      let treasurerCode = "";
-      if (s.direction) {
-        const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
-        if (tr) treasurerCode = tr.treasurerCode;
-      }
-
       const isTeacher = (yData.teachers || []).some(t => t.secretCode && t.secretCode.toUpperCase() === code.toUpperCase());
       if (isTeacher) {
         CommicoAlert("Accès refusé : Le code enseignant ne peut pas ouvrir la section Frais & Trésorerie.");
@@ -3437,7 +3449,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         return;
       }
 
-      if ((validOwnerCode && code.toUpperCase() === validOwnerCode.toUpperCase()) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+      if (isAuthorizedTreasurerOrOwner(s, code)) {
         document.getElementById('treasurerWorkspace').style.display = 'block';
         document.getElementById('treasurerAuthArea').style.display = 'none';
         renderCaisseTable();
@@ -3578,14 +3590,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       if (!s) return;
       const code = document.getElementById('momoSecretInput').value.trim();
-      const validOwnerCode = getOwnerCode(s);
-      let treasurerCode = "";
-      if (s.direction) {
-        const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
-        if (tr) treasurerCode = tr.treasurerCode;
-      }
 
-      if ((validOwnerCode && code.toUpperCase() === validOwnerCode.toUpperCase()) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+      if (isAuthorizedTreasurerOrOwner(s, code)) {
         document.getElementById('momoWorkspace').style.display = 'block';
         document.getElementById('momoAuthArea').style.display = 'none';
         renderMomoTable();
@@ -4076,13 +4082,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
     function renderArmoiriesDisplay() {
       const s = getActiveSchool();
+      if (!s) return;
       const container = document.getElementById('armoiriesDisplayContainer');
-      if (!container || !s) return;
+      if (!container) return;
       container.innerHTML = `
-        <div class="p-3 border rounded bg-white">
-          ${s.armoiries ? `<img src="${escapeHtml(s.armoiries)}" alt="Emblème" style="max-height: 150px;" class="mb-3">` : '<p class="text-muted">Aucun emblème défini</p>'}
-          <h4 class="fw-bold text-primary">"${escapeHtml(s.devise || 'Devise officielle de la Madras')}"</h4>
-        </div>
+        <h5 class="fw-bold text-primary mb-2">${escapeHtml(s.name)}</h5>
+        ${s.armoiries ? `<img src="${escapeHtml(s.armoiries)}" alt="Emblème" style="max-height:130px;" class="mb-2">` : '<div class="text-muted small mb-2">Aucun emblème défini</div>'}
+        <div class="fw-bold fst-italic">"${escapeHtml(s.devise || 'Devise non définie')}"</div>
       `;
     }
 
@@ -4093,27 +4099,33 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const container = document.getElementById('palmaresTableContainer');
       if (!container) return;
 
-      const results = (yData.students || []).map(st => {
-        const cls = st.classe;
-        const courses = yData.courses[cls] || [];
+      const students = yData.students || [];
+      const rows = students.map(st => {
+        const courses = yData.courses[st.classe] || [];
         const notesObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
         let total = 0, maxTotal = 0;
         courses.forEach(c => {
-          total += (parseFloat(notesObj[c.name]) || 0);
+          total += parseFloat(notesObj[c.name]) || 0;
           maxTotal += parseFloat(c.max) || 0;
         });
         const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-        return { ...st, total, maxTotal, pct };
-      });
+        return { student: st, total, maxTotal, pct };
+      }).sort((a, b) => b.pct - a.pct);
 
-      results.sort((a, b) => b.pct - a.pct);
       container.innerHTML = `
         <table class="table table-bordered table-sm align-middle">
-          <thead><tr class="table-warning"><th>Rang</th><th>Matricule</th><th>Nom & Prénom</th><th>Classe</th><th>Total</th><th>Pourcentage</th></tr></thead>
+          <thead><tr><th>Rang</th><th>Matricule</th><th>Élève</th><th>Classe</th><th>Total</th><th>Pourcentage</th></tr></thead>
           <tbody>
-            ${results.map((r, i) => `
-              <tr><td><b>${i + 1}</b></td><td>${escapeHtml(r.matricule)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.classe)}</td><td>${escapeHtml(r.total)} / ${escapeHtml(r.maxTotal)}</td><td><span class="badge bg-success">${r.pct.toFixed(1)} %</span></td></tr>
-            `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune donnée de notes disponible.</td></tr>'}
+            ${rows.map((r, idx) => `
+              <tr>
+                <td><b>${idx + 1}</b></td>
+                <td>${escapeHtml(r.student.matricule)}</td>
+                <td>${escapeHtml(r.student.name)}</td>
+                <td>${escapeHtml(r.student.classe)}</td>
+                <td>${r.total} / ${r.maxTotal}</td>
+                <td><b>${r.pct.toFixed(2)} %</b></td>
+              </tr>
+            `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune donnée disponible.</td></tr>'}
           </tbody>
         </table>
       `;
@@ -4124,9 +4136,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
       yData.notes = {};
+      yData.periodicNotes = {};
       saveSchoolData(s, () => {
         renderPalmaresTable();
-        CommicoAlert("Palmarès réinitialisé.");
+        CommicoAlert("Notes du palmarès effacées.");
       });
     }
 
@@ -4136,7 +4149,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
       const editIdxRaw = document.getElementById('courrierEditIndex').value;
-      const now = new Date();
       const type = document.getElementById('courrierType').value;
       const numDoc = document.getElementById('courrierNumDoc').value.trim();
       const date = document.getElementById('courrierDate').value;
@@ -4144,43 +4156,39 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const dest = document.getElementById('courrierDest').value.trim();
       const objet = document.getElementById('courrierObjet').value.trim();
       const file = document.getElementById('courrierFileInput').files[0];
+      const now = new Date();
+      const heure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const jour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
 
-      const commitCourrier = function(docUrl) {
+      readAttachedDocumentFile(file, function(docUrl) {
         if (editIdxRaw !== "") {
           const idx = parseInt(editIdxRaw, 10);
           if (yData.courriers[idx]) {
             yData.courriers[idx] = {
               ...yData.courriers[idx],
               type, numDoc, date, exp, dest, objet,
-              docUrl: docUrl || yData.courriers[idx].docUrl || ''
+              docUrl: docUrl || (yData.courriers[idx].docUrl || "")
             };
           }
           document.getElementById('courrierEditIndex').value = "";
           saveSchoolData(s, () => {
             renderCourriersTable();
             document.getElementById('formCourrier').reset();
-            CommicoAlert("Courrier modifié avec succès !");
+            CommicoAlert("Correspondance modifiée avec succès !");
           });
           return;
         }
 
         yData.courriers.push({
-          type, numDoc, date, exp, dest, objet, docUrl,
-          heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-          jour: now.toLocaleDateString('fr-FR', { weekday: 'long' })
+          id: 'COUR-' + Date.now(),
+          type, numDoc, date, exp, dest, objet, heure, jour, docUrl
         });
         saveSchoolData(s, () => {
           renderCourriersTable();
           document.getElementById('formCourrier').reset();
-          CommicoAlert("Courrier enregistré avec succès !");
+          CommicoAlert("Correspondance enregistrée avec succès !");
         });
-      };
-
-      if (file) {
-        readAttachedDocumentFile(file, commitCourrier, s);
-      } else {
-        commitCourrier("");
-      }
+      }, s);
     }
 
     function clearCourrierForm() {
@@ -4192,7 +4200,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!yData || !yData.courriers || yData.courriers.length === 0) {
-        CommicoAlert("Aucun courrier à modifier.");
+        CommicoAlert("Aucune correspondance à modifier.");
         return;
       }
       const lastIdx = yData.courriers.length - 1;
@@ -4204,7 +4212,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       document.getElementById('courrierExp').value = item.exp || '';
       document.getElementById('courrierDest').value = item.dest || '';
       document.getElementById('courrierObjet').value = item.objet || '';
-      CommicoAlert("Dernier courrier chargé. Modifiez puis cliquez sur Enregistrer.");
+      CommicoAlert("Dernière correspondance chargée. Modifiez puis cliquez sur Enregistrer.");
     }
 
     function renderCourriersTable() {
@@ -4216,44 +4224,24 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       tbody.innerHTML = (yData.courriers || []).map((c, i) => `
         <tr>
           <td>${escapeHtml(c.date)}</td>
-          <td><span class="badge ${c.type === 'Entrant' ? 'bg-success' : 'bg-info'}">${escapeHtml(c.type)}</span></td>
+          <td><span class="badge ${c.type === 'Entrant' ? 'bg-info' : 'bg-warning'}">${escapeHtml(c.type)}</span></td>
           <td>${escapeHtml(c.numDoc)}</td>
           <td>${escapeHtml(c.exp)}</td>
           <td>${escapeHtml(c.dest)}</td>
           <td>${escapeHtml(c.objet)}</td>
-          <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
-          <td>${c.docUrl ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewCourrierDoc(${i})"><i class="fa fa-eye"></i> Voir Doc</button>` : '-'}</td>
-          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
+          <td>${escapeHtml(c.heure || '')} / ${escapeHtml(c.jour || '')}</td>
+          <td>${c.docUrl ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeArg(c.docUrl)}', '${encodeArg('Courrier ' + c.numDoc)}')">Voir</button>` : '-'}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i></button></td>
         </tr>
-      `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucun courrier.</td></tr>';
-    }
-
-    function viewCourrierDoc(index) {
-      const s = getActiveSchool();
-      const yData = getActiveYearData(s);
-      const item = yData && yData.courriers ? yData.courriers[index] : null;
-      if (item && item.docUrl) {
-        viewDocumentModal(item.docUrl, 'Courrier N° ' + (item.numDoc || ''));
-      }
+      `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance enregistrée.</td></tr>';
     }
 
     function deleteCourrierItem(index) {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
-      if (!s || !yData || !yData.courriers) return;
+      if (!s || !yData) return;
       yData.courriers.splice(index, 1);
       saveSchoolData(s, () => { renderCourriersTable(); });
-    }
-
-    let archiveSearchTerm = "";
-    function searchArchiveByNumDoc() {
-      archiveSearchTerm = document.getElementById('searchArchiveNumInput').value.trim().toLowerCase();
-      renderDossiersTable();
-    }
-    function resetArchiveSearch() {
-      archiveSearchTerm = "";
-      document.getElementById('searchArchiveNumInput').value = "";
-      renderDossiersTable();
     }
 
     function handleSaveArchiveDoc(e) {
@@ -4262,22 +4250,20 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
       const editIdxRaw = document.getElementById('archiveEditIndex').value;
-      const now = new Date();
       const classeur = document.getElementById('archiveClasseur').value;
       const numDoc = document.getElementById('archiveNumDoc').value.trim();
       const date = document.getElementById('archiveDate').value;
       const nomDoc = document.getElementById('archiveNomDoc').value.trim();
       const file = document.getElementById('archiveFileInput').files[0];
 
-      const commitArchive = function(docUrl) {
-        if (!yData.dossiersArchive) yData.dossiersArchive = [];
+      readAttachedDocumentFile(file, function(docUrl) {
         if (editIdxRaw !== "") {
           const idx = parseInt(editIdxRaw, 10);
           if (yData.dossiersArchive[idx]) {
             yData.dossiersArchive[idx] = {
               ...yData.dossiersArchive[idx],
               classeur, numDoc, date, nomDoc,
-              docUrl: docUrl || yData.dossiersArchive[idx].docUrl || ''
+              docUrl: docUrl || (yData.dossiersArchive[idx].docUrl || "")
             };
           }
           document.getElementById('archiveEditIndex').value = "";
@@ -4289,22 +4275,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
           return;
         }
 
-        yData.dossiersArchive.push({
-          classeur, numDoc, date, nomDoc, docUrl,
-          heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-        });
+        yData.dossiersArchive.push({ id: 'DOC-' + Date.now(), classeur, numDoc, date, nomDoc, docUrl });
         saveSchoolData(s, () => {
           renderDossiersTable();
           document.getElementById('formArchiveDoc').reset();
-          CommicoAlert("Document archivé avec succès !");
+          CommicoAlert("Document ajouté aux archives avec succès !");
         });
-      };
-
-      if (file) {
-        readAttachedDocumentFile(file, commitArchive, s);
-      } else {
-        commitArchive("");
-      }
+      }, s);
     }
 
     function editArchiveMode() {
@@ -4324,48 +4301,44 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       CommicoAlert("Dernier document chargé. Modifiez puis cliquez sur Enregistrer.");
     }
 
-    function renderDossiersTable() {
+    function searchArchiveByNumDoc() {
+      const q = document.getElementById('searchArchiveNumInput').value.trim().toLowerCase();
+      renderDossiersTable(q);
+    }
+
+    function resetArchiveSearch() {
+      document.getElementById('searchArchiveNumInput').value = '';
+      renderDossiersTable('');
+    }
+
+    function renderDossiersTable(filterNum = '') {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
       const tbody = document.getElementById('dossiersStorageTableBody');
       if (!tbody) return;
-      const allDocs = yData.dossiersArchive || [];
-      const filtered = allDocs
-        .map((d, realIdx) => ({ d, realIdx }))
-        .filter(entry => !archiveSearchTerm || (entry.d.numDoc && entry.d.numDoc.toLowerCase().includes(archiveSearchTerm)));
+      const fullList = yData.dossiersArchive || [];
+      const list = fullList
+        .map((item, realIdx) => ({ item, realIdx }))
+        .filter(({ item: d }) => !filterNum || (d.numDoc && d.numDoc.toLowerCase().includes(filterNum)));
 
-      tbody.innerHTML = filtered.map(({ d, realIdx }) => `
+      tbody.innerHTML = list.map(({ item: d, realIdx }) => `
         <tr>
-          <td><b>${escapeHtml(d.classeur)}</b></td>
-          <td><code>${escapeHtml(d.numDoc)}</code></td>
-          <td>${escapeHtml(d.date)} à ${escapeHtml(d.heure || '')}</td>
+          <td>${escapeHtml(d.classeur || 'Classeur DOC')}</td>
+          <td><b>${escapeHtml(d.numDoc)}</b></td>
+          <td>${escapeHtml(d.date)}</td>
           <td>${escapeHtml(d.nomDoc)}</td>
-          <td>${d.docUrl ? `<span class="badge bg-secondary">${d.docUrl.startsWith('data:image') ? 'Image' : 'Document'}</span>` : 'Aucun'}</td>
-          <td class="no-print">
-            ${d.docUrl ? `<button type="button" class="btn btn-sm btn-primary me-1" onclick="viewArchiveDoc(${realIdx})"><i class="fa fa-eye"></i> Afficher</button>` : ''}
-            <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveDoc(${realIdx})"><i class="fa fa-trash"></i> Suppr.</button>
-            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Impr.</button>
-            ${d.docUrl ? `<a class="btn btn-sm btn-outline-success" href="${escapeHtml(d.docUrl)}" download="${escapeHtml(d.nomDoc || 'document')}"><i class="fa fa-download"></i> Téléch.</a>` : ''}
-          </td>
+          <td>${d.docUrl ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeArg(d.docUrl)}', '${encodeArg(d.nomDoc)}')">Ouvrir</button>` : '-'}</td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveItem(${realIdx})"><i class="fa fa-trash"></i></button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
     }
 
-    function viewArchiveDoc(realIdx) {
+    function deleteArchiveItem(index) {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
-      const item = yData && yData.dossiersArchive ? yData.dossiersArchive[realIdx] : null;
-      if (item && item.docUrl) {
-        viewDocumentModal(item.docUrl, item.nomDoc || ('Archive ' + (item.numDoc || '')));
-      }
-    }
-
-    function deleteArchiveDoc(realIdx) {
-      const s = getActiveSchool();
-      const yData = getActiveYearData(s);
-      if (!s || !yData || !yData.dossiersArchive) return;
-      yData.dossiersArchive.splice(realIdx, 1);
+      if (!s || !yData) return;
+      yData.dossiersArchive.splice(index, 1);
       saveSchoolData(s, () => { renderDossiersTable(); });
     }
 
@@ -4374,17 +4347,32 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
-      if (!Array.isArray(yData.calendrierVacances)) yData.calendrierVacances = [];
-      const type = document.getElementById('calType').value;
+      const editIdxRaw = document.getElementById('calEditIndex').value;
+      const calType = document.getElementById('calType').value;
       const titre = document.getElementById('calTitre').value.trim();
       const debut = document.getElementById('calDebut').value.trim();
       const fin = document.getElementById('calFin').value.trim();
 
-      yData.calendrierVacances.push({ type, titre, debut, fin });
+      if (!yData.calendrierVacances) yData.calendrierVacances = [];
+      if (editIdxRaw !== "") {
+        const idx = parseInt(editIdxRaw, 10);
+        if (yData.calendrierVacances[idx]) {
+          yData.calendrierVacances[idx] = { calType, titre, debut, fin };
+        }
+        document.getElementById('calEditIndex').value = "";
+        saveSchoolData(s, () => {
+          renderCalendrierTable();
+          document.getElementById('formCalendrierScolaire').reset();
+          CommicoAlert("Événement modifié au calendrier !");
+        });
+        return;
+      }
+
+      yData.calendrierVacances.push({ calType, titre, debut, fin });
       saveSchoolData(s, () => {
         renderCalendrierTable();
         document.getElementById('formCalendrierScolaire').reset();
-        CommicoAlert("Événement enregistré dans le calendrier !");
+        CommicoAlert("Événement ajouté au calendrier !");
       });
     }
 
@@ -4394,27 +4382,29 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!s || !yData) return;
       const tbody = document.getElementById('calendrierTableBody');
       if (!tbody) return;
-      const filterType = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-      const list = (yData.calendrierVacances || [])
+      const filterEl = document.getElementById('calendarFilterSelect');
+      const filter = filterEl ? filterEl.value : 'Tous';
+      const fullList = yData.calendrierVacances || [];
+      const list = fullList
         .map((item, realIdx) => ({ item, realIdx }))
-        .filter(entry => filterType === 'Tous' || entry.item.type === filterType);
+        .filter(({ item: c }) => filter === 'Tous' || c.calType === filter);
 
       tbody.innerHTML = list.map(({ item: c, realIdx }) => `
         <tr>
-          <td><b>${escapeHtml(c.type)}</b></td>
-          <td>${escapeHtml(c.titre)}</td>
+          <td><span class="badge ${c.calType === 'Calendrier Islamique (Hégirien)' ? 'bg-success' : 'bg-primary'}">${escapeHtml(c.calType)}</span></td>
+          <td><b>${escapeHtml(c.titre)}</b></td>
           <td>${escapeHtml(c.debut)}</td>
           <td>${escapeHtml(c.fin)}</td>
-          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${realIdx})"><i class="fa fa-trash"></i> Supprimer</button></td>
+          <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${realIdx})"><i class="fa fa-trash"></i></button></td>
         </tr>
       `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
     }
 
-    function deleteCalendrierItem(realIdx) {
+    function deleteCalendrierItem(index) {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData || !yData.calendrierVacances) return;
-      yData.calendrierVacances.splice(realIdx, 1);
+      yData.calendrierVacances.splice(index, 1);
       saveSchoolData(s, () => { renderCalendrierTable(); });
     }
 
@@ -4423,13 +4413,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
       if (!s || !yData) return;
-      if (!Array.isArray(yData.horairesCours)) yData.horairesCours = [];
       const editIdxRaw = document.getElementById('horaireEditIndex').value;
       const classe = document.getElementById('horaireClassSelect').value;
       const jour = document.getElementById('horaireJour').value;
       const plage = document.getElementById('horairePlage').value.trim();
       const cours = document.getElementById('horaireCoursNom').value.trim();
 
+      if (!yData.horairesCours) yData.horairesCours = [];
       if (editIdxRaw !== "") {
         const idx = parseInt(editIdxRaw, 10);
         if (yData.horairesCours[idx]) yData.horairesCours[idx] = { classe, jour, plage, cours };
@@ -4437,7 +4427,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         saveSchoolData(s, () => {
           renderHorairesTable();
           document.getElementById('formHoraireCours').reset();
-          CommicoAlert("Horaire modifié avec succès !");
+          CommicoAlert("Horaire modifié !");
         });
         return;
       }
@@ -4446,7 +4436,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       saveSchoolData(s, () => {
         renderHorairesTable();
         document.getElementById('formHoraireCours').reset();
-        CommicoAlert("Horaire enregistré avec succès !");
+        CommicoAlert("Horaire ajouté !");
       });
     }
 
@@ -4479,14 +4469,14 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const tbody = document.getElementById('horairesTableBody');
       if (!tbody) return;
       tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-      `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire défini.</td></tr>';
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i></button></td></tr>
+      `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
     }
 
     function deleteHoraireItem(index) {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
-      if (!s || !yData || !yData.horairesCours) return;
+      if (!s || !yData) return;
       yData.horairesCours.splice(index, 1);
       saveSchoolData(s, () => { renderHorairesTable(); });
     }
@@ -4501,49 +4491,23 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const totalStudents = (yData.students || []).length;
       const totalTeachers = (yData.teachers || []).length;
       const totalClasses = (yData.classes || []).length;
-      const totalCaisse = (yData.caisse || []).length;
+      const totalPayments = (yData.caisse || []).length;
 
       container.innerHTML = `
-        <div class="col-md-3">
-          <div class="card p-3 bg-light border-start border-4 border-primary text-center">
-            <h6 class="text-muted small">Élèves Inscrits</h6>
-            <h3 class="fw-bold text-primary m-0">${totalStudents}</h3>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 bg-light border-start border-4 border-success text-center">
-            <h6 class="text-muted small">Enseignants</h6>
-            <h3 class="fw-bold text-success m-0">${totalTeachers}</h3>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 bg-light border-start border-4 border-info text-center">
-            <h6 class="text-muted small">Classes / Niveaux</h6>
-            <h3 class="fw-bold text-info m-0">${totalClasses}</h3>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 bg-light border-start border-4 border-warning text-center">
-            <h6 class="text-muted small">Opérations Caisse</h6>
-            <h3 class="fw-bold text-warning m-0">${totalCaisse}</h3>
-          </div>
-        </div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-primary"><h4>${totalStudents}</h4><small class="text-muted">Élèves / Étudiants</small></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-success"><h4>${totalTeachers}</h4><small class="text-muted">Enseignants & Maîtres</small></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-warning"><h4>${totalClasses}</h4><small class="text-muted">Classes / Niveaux</small></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-info"><h4>${totalPayments}</h4><small class="text-muted">Transactions Trésorerie</small></div></div>
       `;
     }
 
-    function openDirectRegistrationModal() {
-      const s = getActiveSchool();
-      if (!s) { CommicoAlert("Veuillez d'abord ouvrir une Madras."); return; }
-      switchTab('tab-eleves-reg');
-    }
-
-    function openAdminCentralPanel() {
+    async function openAdminCentralPanel() {
       CommicoPrompt("Entrez le mot de passe Administrateur Central :", async function(pass) {
         if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
           await loadAllSchoolsForAdmin();
-          showSection('view-admin-central');
           renderAdminCentralTable();
           renderAdminNotifications();
+          showSection('view-admin-central');
         } else if (pass !== null) {
           CommicoAlert("Mot de passe incorrect.");
         }
@@ -4553,63 +4517,76 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     function renderAdminCentralTable() {
       const tbody = document.getElementById('adminSchoolsTableBody');
       if (!tbody) return;
-      tbody.innerHTML = (appData.schools || []).map(s => {
-        let dirCode = (s.direction && s.direction.length > 0 && s.direction[0].secretCode) ? s.direction[0].secretCode : 'Non généré';
+      const schools = appData.schools || [];
+      tbody.innerHTML = schools.map(s => {
+        const dirCode = getOwnerCode(s) || 'Non défini';
         return `
           <tr>
-            <td><img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/40')}" width="40" height="40" class="rounded-circle" alt="Logo"></td>
+            <td><img src="${escapeHtml(s.logoUrl || 'https://via.placeholder.com/40')}" style="width:40px;height:40px;object-fit:cover;border-radius:50%;"></td>
             <td><b>${escapeHtml(s.name)}</b></td>
             <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
-            <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut)}</span></td>
-            <td>Madras: <code>${escapeHtml(s.secretCode)}</code><br>Directeur: <code>${escapeHtml(dirCode)}</code></td>
+            <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
+            <td><div>Madras : <code>${escapeHtml(s.secretCode)}</code></div><div>Directeur : <code>${escapeHtml(dirCode)}</code></div></td>
             <td>
               <button type="button" class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${encodeArg(s.id)}')">Changer Statut</button>
-              <button type="button" class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${encodeArg(s.id)}')"><i class="fa fa-trash"></i></button>
+              <button type="button" class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${encodeArg(s.id)}')">Supprimer</button>
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
     }
 
-    async function toggleSchoolPaymentStatus(encodedId) {
+    function toggleSchoolPaymentStatus(encodedId) {
       const id = decodeArg(encodedId);
-      const s = await ensureFullSchoolLoaded(id);
-      if (!s) return;
-      s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloquée / Impayé' : 'A jour';
-      saveSchoolData(s, () => {
+      const school = appData.schools.find(s => s.id === id);
+      if (!school) return;
+      school.paiementStatut = school.paiementStatut === 'A jour' ? 'Bloquée / Impayé' : 'A jour';
+      saveSchoolData(school, () => {
         renderAdminCentralTable();
         renderSchoolsList();
-        CommicoAlert("Statut mis à jour : " + s.paiementStatut);
+        CommicoAlert("Statut mis à jour : " + school.paiementStatut);
       });
+    }
+
+    function openDirectRegistrationModal() {
+      const s = getActiveSchool();
+      if (!s) {
+        CommicoAlert("Veuillez d'abord ouvrir une Madras depuis la liste (ou créer une Madras), puis déverrouiller l'inscription élève.");
+        return;
+      }
+      showSection('view-school-dashboard');
+      switchTab('tab-eleves-reg');
     }
 
     function downloadSectionData(sectionName) {
       const s = getActiveSchool();
       const yData = getActiveYearData(s);
-      if (!s || !yData) { CommicoAlert("Aucune donnée active à télécharger."); return; }
+      if (!s || !yData) { CommicoAlert("Aucune donnée active à exporter."); return; }
 
-      let exportObj = {};
-      if (sectionName === 'direction') exportObj = s.direction || [];
-      else if (sectionName === 'classes') exportObj = yData.classes || [];
-      else if (sectionName === 'profs') exportObj = yData.teachers || [];
-      else if (sectionName === 'eleves') exportObj = yData.students || [];
-      else if (sectionName === 'caisse') exportObj = yData.caisse || [];
-      else if (sectionName === 'momo') exportObj = yData.studentPayments || [];
-      else if (sectionName === 'presences') exportObj = yData.presenceStudents || [];
-      else if (sectionName === 'discipline') exportObj = yData.discipline || [];
-      else if (sectionName === 'comm') exportObj = s.communications || [];
-      else if (sectionName === 'armoiries') exportObj = { armoiries: s.armoiries || '', devise: s.devise || '' };
-      else if (sectionName === 'palmares') exportObj = { students: yData.students || [], notes: yData.notes || {}, courses: yData.courses || {} };
-      else if (sectionName === 'courriers') exportObj = yData.courriers || [];
-      else if (sectionName === 'bulletins') exportObj = { notes: yData.notes || {}, courses: yData.courses || {} };
-      else if (sectionName === 'periodic') exportObj = { periodicNotes: yData.periodicNotes || {}, courses: yData.courses || {} };
-      else if (sectionName === 'horaires') exportObj = yData.horairesCours || [];
+      const exportMap = {
+        direction: s.direction || [],
+        classes: yData.classes || [],
+        profs: yData.teachers || [],
+        eleves: yData.students || [],
+        bulletins: yData.notes || {},
+        periodic: yData.periodicNotes || {},
+        caisse: yData.caisse || [],
+        momo: yData.studentPayments || [],
+        presences: yData.presenceStudents || [],
+        discipline: yData.discipline || [],
+        comm: s.communications || [],
+        armoiries: { armoiries: s.armoiries || '', devise: s.devise || '' },
+        palmares: { students: yData.students || [], notes: yData.notes || {}, courses: yData.courses || {} },
+        courriers: yData.courriers || [],
+        horaires: yData.horairesCours || []
+      };
 
-      const blob = new Blob([JSON.stringify({ madras: s.name, annee: s.activeYear, section: sectionName, data: exportObj }, null, 2)], { type: "application/json" });
+      const dataStr = JSON.stringify(exportMap[sectionName] ?? {}, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `COMICO_${s.name.replace(/\s+/g, '_')}_${sectionName}.json`;
+      link.download = `${(s.name || 'madras').replace(/[^a-z0-9]/gi, '_')}_${sectionName}_${s.activeYear}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
