@@ -40,8 +40,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 /* MODALE DE CONSULTATION DE FICHIER / DOCUMENT INTÉGRÉE */
 .file-viewer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
-.file-viewer-card { background: #fff; width: 100%; max-width: 800px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
-.file-viewer-header { background: #0d6efd; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.file-viewer-card { background: #fff; width: 100%; max-width: 850px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
+.file-viewer-header { background: #0d6efd; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .file-viewer-body { flex: 1; padding: 15px; overflow: auto; background: #e5e7eb; display: flex; align-items: center; justify-content: center; }
 .file-viewer-body iframe, .file-viewer-body img { width: 100%; height: 100%; border: 0; object-fit: contain; background: #fff; border-radius: 6px; }
 
@@ -62,7 +62,12 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <!-- Navigation Principale Harmonisée pour Gestion COMICO -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
         <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-            <img src="img/logo1.jpg" alt="Logo" class="me-3 rounded-circle" style="width: 45px; height: 45px; object-fit: cover;">
+            <img id="navBrandLogo"
+                 src="img/logo1.jpg"
+                 alt="Logo COMICO-RDC"
+                 class="me-3 rounded-circle"
+                 style="width: 45px; height: 45px; object-fit: cover; display: inline-block;"
+                 onerror="handleLogoFallback(this, 45, 'CR');">
             <h2 class="m-0 text-primary">COMICO-RDC</h2>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -132,8 +137,11 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="fileViewerModal" class="file-viewer-overlay">
   <div class="file-viewer-card">
     <div class="file-viewer-header">
-      <h5 class="m-0 text-white"><i class="fa fa-file-alt me-2"></i>Consultation du Document Scanné</h5>
-      <button class="btn btn-sm btn-light fw-bold" onclick="closeFileViewerModal()"><i class="fa fa-times"></i> Fermer</button>
+      <h5 class="m-0 text-white" id="fileViewerTitle"><i class="fa fa-file-alt me-2"></i>Consultation du Document Scanné</h5>
+      <div class="d-flex gap-2">
+        <a id="fileViewerDownloadLink" href="#" download="document" class="btn btn-sm btn-success fw-bold"><i class="fa fa-download me-1"></i> Télécharger</a>
+        <button class="btn btn-sm btn-light fw-bold" onclick="closeFileViewerModal()"><i class="fa fa-times"></i> Fermer</button>
+      </div>
     </div>
     <div class="file-viewer-body" id="fileViewerContentArea"></div>
   </div>
@@ -358,7 +366,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div id="view-school-dashboard" class="view-section">
 <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm no-print flex-wrap gap-2">
 <div class="d-flex align-items-center gap-3">
-<img id="dashSchoolLogo" class="school-logo-display" src="" alt="Logo">
+<img id="dashSchoolLogo" class="school-logo-display" src="img/logo1.jpg" alt="Logo" onerror="handleLogoFallback(this, 70, 'MD');">
 <div><h3 id="dashSchoolTitle" class="text-primary m-0 fw-bold"></h3><small id="dashSchoolSub" class="text-muted"></small></div>
 </div>
 <button class="btn btn-secondary btn-sm fw-bold" onclick="showSection('view-portal')"><i class="fa fa-times me-1"></i> Fermer / Retour</button>
@@ -600,13 +608,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 
 <div class="student-card-container mb-3" id="studentCardPrintArea">
-    <img id="cardBgLogo" src="" class="student-card-bg-logo" alt="Logo Filigrane Transparent">
+    <img id="cardBgLogo" src="img/logo1.jpg" class="student-card-bg-logo" alt="Logo Filigrane Transparent" onerror="handleLogoFallback(this, 160, 'CR');">
     <div class="student-card-content">
         <!-- RECTO -->
         <div id="cardRectoView">
             <div class="text-center mb-2 pb-2 border-bottom">
                 <div class="d-flex align-items-center justify-content-start mb-1">
-                    <img id="cardSchoolLogo" src="" alt="Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;" class="me-2">
+                    <img id="cardSchoolLogo" src="img/logo1.jpg" alt="Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;" class="me-2" onerror="handleLogoFallback(this, 35, 'CR');">
                     <div style="font-size: 10px; font-weight: 700; text-align: left;">République Démocratique du Congo<br><span id="cardSchoolName" class="text-primary fw-bold">-</span></div>
                 </div>
                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">Communauté Islamique en République Démocratique du Congo en sigle "COMICO"</div>
@@ -621,7 +629,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
                     <div style="font-size: 10px;"><b>Adresse :</b> <span id="cardAdresseVal">-</span></div>
                 </div>
                 <div class="col-4 text-end">
-                    <img id="cardPhotoPreview" src="https://via.placeholder.com/80" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;">
+                    <img id="cardPhotoPreview" src="img/logo1.jpg" alt="Photo" style="width: 55px; height: 65px; object-fit: cover; border: 1px solid #0d6efd; border-radius: 4px;" onerror="handleLogoFallback(this, 65, 'EL');">
                 </div>
             </div>
             <div class="mt-2 text-center" style="font-size: 7.5px; font-weight: bold; border-top: 1px dashed #0d6efd; padding-top: 3px;">
@@ -944,7 +952,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 <div id="commWorkspace">
 <textarea id="announcementText" class="form-control mb-2 no-print" rows="3" placeholder="Saisir une communication officielle..."></textarea>
-<div class="mb-2"><label class="form-label small fw-bold">Images de l'événement (Format normal, adapté A3 / A4) :</label><input type="file" id="commImageInput" class="form-control form-control-sm" accept="image/*" multiple></div>
+<div class="mb-2"><label class="form-label small fw-bold">Images / Documents PDF de l'événement (Format normal, adapté A3 / A4) :</label><input type="file" id="commImageInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf" multiple></div>
 <div class="action-bar mb-3 no-print">
 <button class="btn btn-success btn-sm fw-bold" onclick="handleSaveCommunication()"><i class="fa fa-save me-1"></i> Enregistrer</button>
 <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
@@ -954,7 +962,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <button type="button" class="btn btn-info btn-sm fw-bold text-white" onclick="CommicoAlert('Modifier')"><i class="fa fa-edit me-1"></i> Modifier</button>
 <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
 </div>
-<table class="table table-bordered mt-3"><thead><tr><th>Date & Heure</th><th>Annonce (Validité 72h)</th><th>Images (Formats A3/A4)</th><th class="no-print">Action</th></tr></thead><tbody id="commTableBody"></tbody></table>
+<table class="table table-bordered mt-3"><thead><tr><th>Date & Heure</th><th>Annonce (Validité 72h)</th><th>Images / PDF (Formats A3/A4)</th><th class="no-print">Action</th></tr></thead><tbody id="commTableBody"></tbody></table>
 </div>
 <div class="mt-3 no-print">
     <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -994,7 +1002,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-shield-alt me-2"></i>Emblèmes & Devise de la Madras</h5>
   <div class="card p-3 shadow-sm mb-4">
     <form onsubmit="handleSaveArmoiries(event)" class="row g-3">
-      <div class="col-md-6"><label class="form-label fw-bold">Symbole / Emblème :</label><input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*"></div>
+      <div class="col-md-6"><label class="form-label fw-bold">Symbole / Emblème (Image ou PDF) :</label><input type="file" id="schoolArmoiriesFile" class="form-control" accept="image/*,.pdf,application/pdf"></div>
       <div class="col-md-6"><label class="form-label fw-bold">Devise Officielle :</label><input type="text" id="schoolDeviseInput" class="form-control" placeholder="Ex: Savoir - Foi - Excellence"></div>
       <div class="col-12 action-bar">
           <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
@@ -1031,7 +1039,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-2"><input type="text" id="courrierExp" class="form-control form-control-sm" placeholder="Expéditeur" required></div>
     <div class="col-md-2"><input type="text" id="courrierDest" class="form-control form-control-sm" placeholder="Destinataire" required></div>
     <div class="col-md-2"><input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Objet" required></div>
-    <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Photo :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
+    <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Image / PDF :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
     <div class="col-md-6 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
         <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
@@ -1071,7 +1079,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-3"><label class="form-label small fw-bold">N° de Document :</label><input type="text" id="archiveNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
     <div class="col-md-3"><label class="form-label small fw-bold">Date :</label><input type="date" id="archiveDate" class="form-control form-control-sm" required></div>
     <div class="col-md-3"><label class="form-label small fw-bold">Intitulé :</label><input type="text" id="archiveNomDoc" class="form-control form-control-sm" placeholder="Intitulé Document" required></div>
-    <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Fichier Scanné :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf"></div>
+    <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Fichier Scanné (Image ou PDF) :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
     <div class="col-md-4 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -1192,6 +1200,51 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 
+function createFallbackLogoDataUrl(size, label) {
+    const px = size || 64;
+    const text = (label || 'CR').slice(0, 3);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${px} ${px}"><circle cx="${px/2}" cy="${px/2}" r="${px/2}" fill="#0d6efd"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="${Math.max(10, Math.round(px*0.32))}" font-weight="bold">${text}</text></svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+function handleLogoFallback(imgEl, size, label) {
+    if (!imgEl || imgEl.dataset.fallbackApplied === "1") return;
+    imgEl.dataset.fallbackApplied = "1";
+    imgEl.src = createFallbackLogoDataUrl(size || 64, label || 'CR');
+}
+
+function isPdfOrImageUrl(url, fileType) {
+    if (!url) return 'none';
+    const typeLower = (fileType || '').toLowerCase();
+    if (typeLower.includes('pdf') || url.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(url)) {
+        return 'pdf';
+    }
+    if (typeLower.startsWith('image/') || url.startsWith('data:image') || /\.(jpeg|jpg|gif|png|webp|svg)(\?|$)/i.test(url)) {
+        return 'image';
+    }
+    return 'other';
+}
+
+function readFileAsDataUrl(file, callback) {
+    if (!file) {
+        callback({ dataUrl: '', fileName: '', fileType: '' });
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        callback({
+            dataUrl: evt.target.result || '',
+            fileName: file.name || 'document',
+            fileType: file.type || ''
+        });
+    };
+    reader.onerror = function() {
+        CommicoAlert("Erreur lors de la lecture du fichier.");
+        callback({ dataUrl: '', fileName: '', fileType: '' });
+    };
+    reader.readAsDataURL(file);
+}
+
 function CommicoAlert(msg) {
     const modal = document.getElementById('commicoCustomModal');
     document.getElementById('commicoModalMessage').innerText = msg;
@@ -1302,7 +1355,11 @@ function loadDataFromLocal() {
 }
 
 function saveData() {
-    localStorage.setItem('comico_appData', JSON.stringify(appData));
+    try {
+        localStorage.setItem('comico_appData', JSON.stringify(appData));
+    } catch(e) {
+        CommicoAlert("Espace de stockage local saturé : utilisez des images légères ou des PDF de taille raisonnable.");
+    }
 }
 
 function showSection(id) {
@@ -1324,7 +1381,7 @@ function openSchoolForm() {
 
 function compressAndResizeImage(file, callback) {
     if (!file) {
-        callback("https://via.placeholder.com/70");
+        callback("img/logo1.jpg");
         return;
     }
     const reader = new FileReader();
@@ -1337,6 +1394,9 @@ function compressAndResizeImage(file, callback) {
             canvas.height = 150;
             ctx.drawImage(img, 0, 0, 150, 150);
             callback(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.onerror = function() {
+            callback("img/logo1.jpg");
         };
         img.src = e.target.result;
     };
@@ -1386,7 +1446,7 @@ function finishSavingSchool(name, province, division, subDivision, commune, addr
                 caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
             }
         },
-        direction: [], communications: [], armoiries: '', devise: ''
+        direction: [], communications: [], armoiries: '', armoiriesType: '', devise: ''
     });
     
     saveData();
@@ -1459,14 +1519,26 @@ function openAdminNotificationsPanel() {
 
 function closeFileViewerModal() {
     document.getElementById('fileViewerModal').style.display = 'none';
+    document.getElementById('fileViewerContentArea').innerHTML = '';
 }
 
-function viewDocumentModal(url, title) {
+function viewDocumentModal(url, title, fileType) {
+    if (!url) { CommicoAlert("Aucun fichier joint à afficher."); return; }
     const area = document.getElementById('fileViewerContentArea');
-    if(url.startsWith('data:image') || url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-        area.innerHTML = `<img src="${url}" alt="Document">`;
+    const titleEl = document.getElementById('fileViewerTitle');
+    const dlLink = document.getElementById('fileViewerDownloadLink');
+    const safeTitle = title || 'Document';
+    titleEl.innerHTML = `<i class="fa fa-file-alt me-2"></i>${safeTitle}`;
+    dlLink.href = url;
+    dlLink.download = safeTitle.replace(/[^a-zA-Z0-9_-]/g, '_') + (isPdfOrImageUrl(url, fileType) === 'pdf' ? '.pdf' : '');
+
+    const kind = isPdfOrImageUrl(url, fileType);
+    if (kind === 'image') {
+        area.innerHTML = `<img src="${url}" alt="${safeTitle}">`;
+    } else if (kind === 'pdf') {
+        area.innerHTML = `<iframe src="${url}" title="${safeTitle}" style="width:100%;height:100%;background:#fff;"></iframe>`;
     } else {
-        area.innerHTML = `<iframe src="${url}"></iframe>`;
+        area.innerHTML = `<div class="text-center p-4 bg-white rounded shadow-sm"><p class="mb-3">Aperçu direct indisponible pour ce format.</p><a href="${url}" download="${safeTitle}" class="btn btn-primary btn-sm fw-bold"><i class="fa fa-download me-1"></i> Télécharger le fichier</a></div>`;
     }
     document.getElementById('fileViewerModal').style.display = 'flex';
 }
@@ -1481,7 +1553,7 @@ function renderSchoolsList() {
     container.innerHTML = appData.schools.map(s => `
         <div class="col-md-6">
             <div class="card shadow-sm border-start border-4 border-primary p-3 bg-light d-flex flex-row align-items-center gap-3">
-                <img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo">
+                <img src="${s.logoUrl || 'img/logo1.jpg'}" class="school-logo-display" alt="Logo" onerror="handleLogoFallback(this, 70, 'MD');">
                 <div class="flex-grow-1">
                     <h5 class="fw-bold text-primary mb-1">${s.name}</h5>
                     <div class="small text-muted mb-1"><b>Prov :</b> ${s.province} | <b>Statut :</b> <span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></div>
@@ -1514,7 +1586,7 @@ function renderPortalAnnouncements() {
         <div class="alert alert-light border-start border-4 border-warning mb-2 py-2">
             <strong>${item.schoolName}</strong> <small class="text-muted">(${item.date})</small>
             <div class="small fw-bold">${item.message}</div>
-            ${item.images && item.images.length ? `<div class="mt-2 d-flex gap-2">${item.images.map(img => `<img src="${img}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain;" class="border">`).join('')}</div>` : ''}
+            ${item.attachments && item.attachments.length ? `<div class="mt-2 d-flex flex-wrap gap-2">${item.attachments.map(att => isPdfOrImageUrl(att.url, att.type) === 'pdf' ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="viewDocumentModal('${att.url}', '${att.name || 'PDF Annonce'}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${att.name || 'Voir PDF'}</button>` : `<img src="${att.url}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="border" onclick="viewDocumentModal('${att.url}', '${att.name || 'Image Annonce'}', 'image/*')">`).join('')}</div>` : (item.images && item.images.length ? `<div class="mt-2 d-flex gap-2">${item.images.map(img => `<img src="${img}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain;" class="border">`).join('')}</div>` : '')}
         </div>
     `).join('') || '<p class="text-muted small mb-0">Aucune annonce active (les annonces expirent après 72h).</p>';
 }
@@ -1592,7 +1664,9 @@ function proceedToDashboardOpen(id) {
     const s = appData.schools.find(x => x.id === id);
     document.getElementById('dashSchoolTitle').innerText = s.name;
     document.getElementById('dashSchoolSub').innerText = s.province + ' | ' + s.commune;
-    document.getElementById('dashSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/70';
+    const dashLogo = document.getElementById('dashSchoolLogo');
+    dashLogo.dataset.fallbackApplied = "0";
+    dashLogo.src = s.logoUrl || 'img/logo1.jpg';
     
     populateSchoolYearsSelect();
     refreshAllDropdowns();
@@ -1656,7 +1730,6 @@ function promptSecureTabAccess(tabId, element) {
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (s.yearsData[s.activeYear].teachers || []).some(t => t.secretCode.toUpperCase() === code);
 
-        // RÈGLE STRICTE : CODE ENSEIGNANT NE PEUT PAS OUVRIR CES SECTIONS
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
             'tab-jobs-received', 'tab-armoiries', 'tab-courriers', 'tab-dossiers-archivage'
@@ -1775,7 +1848,7 @@ function refreshAllDropdowns() {
     renderStatistiques();
 }
 
-// 1. DIRECTION (Propriétaire caché, reste visible et généré)
+// 1. DIRECTION
 function onDirRoleChange(val) {
     const container = document.getElementById('treasurerCodeContainer');
     const input = document.getElementById('dirTreasurerCode');
@@ -2136,8 +2209,8 @@ function populateCardFromSelectedStudent() {
         document.getElementById('cardClasseVal').innerText = st.classe;
         document.getElementById('cardAdresseVal').innerText = s.address || 'Adresse Madras';
         document.getElementById('cardSchoolName').innerText = s.name;
-        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'https://via.placeholder.com/40';
-        document.getElementById('cardBgLogo').src = s.logoUrl || 'https://via.placeholder.com/160';
+        document.getElementById('cardSchoolLogo').src = s.logoUrl || 'img/logo1.jpg';
+        document.getElementById('cardBgLogo').src = s.logoUrl || 'img/logo1.jpg';
         document.getElementById('cardVersoMadrasName').innerText = s.name;
     }
 }
@@ -2159,9 +2232,13 @@ function toggleCardFace(face) {
 function previewStudentCardPhoto(e) {
     const file = e.target.files[0];
     if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { document.getElementById('cardPhotoPreview').src = evt.target.result; };
-        reader.readAsDataURL(file);
+        readFileAsDataUrl(file, function(res) {
+            if (res.dataUrl) {
+                const photoEl = document.getElementById('cardPhotoPreview');
+                photoEl.dataset.fallbackApplied = "0";
+                photoEl.src = res.dataUrl;
+            }
+        });
     }
 }
 
@@ -2225,7 +2302,9 @@ function consultCard(id) {
         document.getElementById('cardClasseVal').innerText = c.classe;
         document.getElementById('cardAdresseVal').innerText = c.adresse;
         document.getElementById('cardMotVal').innerText = c.mot;
-        document.getElementById('cardPhotoPreview').src = c.photo;
+        const photoEl = document.getElementById('cardPhotoPreview');
+        photoEl.dataset.fallbackApplied = "0";
+        photoEl.src = c.photo || 'img/logo1.jpg';
         window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 }
@@ -2394,7 +2473,6 @@ function handleSaveStudentNotesForm(e, mat) {
     });
 
     saveData();
-    // Vider la zone de saisie pour laisser place aux nouvelles informations
     document.querySelectorAll('.note-input').forEach(input => { input.value = ''; });
     CommicoAlert("Notes enregistrées avec succès et zone vidée pour de nouvelles informations !");
 }
@@ -2909,27 +2987,32 @@ function handleSaveCommunication() {
     const text = document.getElementById('announcementText').value.trim();
     const files = document.getElementById('commImageInput').files;
     let images = [];
+    let attachments = [];
     let processed = 0;
     const now = Date.now();
     if(files && files.length > 0) {
-        const count = Math.min(files.length, 2);
+        const count = Math.min(files.length, 3);
         for(let i=0; i<count; i++) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                images.push(e.target.result);
+            const currentFile = files[i];
+            readFileAsDataUrl(currentFile, function(res) {
+                if (res.dataUrl) {
+                    attachments.push({ url: res.dataUrl, name: res.fileName, type: res.fileType });
+                    if (isPdfOrImageUrl(res.dataUrl, res.fileType) === 'image') {
+                        images.push(res.dataUrl);
+                    }
+                }
                 processed++;
-                if(processed === count) { finishCommSave(s, text, images, now); }
-            };
-            reader.readAsDataURL(files[i]);
+                if(processed === count) { finishCommSave(s, text, images, attachments, now); }
+            });
         }
     } else {
-        finishCommSave(s, text, [], now);
+        finishCommSave(s, text, [], [], now);
     }
 }
 
-function finishCommSave(s, text, images, timestamp) {
-    if(text || images.length) {
-        s.communications.push({ date: new Date().toLocaleString(), message: text, images: images, timestamp: timestamp });
+function finishCommSave(s, text, images, attachments, timestamp) {
+    if(text || images.length || attachments.length) {
+        s.communications.push({ date: new Date().toLocaleString(), message: text, images: images, attachments: attachments, timestamp: timestamp });
         saveData();
         renderCommTable();
         renderPortalAnnouncements();
@@ -2943,14 +3026,23 @@ function renderCommTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('commTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.communications || []).map((c, i) => `
-        <tr>
-            <td>${c.date}</td>
-            <td>${c.message}</td>
-            <td>${c.images && c.images.length ? c.images.map(img => `<img src="${img}" style="max-height:120px; width:auto; border-radius:4px; margin-right:4px;" class="border">`).join('') : 'Aucune'}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
+    tbody.innerHTML = (s.communications || []).map((c, i) => {
+        const atts = c.attachments && c.attachments.length ? c.attachments : (c.images || []).map((u, idx) => ({ url: u, name: `Image_${idx+1}`, type: 'image/*' }));
+        const mediaHtml = atts.length ? atts.map(att => {
+            if (isPdfOrImageUrl(att.url, att.type) === 'pdf') {
+                return `<button type="button" class="btn btn-sm btn-outline-danger me-1 mb-1" onclick="viewDocumentModal('${att.url}', '${att.name || 'PDF'}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${att.name || 'PDF'}</button>`;
+            }
+            return `<img src="${att.url}" style="max-height:120px; width:auto; border-radius:4px; margin-right:4px; cursor:pointer;" class="border" onclick="viewDocumentModal('${att.url}', '${att.name || 'Image'}', 'image/*')">`;
+        }).join('') : 'Aucun fichier';
+        return `
+            <tr>
+                <td>${c.date}</td>
+                <td>${c.message}</td>
+                <td>${mediaHtml}</td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
 }
 
 function deleteCommItem(index) {
@@ -3002,14 +3094,16 @@ function handleSaveArmoiries(e) {
     s.devise = document.getElementById('schoolDeviseInput').value.trim();
     const file = document.getElementById('schoolArmoiriesFile').files[0];
     if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            s.armoiries = evt.target.result;
+        readFileAsDataUrl(file, function(res) {
+            if (res.dataUrl) {
+                s.armoiries = res.dataUrl;
+                s.armoiriesType = res.fileType;
+                s.armoiriesName = res.fileName;
+            }
             saveData();
             renderArmoiriesDisplay();
             CommicoAlert("Emblèmes et devise enregistrés !");
-        };
-        reader.readAsDataURL(file);
+        });
     } else {
         saveData();
         renderArmoiriesDisplay();
@@ -3021,15 +3115,23 @@ function renderArmoiriesDisplay() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('armoiriesDisplayContainer');
     if(!container) return;
+    let mediaPart = '';
+    if (s.armoiries) {
+        if (isPdfOrImageUrl(s.armoiries, s.armoiriesType) === 'pdf') {
+            mediaPart = `<button type="button" class="btn btn-sm btn-outline-danger fw-bold mb-3" onclick="viewDocumentModal('${s.armoiries}', '${s.armoiriesName || 'Emblème PDF'}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> Afficher l'Emblème / Document PDF</button><br>`;
+        } else {
+            mediaPart = `<img src="${s.armoiries}" style="max-height:120px; cursor:pointer;" class="mb-3 border rounded" onclick="viewDocumentModal('${s.armoiries}', '${s.armoiriesName || 'Emblème'}', 'image/*')"><br>`;
+        }
+    }
     container.innerHTML = `
-        ${s.armoiries ? `<img src="${s.armoiries}" style="max-height:120px;" class="mb-3"><br>` : ''}
+        ${mediaPart}
         <h4 class="fw-bold text-primary">" ${s.devise || 'Aucune devise renseignée'} "</h4>
     `;
 }
 
 function deleteArmoiries() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    s.armoiries = ''; s.devise = '';
+    s.armoiries = ''; s.armoiriesType = ''; s.armoiriesName = ''; s.devise = '';
     saveData(); renderArmoiriesDisplay();
 }
 
@@ -3073,91 +3175,109 @@ function handleSaveCourrier(e) {
         exp: document.getElementById('courrierExp').value.trim(),
         dest: document.getElementById('courrierDest').value.trim(),
         objet: document.getElementById('courrierObjet').value.trim(),
-        fileUrl: ''
+        fileUrl: '',
+        fileName: '',
+        fileType: ''
     };
 
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            saveObj.fileUrl = evt.target.result;
-            s.yearsData[s.activeYear].courriers.push(saveObj);
-            saveData(); renderCourriersTable();
-            document.getElementById('formCourrier').reset();
-            CommicoAlert("Correspondance enregistrée !");
-        };
-        reader.readAsDataURL(file);
-    } else {
+    readFileAsDataUrl(file, function(res) {
+        saveObj.fileUrl = res.dataUrl;
+        saveObj.fileName = res.fileName;
+        saveObj.fileType = res.fileType;
         s.yearsData[s.activeYear].courriers.push(saveObj);
-        saveData(); renderCourriersTable();
+        saveData();
+        renderCourriersTable();
         document.getElementById('formCourrier').reset();
         CommicoAlert("Correspondance enregistrée !");
-    }
+    });
 }
 
 function renderCourriersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('courriersTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).map((c, i) => `
-        <tr>
-            <td>${c.date}</td><td>${c.type}</td><td><code>${c.numDoc || '-'}</code></td><td>${c.exp}</td><td>${c.dest || '-'}</td><td>${c.objet}</td><td>${c.heure || ''} (${c.jour || ''})</td>
-            <td>${c.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${c.fileUrl}', '${c.objet}')"><i class="fa fa-eye"></i> Aperçu</button>` : 'Aucun'}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i> Supprimer</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
+    tbody.innerHTML = (s.yearsData[s.activeYear].courriers || []).map((c, i) => {
+        const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
+        const docBtn = c.fileUrl
+            ? (kind === 'pdf'
+                ? `<button type="button" class="btn btn-sm btn-danger" onclick="viewDocumentModal('${c.fileUrl}', '${c.fileName || c.objet}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
+                : `<button type="button" class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${c.fileUrl}', '${c.fileName || c.objet}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
+            : 'Aucun';
+        return `
+            <tr>
+                <td>${c.date}</td><td>${c.type}</td><td><code>${c.numDoc || '-'}</code></td><td>${c.exp}</td><td>${c.dest || '-'}</td><td>${c.objet}</td><td>${c.heure || ''} (${c.jour || ''})</td>
+                <td>${docBtn}</td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="s.yearsData[s.activeYear].courriers.splice(${i},1);saveData();renderCourriersTable();"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-// ARCHIVES & DOSSIERS (AVEC LES BOUTONS DEMANDÉS)
+// ARCHIVES & DOSSIERS (AVEC PRISE EN CHARGE IMAGES & PDF ET BOUTONS DEMANDÉS)
 function handleSaveArchiveDoc(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const file = document.getElementById('archiveFileInput').files[0];
     const now = new Date();
     const saveObj = {
+        id: 'ARC-' + Date.now(),
         classeur: document.getElementById('archiveClasseur').value,
         numDoc: document.getElementById('archiveNumDoc').value.trim(),
         date: document.getElementById('archiveDate').value,
         heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         annee: s.activeYear,
         nomDoc: document.getElementById('archiveNomDoc').value.trim(),
-        fileUrl: ''
+        fileUrl: '',
+        fileName: '',
+        fileType: ''
     };
 
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            saveObj.fileUrl = evt.target.result;
-            s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
-            saveData(); renderDossiersTable();
-            document.getElementById('formArchiveDoc').reset();
-            CommicoAlert("Document archivé avec succès !");
-        };
-        reader.readAsDataURL(file);
-    } else {
+    readFileAsDataUrl(file, function(res) {
+        saveObj.fileUrl = res.dataUrl;
+        saveObj.fileName = res.fileName;
+        saveObj.fileType = res.fileType;
         s.yearsData[s.activeYear].dossiersArchive.push(saveObj);
-        saveData(); renderDossiersTable();
+        saveData();
+        renderDossiersTable();
         document.getElementById('formArchiveDoc').reset();
         CommicoAlert("Document archivé avec succès !");
-    }
+    });
+}
+
+function buildArchiveRowsHtml(list, highlightClass) {
+    return list.map((d) => {
+        const kind = isPdfOrImageUrl(d.fileUrl, d.fileType);
+        const badgeFile = d.fileUrl
+            ? (kind === 'pdf'
+                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="viewDocumentModal('${d.fileUrl}', '${d.fileName || d.nomDoc}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
+                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold" onclick="viewDocumentModal('${d.fileUrl}', '${d.fileName || d.nomDoc}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
+            : '<span class="text-muted small">Aucun</span>';
+        const rowId = d.id || d.numDoc;
+        return `
+            <tr class="${highlightClass || ''}">
+                <td><b>${d.classeur}</b></td>
+                <td><code>${d.numDoc}</code></td>
+                <td>${d.date} ${d.heure || ''}</td>
+                <td>${d.nomDoc}</td>
+                <td>${badgeFile}</td>
+                <td class="no-print">
+                    <button type="button" class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${rowId}')"><i class="fa fa-eye"></i> Afficher</button>
+                    <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItemById('${rowId}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="downloadArchiveItem('${rowId}')"><i class="fa fa-download"></i> Télécharger</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times"></i> Fermer</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (s.yearsData[s.activeYear].dossiersArchive || []).map((d, i) => `
-        <tr>
-            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date} ${d.heure || ''}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${d.numDoc}')"><i class="fa fa-eye"></i> Afficher</button>
-                <button class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItem(${i})"><i class="fa fa-trash"></i> Supprimer</button>
-                <button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadArchiveItem()"><i class="fa fa-download"></i> Télécharger</button>
-                <button class="btn btn-sm btn-secondary" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times"></i> Fermer</button>
-            </td>
-        </tr>
-    `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
+    const list = s.yearsData[s.activeYear].dossiersArchive || [];
+    tbody.innerHTML = buildArchiveRowsHtml(list, '') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
 }
 
 function searchArchiveByNumDoc() {
@@ -3169,30 +3289,54 @@ function searchArchiveByNumDoc() {
     const tbody = document.getElementById('dossiersStorageTableBody');
     if(!tbody) return;
     
-    tbody.innerHTML = results.map((d, i) => `
-        <tr class="table-warning">
-            <td><b>${d.classeur}</b></td><td><code>${d.numDoc}</code></td><td>${d.date}</td><td>${d.nomDoc}</td>
-            <td>${d.fileUrl ? `<button class="btn btn-sm btn-info text-white" onclick="viewDocumentModal('${d.fileUrl}', '${d.nomDoc}')"><i class="fa fa-eye"></i> Afficher</button>` : 'Aucun'}</td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${d.numDoc}')"><i class="fa fa-eye"></i> Afficher</button>
-                <button class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItem(${i})"><i class="fa fa-trash"></i> Supprimer</button>
-                <button class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadArchiveItem()"><i class="fa fa-download"></i> Télécharger</button>
-                <button class="btn btn-sm btn-secondary" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times"></i> Fermer</button>
-            </td>
-        </tr>
-    `).join('') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}".</td></tr>`;
+    tbody.innerHTML = buildArchiveRowsHtml(results, 'table-warning') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${query}".</td></tr>`;
 }
 
-function viewArchiveItem(numDoc) { CommicoAlert("Affichage du document d'archive : " + numDoc); }
-function deleteArchiveItem(i) {
+function findArchiveDoc(identifier) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    s.yearsData[s.activeYear].dossiersArchive.splice(i, 1);
-    saveData();
-    renderDossiersTable();
-    CommicoAlert("Document supprimé avec succès.");
+    if (!s) return null;
+    const list = s.yearsData[s.activeYear].dossiersArchive || [];
+    return list.find(d => (d.id && d.id === identifier) || d.numDoc === identifier) || null;
 }
-function downloadArchiveItem() { window.print(); }
+
+function viewArchiveItem(identifier) {
+    const doc = findArchiveDoc(identifier);
+    if (doc && doc.fileUrl) {
+        viewDocumentModal(doc.fileUrl, `${doc.numDoc} - ${doc.nomDoc}`, doc.fileType);
+    } else if (doc) {
+        CommicoAlert(`Document : ${doc.nomDoc} (N° ${doc.numDoc}) — Aucun fichier image/PDF joint.`);
+    } else {
+        CommicoAlert("Document d'archive introuvable.");
+    }
+}
+
+function deleteArchiveItemById(identifier) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const list = s.yearsData[s.activeYear].dossiersArchive || [];
+    const idx = list.findIndex(d => (d.id && d.id === identifier) || d.numDoc === identifier);
+    if (idx !== -1) {
+        list.splice(idx, 1);
+        saveData();
+        renderDossiersTable();
+        CommicoAlert("Document supprimé avec succès.");
+    }
+}
+
+function downloadArchiveItem(identifier) {
+    const doc = findArchiveDoc(identifier);
+    if (doc && doc.fileUrl) {
+        const a = document.createElement('a');
+        a.href = doc.fileUrl;
+        const ext = isPdfOrImageUrl(doc.fileUrl, doc.fileType) === 'pdf' ? '.pdf' : '.jpg';
+        a.download = doc.fileName || (`${doc.numDoc}_${doc.nomDoc}`.replace(/[^a-zA-Z0-9_-]/g, '_') + ext);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } else {
+        window.print();
+    }
+}
 
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
@@ -3278,7 +3422,7 @@ function renderAdminCentralTable() {
         let dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : '<span class="text-danger">Non défini</span>';
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'https://via.placeholder.com/70'}" class="school-logo-display" alt="Logo"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" class="school-logo-display" alt="Logo" onerror="handleLogoFallback(this, 70, 'MD');"></td>
                 <td><b>${s.name}</b><br><small class="text-muted">${s.regime || ''}</small></td>
                 <td>${s.province} / ${s.subDivision || '-'}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${s.paiementStatut || 'A jour'}</span></td>
