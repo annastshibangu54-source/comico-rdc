@@ -1087,42 +1087,49 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- ARCHIVES & DOSSIERS -->
 <div class="tab-pane" id="tab-dossiers-archivage">
   <h5 class="text-primary fw-bold mb-3"><i class="fa fa-folder-open me-2"></i>Archives & Dossiers</h5>
-  
-  <div class="row mb-3 no-print bg-light p-3 rounded">
+
+  <div class="row g-2 mb-3 no-print bg-light p-3 rounded align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Classeur :</label>
+      <select id="archiveClasseur" class="form-select form-select-sm" onchange="onArchiveClasseurOrSearchChange()">
+        <option value="Entrant">1. Entrant</option>
+        <option value="Sortant">2. Sortant</option>
+      </select>
+    </div>
     <div class="col-md-8">
-        <label class="form-label small fw-bold">Recherche par N° de Document :</label>
-        <div class="input-group input-group-sm">
-            <input type="text" id="searchArchiveNumInput" class="form-control" placeholder="Introduisez le numéro du document déjà enregistré...">
-            <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher</button>
-            <button class="btn btn-outline-secondary" type="button" onclick="renderDossiersTable()">Afficher Tout</button>
-        </div>
+      <label class="form-label small fw-bold">Recherche par N° de Document (NumDoc) :</label>
+      <div class="input-group input-group-sm">
+        <input type="text" id="searchArchiveNumInput" class="form-control" placeholder="Entrez le Numéro du document (NumDoc)..." oninput="onArchiveClasseurOrSearchChange()">
+        <button class="btn btn-primary" type="button" onclick="searchArchiveByNumDoc()"><i class="fa fa-search me-1"></i> Rechercher</button>
+        <button class="btn btn-outline-secondary" type="button" onclick="showAllArchiveCorrespondances()">Afficher Tout</button>
+      </div>
     </div>
   </div>
 
-  <form id="formArchiveDoc" onsubmit="handleSaveArchiveDoc(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
-    <div class="col-md-3">
-        <label class="form-label small fw-bold">Classeur DOC :</label>
-        <select id="archiveClasseur" class="form-select form-select-sm" required>
-            <option value="Doc Entrant">Classeur DOC Entrant</option>
-            <option value="Doc Sortant">Classeur DOC Sortant</option>
-        </select>
-    </div>
-    <div class="col-md-3"><label class="form-label small fw-bold">N° de Document :</label><input type="text" id="archiveNumDoc" class="form-control form-control-sm" placeholder="N° Doc" required></div>
-    <div class="col-md-3"><label class="form-label small fw-bold">Date :</label><input type="date" id="archiveDate" class="form-control form-control-sm" required></div>
-    <div class="col-md-3"><label class="form-label small fw-bold">Intitulé :</label><input type="text" id="archiveNomDoc" class="form-control form-control-sm" placeholder="Intitulé Document" required></div>
-    <div class="col-md-8 mt-2"><label class="small fw-bold">Insérer Fichier Scanné (Image ou PDF) :</label><input type="file" id="archiveFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
-    <div class="col-md-4 mt-2 action-bar">
-        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
-  </form>
+  <div class="action-bar mb-3 no-print">
+    <button type="button" class="btn btn-success btn-sm fw-bold" onclick="saveCurrentArchiveCorrespondence()"><i class="fa fa-save me-1"></i> Enregistrer</button>
+    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
 
-  <table class="table table-bordered table-sm align-middle">
-    <thead>
-        <tr><th>Classeur DOC</th><th>N° Doc</th><th>Date / Heure</th><th>Intitulé</th><th>Fichier</th><th class="no-print">Boutons (Afficher, Supprimer, Imprimer, Télécharger, Fermer)</th></tr>
-    </thead>
-    <tbody id="dossiersStorageTableBody"></tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle">
+      <thead>
+        <tr>
+          <th>Classeur</th>
+          <th>N° Doc</th>
+          <th>Date</th>
+          <th>Expéditeur</th>
+          <th>Destinataire</th>
+          <th>Objet</th>
+          <th>Heure / Jour</th>
+          <th>Document</th>
+          <th class="no-print">Action</th>
+        </tr>
+      </thead>
+      <tbody id="dossiersStorageTableBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- CALENDRIER -->
@@ -3529,135 +3536,153 @@ function deleteCourrierItem(index) {
     renderCourriersTable();
 }
 
-function handleSaveArchiveDoc(e) {
-    e.preventDefault();
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const file = document.getElementById('archiveFileInput').files[0];
-    const now = new Date();
-    const saveObj = {
-        id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        classeur: document.getElementById('archiveClasseur').value,
-        numDoc: document.getElementById('archiveNumDoc').value.trim(),
-        date: document.getElementById('archiveDate').value,
-        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        annee: s.activeYear,
-        nomDoc: document.getElementById('archiveNomDoc').value.trim(),
-        fileUrl: '',
-        fileName: '',
-        fileType: ''
-    };
+// ARCHIVES & DOSSIERS (BASÉ SUR CORRESPONDANCES ET CLASSEUR ENTRANT / SORTANT)
+function getSelectedArchiveClasseurType() {
+    const sel = document.getElementById('archiveClasseur');
+    return sel ? sel.value : 'Entrant';
+}
 
-    readFileAsDataUrl(file, function(res) {
-        saveObj.fileUrl = res.dataUrl;
-        saveObj.fileName = res.fileName;
-        saveObj.fileType = res.fileType;
-        yData.dossiersArchive.push(saveObj);
-        saveData();
-        renderDossiersTable();
-        document.getElementById('formArchiveDoc').reset();
-        CommicoAlert("Document archivé avec succès !");
+function getFilteredArchiveCorrespondances(forceAll) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return [];
+    const yData = getActiveYearData(s);
+    const classeurType = getSelectedArchiveClasseurType();
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+
+    return (yData.courriers || []).filter(c => {
+        const matchesType = (c.type || '').toLowerCase() === classeurType.toLowerCase();
+        if (!matchesType) return false;
+        if (!forceAll && query) {
+            return (c.numDoc || '').toUpperCase().includes(query);
+        }
+        return true;
     });
 }
 
-function buildArchiveRowsHtml(list, highlightClass) {
-    return list.map((d) => {
-        const kind = isPdfOrImageUrl(d.fileUrl, d.fileType);
-        const badgeFile = d.fileUrl
+function buildArchiveCorrespondanceRowsHtml(list, highlightClass) {
+    return list.map((c) => {
+        const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
+        const docBtn = c.fileUrl
             ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.nomDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.nomDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
+                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
+                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
             : '<span class="text-muted small">Aucun</span>';
-        const rowId = d.id || d.numDoc;
+        const numDocSafe = c.numDoc || '';
+        const typeSafe = c.type || '';
         return `
             <tr class="${highlightClass || ''}">
-                <td><b>${escapeHtml(d.classeur)}</b></td>
-                <td><code>${escapeHtml(d.numDoc)}</code></td>
-                <td>${escapeHtml(d.date)} ${escapeHtml(d.heure || '')}</td>
-                <td>${escapeHtml(d.nomDoc)}</td>
-                <td>${badgeFile}</td>
+                <td><b>${escapeHtml(typeSafe)}</b></td>
+                <td><code>${escapeHtml(numDocSafe || '-')}</code></td>
+                <td>${escapeHtml(c.date || '-')}</td>
+                <td>${escapeHtml(c.exp || '-')}</td>
+                <td>${escapeHtml(c.dest || '-')}</td>
+                <td>${escapeHtml(c.objet || '-')}</td>
+                <td>${escapeHtml(c.heure || '')} ${c.jour ? '(' + escapeHtml(c.jour) + ')' : ''}</td>
+                <td>${docBtn}</td>
                 <td class="no-print">
-                    <button type="button" class="btn btn-sm btn-info text-white me-1" onclick="viewArchiveItem('${escapeJsAttr(rowId)}')"><i class="fa fa-eye"></i> Afficher</button>
-                    <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveItemById('${escapeJsAttr(rowId)}')"><i class="fa fa-trash"></i> Supprimer</button>
-                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="downloadArchiveItem('${escapeJsAttr(rowId)}')"><i class="fa fa-download"></i> Télécharger</button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times"></i> Fermer</button>
+                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-function renderDossiersTable() {
+function renderDossiersTable(forceAll, isSearchMode) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
-    if(!tbody || !s) return;
-    const yData = getActiveYearData(s);
-    const list = yData.dossiersArchive || [];
-    tbody.innerHTML = buildArchiveRowsHtml(list, '') || '<tr><td colspan="6" class="text-center text-muted">Aucun document archivé.</td></tr>';
+    if (!tbody || !s) return;
+    const classeurType = getSelectedArchiveClasseurType();
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    const list = getFilteredArchiveCorrespondances(Boolean(forceAll));
+
+    if (!list.length) {
+        if (isSearchMode && query) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Aucune correspondance "${escapeHtml(classeurType)}" trouvée pour le N° "${escapeHtml(query)}".</td></tr>`;
+        } else {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance "${escapeHtml(classeurType)}" enregistrée.</td></tr>`;
+        }
+        return;
+    }
+
+    const rowHighlight = (!forceAll && query) ? 'table-warning' : '';
+    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, rowHighlight);
+}
+
+function onArchiveClasseurOrSearchChange() {
+    renderDossiersTable(false, true);
 }
 
 function searchArchiveByNumDoc() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const query = document.getElementById('searchArchiveNumInput').value.trim().toUpperCase();
-    if(!query) { CommicoAlert("Veuillez introduire le numéro du document déjà enregistré."); return; }
-    
-    const results = (yData.dossiersArchive || []).filter(d => d.numDoc.toUpperCase().includes(query));
-    const tbody = document.getElementById('dossiersStorageTableBody');
-    if(!tbody) return;
-    
-    tbody.innerHTML = buildArchiveRowsHtml(results, 'table-warning') || `<tr><td colspan="6" class="text-center text-danger">Aucun document trouvé pour le N° "${escapeHtml(query)}".</td></tr>`;
-}
-
-function findArchiveDoc(identifier) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return null;
-    const yData = getActiveYearData(s);
-    const list = yData.dossiersArchive || [];
-    return list.find(d => (d.id && d.id === identifier) || d.numDoc === identifier) || null;
-}
-
-function viewArchiveItem(identifier) {
-    const doc = findArchiveDoc(identifier);
-    if (doc && doc.fileUrl) {
-        viewDocumentModal(doc.fileUrl, `${doc.numDoc} - ${doc.nomDoc}`, doc.fileType);
-    } else if (doc) {
-        CommicoAlert(`Document : ${doc.nomDoc} (N° ${doc.numDoc}) — Aucun fichier image/PDF joint.`);
-    } else {
-        CommicoAlert("Document d'archive introuvable.");
+    if (!s) return;
+    const query = document.getElementById('searchArchiveNumInput').value.trim();
+    if (!query) {
+        CommicoAlert("Veuillez introduire le numéro du document (NumDoc).");
+        return;
     }
+    renderDossiersTable(false, true);
 }
 
-function deleteArchiveItemById(identifier) {
+function showAllArchiveCorrespondances() {
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    if (inputEl) inputEl.value = '';
+    renderDossiersTable(true, false);
+}
+
+function archiveCorrespondenceByNumDoc(numDoc, typeCourrier) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    const list = yData.dossiersArchive || [];
-    const idx = list.findIndex(d => (d.id && d.id === identifier) || d.numDoc === identifier);
-    if (idx !== -1) {
-        list.splice(idx, 1);
-        saveData();
-        renderDossiersTable();
-        CommicoAlert("Document supprimé avec succès.");
+    const targetType = typeCourrier || getSelectedArchiveClasseurType();
+    const match = (yData.courriers || []).find(c =>
+        (c.type || '').toLowerCase() === targetType.toLowerCase() &&
+        (c.numDoc || '').trim().toUpperCase() === (numDoc || '').trim().toUpperCase()
+    );
+    if (!match) {
+        CommicoAlert("Document introuvable dans les correspondances.");
+        return;
     }
+    if (!yData.dossiersArchive) yData.dossiersArchive = [];
+    const now = new Date();
+    const classeurLabel = targetType === 'Sortant' ? 'Doc Sortant' : 'Doc Entrant';
+    const existingIdx = yData.dossiersArchive.findIndex(d =>
+        (d.numDoc || '').toUpperCase() === (match.numDoc || '').toUpperCase() &&
+        (d.classeur || '').toLowerCase() === classeurLabel.toLowerCase()
+    );
+    const archiveRecord = {
+        id: existingIdx !== -1 ? yData.dossiersArchive[existingIdx].id : ('ARC-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
+        classeur: classeurLabel,
+        numDoc: match.numDoc,
+        date: match.date || now.toLocaleDateString(),
+        heure: match.heure || now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        jour: match.jour || now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+        exp: match.exp || '',
+        dest: match.dest || '',
+        annee: s.activeYear,
+        nomDoc: match.objet || match.numDoc,
+        fileUrl: match.fileUrl || '',
+        fileName: match.fileName || '',
+        fileType: match.fileType || ''
+    };
+    if (existingIdx !== -1) {
+        yData.dossiersArchive[existingIdx] = archiveRecord;
+    } else {
+        yData.dossiersArchive.push(archiveRecord);
+    }
+    saveData();
+    CommicoAlert(`Document N° ${match.numDoc} (${targetType}) enregistré dans les archives !`);
 }
 
-function downloadArchiveItem(identifier) {
-    const doc = findArchiveDoc(identifier);
-    if (doc && doc.fileUrl) {
-        const a = document.createElement('a');
-        a.href = doc.fileUrl;
-        const ext = isPdfOrImageUrl(doc.fileUrl, doc.fileType) === 'pdf' ? '.pdf' : '.jpg';
-        a.download = doc.fileName || (`${doc.numDoc}_${doc.nomDoc}`.replace(/[^a-zA-Z0-9_-]/g, '_') + ext);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    } else {
-        window.print();
+function saveCurrentArchiveCorrespondence() {
+    const list = getFilteredArchiveCorrespondances(false);
+    if (!list.length) {
+        CommicoAlert("Aucun document correspondant à enregistrer.");
+        return;
     }
+    archiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
 }
 
 function handleSaveCalendrierScolaire(e) {
