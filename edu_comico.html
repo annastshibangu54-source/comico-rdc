@@ -158,6 +158,20 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
+<!-- MODALE D'AFFICHAGE DU CODE DE SUIVI CANDIDATURE -->
+<div id="jobTrackingCodeModal" class="secret-modal-overlay no-print">
+  <div class="secret-modal-card">
+    <i class="fa fa-key fa-4x text-warning mb-3"></i>
+    <h3 class="fw-bold">Candidature Envoyée !</h3>
+    <p class="text-muted small">Voici votre <b>Code de Suivi de Candidature</b> généré automatiquement. Gardez-le bien pour vérifier la réponse du propriétaire :</p>
+    <div id="modalJobTrackingCodeDisplay" class="secret-code-badge">CND-0000</div>
+    <div>
+      <button class="btn btn-outline-primary btn-sm me-2" onclick="copyJobTrackingCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
+      <button class="btn btn-warning btn-sm fw-bold px-4" onclick="closeJobTrackingCodeModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOITE DE DIALOGUE OBLIGATOIRE POUR INSCRIRE LE DIRECTEUR LORS DU 1ER PARAMÈTRE -->
 <div id="directorPromptModal" class="secret-modal-overlay no-print">
   <div class="secret-modal-card">
@@ -418,6 +432,17 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 </form>
+
+<!-- SUIVI DE CANDIDATURE PAR CODE -->
+<div class="mt-4 pt-4 border-top no-print">
+<h5 class="text-primary fw-bold mb-2"><i class="fa fa-search me-2"></i>Suivi de Candidature (Vérifier la Réponse du Propriétaire)</h5>
+<p class="text-muted small mb-2">Introduisez votre code ou mot de passe de suivi reçu lors de l'envoi de votre candidature pour consulter la réponse du propriétaire.</p>
+<div class="input-group input-group-sm" style="max-width: 420px;">
+<input type="text" id="jobTrackingLookupInput" class="form-control" placeholder="Entrez votre code de suivi (ex: CND-XXXX)...">
+<button type="button" class="btn btn-primary fw-bold" onclick="checkJobApplicationResponse()"><i class="fa fa-check-circle me-1"></i> Vérifier la réponse</button>
+</div>
+<div id="jobTrackingResultArea" class="mt-3"></div>
+</div>
 </div>
 </div>
 </div>
@@ -1092,7 +1117,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
-    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th class="no-print">Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Code Suivi</th><th>Réponse Propriétaire</th><th class="no-print">Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
 </div>
 </div>
 
@@ -1314,6 +1339,7 @@ let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
 let currentCreatedDirectorCode = "";
+let currentCreatedJobTrackingCode = "";
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
@@ -1552,12 +1578,14 @@ function CommicoAlert(msg) {
     modal.style.display = 'flex';
 }
 
-function CommicoPrompt(msg, callback) {
+function CommicoPrompt(msg, callback, inputType, placeholderText) {
     const modal = document.getElementById('commicoCustomModal');
     document.getElementById('commicoModalMessage').innerText = msg;
     const inputArea = document.getElementById('commicoModalInputArea');
     inputArea.style.display = 'block';
     const inputField = document.getElementById('commicoModalInput');
+    inputField.type = inputType || 'password';
+    inputField.placeholder = placeholderText || 'Saisir votre code...';
     inputField.value = '';
     document.getElementById('commicoModalBtnCancel').style.display = 'inline-block';
     const okBtn = document.getElementById('commicoModalBtnOk');
@@ -3812,7 +3840,20 @@ function deleteCommItem(index) {
 function openJobApplicationSection() {
     const select = document.getElementById('jobSchoolSelect');
     select.innerHTML = (appData.schools || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+    document.getElementById('jobTrackingResultArea').innerHTML = '';
     showSection('view-job-application');
+}
+
+function generateUniqueJobTrackingCode() {
+    let code = '';
+    let exists = true;
+    while (exists) {
+        code = 'CND-' + Math.floor(1000 + Math.random() * 9000);
+        exists = (appData.schools || []).some(sch =>
+            (sch.jobApplications || []).some(app => app.trackingCode && app.trackingCode.toUpperCase() === code)
+        );
+    }
+    return code;
 }
 
 function handleSendJobApplication(e) {
@@ -3821,11 +3862,69 @@ function handleSendJobApplication(e) {
     const s = appData.schools.find(x => x.id === schId);
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
-        s.jobApplications.push({ id: 'JOB-' + Date.now(), name: document.getElementById('jobApplicantName').value.trim(), role: document.getElementById('jobRole').value.trim() });
+        const trackingCode = generateUniqueJobTrackingCode();
+        s.jobApplications.push({
+            id: 'JOB-' + Date.now(),
+            trackingCode: trackingCode,
+            name: document.getElementById('jobApplicantName').value.trim(),
+            role: document.getElementById('jobRole').value.trim(),
+            ownerReply: '',
+            repliedAt: ''
+        });
         saveData();
-        CommicoAlert("Candidature transmise à la Madras !");
-        showSection('view-portal');
+        currentCreatedJobTrackingCode = trackingCode;
+        document.getElementById('modalJobTrackingCodeDisplay').innerText = trackingCode;
+        document.getElementById('jobTrackingCodeModal').style.display = 'flex';
+        e.target.reset();
     }
+}
+
+function copyJobTrackingCodeModal() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(currentCreatedJobTrackingCode);
+    }
+    CommicoAlert("Code de suivi copié !");
+}
+
+function closeJobTrackingCodeModal() {
+    document.getElementById('jobTrackingCodeModal').style.display = 'none';
+}
+
+function checkJobApplicationResponse() {
+    const inputEl = document.getElementById('jobTrackingLookupInput');
+    const resultArea = document.getElementById('jobTrackingResultArea');
+    const code = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    if (!code) {
+        CommicoAlert("Veuillez introduire votre code ou mot de passe de suivi.");
+        return;
+    }
+
+    let foundApp = null;
+    let foundSchool = null;
+    (appData.schools || []).forEach(sch => {
+        const match = (sch.jobApplications || []).find(app => app.trackingCode && app.trackingCode.toUpperCase() === code);
+        if (match) {
+            foundApp = match;
+            foundSchool = sch;
+        }
+    });
+
+    if (!foundApp) {
+        resultArea.innerHTML = `<div class="alert alert-danger py-2 small mb-0">Aucune candidature trouvée avec le code <b>${escapeHtml(code)}</b>.</div>`;
+        return;
+    }
+
+    const replyHtml = foundApp.ownerReply
+        ? `<div class="alert alert-success py-2 small mb-0">
+               <div><b>Madras :</b> ${escapeHtml(foundSchool ? foundSchool.name : '-')} | <b>Candidat :</b> ${escapeHtml(foundApp.name)} (${escapeHtml(foundApp.role)})</div>
+               <div class="mt-1"><b>Réponse du Propriétaire :</b> ${escapeHtml(foundApp.ownerReply)}</div>
+               ${foundApp.repliedAt ? `<div class="text-muted" style="font-size:11px;">Répondu le : ${escapeHtml(foundApp.repliedAt)}</div>` : ''}
+           </div>`
+        : `<div class="alert alert-info py-2 small mb-0">
+               <div><b>Madras :</b> ${escapeHtml(foundSchool ? foundSchool.name : '-')} | <b>Candidat :</b> ${escapeHtml(foundApp.name)} (${escapeHtml(foundApp.role)})</div>
+               <div class="mt-1">Le propriétaire n'a pas encore répondu à cette candidature.</div>
+           </div>`;
+    resultArea.innerHTML = replyHtml;
 }
 
 function renderSchoolJobsTable() {
@@ -3836,12 +3935,29 @@ function renderSchoolJobsTable() {
         <tr>
             <td><b>${escapeHtml(j.name)}</b></td>
             <td>${escapeHtml(j.role)}</td>
+            <td><code>${escapeHtml(j.trackingCode || '-')}</code></td>
+            <td>${j.ownerReply ? `<span class="badge bg-success text-wrap text-start">${escapeHtml(j.ownerReply)}</span>` : '<span class="text-muted small">En attente de réponse</span>'}</td>
             <td class="no-print">
-                <button class="btn btn-sm btn-success me-1" onclick="CommicoAlert('Réponse envoyée !')"><i class="fa fa-reply"></i> Répondre</button>
+                <button class="btn btn-sm btn-success me-1" onclick="replyToSchoolJob(${i})"><i class="fa fa-reply"></i> Répondre</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteSchoolJob(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
+}
+
+function replyToSchoolJob(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s || !s.jobApplications || !s.jobApplications[index]) return;
+    const job = s.jobApplications[index];
+    CommicoPrompt("Saisissez votre réponse pour " + job.name + " :", function(replyText) {
+        if (replyText && replyText.trim() !== '') {
+            job.ownerReply = replyText.trim();
+            job.repliedAt = new Date().toLocaleString('fr-FR');
+            saveData();
+            renderSchoolJobsTable();
+            CommicoAlert("Réponse enregistrée ! Le candidat pourra la consulter avec son code : " + (job.trackingCode || ''));
+        }
+    }, 'text', 'Écrire votre réponse au candidat...');
 }
 
 function deleteSchoolJob(index) {
@@ -4004,212 +4120,212 @@ function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.courriers || yData.courriers.length === 0) {
+    if (!yData.courriers || !yData.courriers.length) {
         CommicoAlert("Aucune correspondance à supprimer.");
         return;
     }
-    const numInput = document.getElementById('courrierNumDoc');
-    const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
-    let idx = -1;
-    if (targetNum) {
-        idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
-    }
-    if (idx === -1) {
-        idx = yData.courriers.length - 1;
-    }
-    deleteCourrierItem(idx);
+    deleteCourrierItem(yData.courriers.length - 1);
 }
 
-// ARCHIVES & DOSSIERS (BASÉ SUR CORRESPONDANCES ET CLASSEUR ENTRANT / SORTANT)
-function getSelectedArchiveClasseurType() {
-    const sel = document.getElementById('archiveClasseur');
-    return sel ? sel.value : 'Entrant';
-}
+// ARCHIVES & DOSSIERS
+let archiveFilterNumDoc = '';
+let archiveShowAllMode = false;
 
-function getFilteredArchiveCorrespondances(forceAll) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return [];
-    const yData = getActiveYearData(s);
-    const classeurType = getSelectedArchiveClasseurType();
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-
-    return (yData.courriers || []).filter(c => {
-        const matchesType = (c.type || '').toLowerCase() === classeurType.toLowerCase();
-        if (!matchesType) return false;
-        if (!forceAll && query) {
-            return (c.numDoc || '').toUpperCase().includes(query);
-        }
-        return true;
+function getCombinedArchiveRecords(yData) {
+    const map = new Map();
+    (yData.dossiersArchive || []).forEach(d => {
+        const key = (d.numDoc || '').trim().toUpperCase() || ('ARCH-' + Math.random());
+        map.set(key, {
+            classeur: d.classeur || d.type || 'Entrant',
+            numDoc: d.numDoc || '-',
+            date: d.date || '-',
+            exp: d.exp || '-',
+            dest: d.dest || '-',
+            objet: d.objet || '-',
+            heure: d.heure || '',
+            jour: d.jour || '',
+            fileUrl: d.fileUrl || '',
+            fileName: d.fileName || '',
+            fileType: d.fileType || ''
+        });
     });
-}
-
-function buildArchiveCorrespondanceRowsHtml(list, highlightClass) {
-    return list.map((c) => {
-        const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
-        const docBtn = c.fileUrl
-            ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
-            : '<span class="text-muted small">Aucun</span>';
-        const numDocSafe = c.numDoc || '';
-        const typeSafe = c.type || '';
-        return `
-            <tr class="${highlightClass || ''}">
-                <td><b>${escapeHtml(typeSafe)}</b></td>
-                <td><code>${escapeHtml(numDocSafe || '-')}</code></td>
-                <td>${escapeHtml(c.date || '-')}</td>
-                <td>${escapeHtml(c.exp || '-')}</td>
-                <td>${escapeHtml(c.dest || '-')}</td>
-                <td>${escapeHtml(c.objet || '-')}</td>
-                <td>${escapeHtml(c.heure || '')} ${c.jour ? '(' + escapeHtml(c.jour) + ')' : ''}</td>
-                <td>${docBtn}</td>
-                <td class="no-print">
-                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
-                    <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-trash"></i> Supprimer</button>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderDossiersTable(forceAll, isSearchMode) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const tbody = document.getElementById('dossiersStorageTableBody');
-    if (!tbody || !s) return;
-    const classeurType = getSelectedArchiveClasseurType();
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-    const list = getFilteredArchiveCorrespondances(Boolean(forceAll));
-
-    if (!list.length) {
-        if (isSearchMode && query) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Aucune correspondance "${escapeHtml(classeurType)}" trouvée pour le N° "${escapeHtml(query)}".</td></tr>`;
-        } else {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance "${escapeHtml(classeurType)}" enregistrée.</td></tr>`;
+    (yData.courriers || []).forEach(c => {
+        const key = (c.numDoc || '').trim().toUpperCase() || ('COUR-' + Math.random());
+        if (!map.has(key)) {
+            map.set(key, {
+                classeur: c.type || 'Entrant',
+                numDoc: c.numDoc || '-',
+                date: c.date || '-',
+                exp: c.exp || '-',
+                dest: c.dest || '-',
+                objet: c.objet || '-',
+                heure: c.heure || '',
+                jour: c.jour || '',
+                fileUrl: c.fileUrl || '',
+                fileName: c.fileName || '',
+                fileType: c.fileType || ''
+            });
         }
-        return;
-    }
-
-    const rowHighlight = (!forceAll && query) ? 'table-warning' : '';
-    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, rowHighlight);
+    });
+    return Array.from(map.values());
 }
 
 function onArchiveClasseurOrSearchChange() {
-    renderDossiersTable(false, true);
+    const searchInput = document.getElementById('searchArchiveNumInput');
+    archiveFilterNumDoc = searchInput ? searchInput.value.trim() : '';
+    renderDossiersTable();
 }
 
 function searchArchiveByNumDoc() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const query = document.getElementById('searchArchiveNumInput').value.trim();
-    if (!query) {
-        CommicoAlert("Veuillez introduire le numéro du document (NumDoc).");
-        return;
-    }
-    renderDossiersTable(false, true);
+    const searchInput = document.getElementById('searchArchiveNumInput');
+    archiveFilterNumDoc = searchInput ? searchInput.value.trim() : '';
+    renderDossiersTable();
 }
 
 function showAllArchiveCorrespondances() {
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    if (inputEl) inputEl.value = '';
-    renderDossiersTable(true, false);
-}
-
-function archiveCorrespondenceByNumDoc(numDoc, typeVal) {
-    requireOwnerCodeAction(function() {
-        const s = appData.schools.find(x => x.id === activeSchoolId);
-        if (!s) return;
-        const yData = getActiveYearData(s);
-        const classeurType = typeVal || getSelectedArchiveClasseurType();
-        const courriers = yData.courriers || [];
-        const match = courriers.find(c =>
-            (!typeVal || (c.type || '').toLowerCase() === classeurType.toLowerCase()) &&
-            (!numDoc || (c.numDoc || '').toUpperCase() === numDoc.toUpperCase())
-        ) || courriers.find(c => (c.type || '').toLowerCase() === classeurType.toLowerCase());
-
-        if (!match) {
-            CommicoAlert("Aucune correspondance trouvée dans le classeur " + classeurType + ".");
-            return;
-        }
-
-        if (!yData.dossiersArchive) yData.dossiersArchive = [];
-        const existingIdx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').toUpperCase() === (match.numDoc || '').toUpperCase() && (d.type || '').toLowerCase() === (match.type || '').toLowerCase());
-        const archivedItem = {
-            classeur: classeurType,
-            type: match.type,
-            numDoc: match.numDoc,
-            date: match.date,
-            heure: match.heure || '',
-            jour: match.jour || '',
-            exp: match.exp,
-            dest: match.dest || '',
-            objet: match.objet,
-            fileUrl: match.fileUrl || '',
-            fileName: match.fileName || '',
-            fileType: match.fileType || '',
-            archivedAt: new Date().toLocaleString()
-        };
-
-        if (existingIdx !== -1) {
-            yData.dossiersArchive[existingIdx] = archivedItem;
-        } else {
-            yData.dossiersArchive.push(archivedItem);
-        }
-        saveData();
-        renderDossiersTable(false, false);
-        CommicoAlert("Correspondance N° " + (match.numDoc || '') + " enregistrée dans les archives (" + classeurType + ") !");
-    });
+    archiveShowAllMode = true;
+    const searchInput = document.getElementById('searchArchiveNumInput');
+    if (searchInput) searchInput.value = '';
+    archiveFilterNumDoc = '';
+    renderDossiersTable();
 }
 
 function saveCurrentArchiveCorrespondence() {
-    const query = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-    const classeurType = getSelectedArchiveClasseurType();
-    archiveCorrespondenceByNumDoc(query, classeurType);
-}
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
 
-function deleteArchiveCorrespondenceByNumDoc(numDoc, typeVal) {
-    requireOwnerCodeAction(function() {
-        const s = appData.schools.find(x => x.id === activeSchoolId);
-        if (!s) return;
-        const yData = getActiveYearData(s);
-        const classeurType = typeVal || getSelectedArchiveClasseurType();
-        if (!Array.isArray(yData.courriers) || !yData.courriers.length) {
-            CommicoAlert("Aucune correspondance à supprimer.");
-            return;
-        }
+    if (!yData.dossiersArchive) yData.dossiersArchive = [];
+    const sourceList = getCombinedArchiveRecords(yData);
+    let candidate = null;
 
-        let targetIdx = -1;
-        if (numDoc) {
-            targetIdx = yData.courriers.findIndex(c =>
-                (c.type || '').toLowerCase() === classeurType.toLowerCase() &&
-                (c.numDoc || '').toUpperCase() === numDoc.toUpperCase()
-            );
-        }
-        if (targetIdx === -1) {
-            targetIdx = yData.courriers.findIndex(c => (c.type || '').toLowerCase() === classeurType.toLowerCase());
-        }
-        if (targetIdx === -1) {
-            CommicoAlert("Aucune correspondance trouvée dans le classeur " + classeurType + ".");
-            return;
-        }
+    if (numQuery) {
+        candidate = sourceList.find(item => (item.numDoc || '').toUpperCase() === numQuery.toUpperCase());
+    } else {
+        const matchingClasseur = sourceList.filter(item => item.classeur === classeur);
+        candidate = matchingClasseur.length ? matchingClasseur[matchingClasseur.length - 1] : (sourceList.length ? sourceList[sourceList.length - 1] : null);
+    }
 
-        const removed = yData.courriers.splice(targetIdx, 1)[0];
-        if (Array.isArray(yData.dossiersArchive) && removed && removed.numDoc) {
-            yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== removed.numDoc.toUpperCase());
-        }
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable(false, false);
-        CommicoAlert("Correspondance supprimée avec succès.");
-    });
+    if (!candidate) {
+        CommicoAlert("Aucune correspondance trouvée à archiver.");
+        return;
+    }
+
+    const existsIdx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').toUpperCase() === (candidate.numDoc || '').toUpperCase());
+    const entryToSave = {
+        classeur: classeur,
+        numDoc: candidate.numDoc,
+        date: candidate.date,
+        exp: candidate.exp,
+        dest: candidate.dest,
+        objet: candidate.objet,
+        heure: candidate.heure,
+        jour: candidate.jour,
+        fileUrl: candidate.fileUrl,
+        fileName: candidate.fileName,
+        fileType: candidate.fileType
+    };
+
+    if (existsIdx !== -1) {
+        yData.dossiersArchive[existsIdx] = entryToSave;
+    } else {
+        yData.dossiersArchive.push(entryToSave);
+    }
+
+    saveData();
+    renderDossiersTable();
+    CommicoAlert("Correspondance enregistrée dans les Archives (" + classeur + ") !");
 }
 
 function deleteCurrentArchiveCorrespondence() {
-    const query = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-    const classeurType = getSelectedArchiveClasseurType();
-    deleteArchiveCorrespondenceByNumDoc(query, classeurType);
+    requireOwnerCodeAction(function() {
+        const s = appData.schools.find(x => x.id === activeSchoolId);
+        if(!s) return;
+        const yData = getActiveYearData(s);
+        const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+        const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
+
+        if (!yData.dossiersArchive) yData.dossiersArchive = [];
+        let deleted = false;
+
+        if (numQuery) {
+            const before = yData.dossiersArchive.length;
+            yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== numQuery.toUpperCase());
+            if (yData.courriers) {
+                yData.courriers = yData.courriers.filter(c => (c.numDoc || '').toUpperCase() !== numQuery.toUpperCase());
+            }
+            deleted = yData.dossiersArchive.length < before;
+        } else {
+            const idx = yData.dossiersArchive.map(d => d.classeur).lastIndexOf(classeur);
+            if (idx !== -1) {
+                yData.dossiersArchive.splice(idx, 1);
+                deleted = true;
+            }
+        }
+
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+        CommicoAlert(deleted ? "Archive supprimée avec succès." : "Aucune archive correspondante à supprimer.");
+    });
+}
+
+function deleteArchiveByNumDoc(numDoc, classeur) {
+    requireOwnerCodeAction(function() {
+        const s = appData.schools.find(x => x.id === activeSchoolId);
+        if(!s) return;
+        const yData = getActiveYearData(s);
+        if (yData.dossiersArchive) {
+            yData.dossiersArchive = yData.dossiersArchive.filter(d => !((d.numDoc || '') === numDoc && (!classeur || d.classeur === classeur)));
+        }
+        if (yData.courriers) {
+            yData.courriers = yData.courriers.filter(c => (c.numDoc || '') !== numDoc);
+        }
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+        CommicoAlert("Correspondance archivée supprimée avec succès.");
+    });
+}
+
+function renderDossiersTable() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('dossiersStorageTableBody');
+    if(!tbody || !s) return;
+    const yData = getActiveYearData(s);
+    const classeurSel = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : (archiveFilterNumDoc || '').toLowerCase();
+
+    let records = getCombinedArchiveRecords(yData);
+    if (searchVal) {
+        records = records.filter(r => (r.numDoc || '').toLowerCase().includes(searchVal));
+    } else if (!archiveShowAllMode) {
+        records = records.filter(r => r.classeur === classeurSel);
+    }
+
+    tbody.innerHTML = records.map(r => {
+        const kind = isPdfOrImageUrl(r.fileUrl, r.fileType);
+        const docBtn = r.fileUrl
+            ? (kind === 'pdf'
+                ? `<button type="button" class="btn btn-sm btn-danger no-print" onclick="viewDocumentModal('${escapeJsAttr(r.fileUrl)}', '${escapeJsAttr(r.fileName || r.objet)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
+                : `<button type="button" class="btn btn-sm btn-info text-white no-print" onclick="viewDocumentModal('${escapeJsAttr(r.fileUrl)}', '${escapeJsAttr(r.fileName || r.objet)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
+            : 'Aucun';
+        return `
+            <tr>
+                <td><span class="badge ${r.classeur === 'Entrant' ? 'bg-primary' : 'bg-secondary'}">${escapeHtml(r.classeur)}</span></td>
+                <td><code>${escapeHtml(r.numDoc)}</code></td>
+                <td>${escapeHtml(r.date)}</td>
+                <td>${escapeHtml(r.exp)}</td>
+                <td>${escapeHtml(r.dest)}</td>
+                <td>${escapeHtml(r.objet)}</td>
+                <td>${escapeHtml(r.heure || '')} (${escapeHtml(r.jour || '')})</td>
+                <td>${docBtn}</td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveByNumDoc('${escapeJsAttr(r.numDoc)}', '${escapeJsAttr(r.classeur)}')"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans les archives.</td></tr>';
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4235,22 +4351,14 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const filter = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    
+    const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
     let list = yData.calendrierVacances || [];
-    if(filter !== 'Tous') {
-        list = list.filter(item => item.type === filter);
+    if(filterVal !== 'Tous') {
+        list = list.filter(item => item.type === filterVal);
     }
-
     tbody.innerHTML = list.map((c, i) => `
-        <tr>
-            <td><b>${escapeHtml(c.type || 'Non spécifié')}</b></td>
-            <td>${escapeHtml(c.titre)}</td>
-            <td>${escapeHtml(c.debut)}</td>
-            <td>${escapeHtml(c.fin)}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement dans ce calendrier.</td></tr>';
+        <tr><td><b>${escapeHtml(c.type || '-')}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
 }
 
 function deleteCalendrierItem(index) {
@@ -4286,14 +4394,8 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr>
-            <td>${escapeHtml(h.classe)}</td>
-            <td>${escapeHtml(h.jour)}</td>
-            <td>${escapeHtml(h.plage)}</td>
-            <td>${escapeHtml(h.cours)}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire défini.</td></tr>';
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
 function deleteHoraireItem(index) {
@@ -4310,27 +4412,21 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
-    
-    const totalStudents = (yData.students || []).length;
-    const totalTeachers = (yData.teachers || []).length;
-    const totalClasses = (yData.classes || []).length;
-    const totalCaisse = (yData.caisse || []).reduce((acc, item) => acc + parseFloat(item.montant || 0), 0);
-
     container.innerHTML = `
-        <div class="col-md-3"><div class="card p-3 bg-primary text-white text-center rounded shadow-sm"><h3 class="fw-bold mb-0">${totalStudents}</h3><small>Élèves Inscrits</small></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-success text-white text-center rounded shadow-sm"><h3 class="fw-bold mb-0">${totalTeachers}</h3><small>Enseignants</small></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-info text-white text-center rounded shadow-sm"><h3 class="fw-bold mb-0">${totalClasses}</h3><small>Classes</small></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-warning text-dark text-center rounded shadow-sm"><h3 class="fw-bold mb-0">${totalCaisse.toFixed(0)}</h3><small>Total Caisse</small></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-primary"><h6>Élèves Inscrits</h6><h3 class="fw-bold text-primary">${(yData.students || []).length}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-success"><h6>Enseignants</h6><h3 class="fw-bold text-success">${(yData.teachers || []).length}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-warning"><h6>Classes</h6><h3 class="fw-bold text-warning">${(yData.classes || []).length}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-info"><h6>Transactions Caisse</h6><h3 class="fw-bold text-info">${(yData.caisse || []).length}</h3></div></div>
     `;
 }
 
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
             showSection('view-admin-central');
         } else if(pass !== null) {
-            CommicoAlert("Mot de passe incorrect.");
+            CommicoAlert("Mot de passe Administrateur Central incorrect.");
         }
     });
 }
@@ -4338,50 +4434,72 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = appData.schools.map((s) => {
-        let dirCode = "Non généré";
-        if(s.direction && s.direction.length > 0) {
-            const d = s.direction.find(x => x.role === 'Directeur / Propriétaire');
-            if(d) dirCode = d.secretCode;
-        }
+    tbody.innerHTML = (appData.schools || []).map(s => {
+        const dirEntry = (s.direction || []).find(d => d.role === 'Directeur / Propriétaire' && d.secretCode);
+        const dirCodeDisplay = dirEntry ? `<code>${escapeHtml(dirEntry.secretCode)}</code>` : '<span class="text-muted small">Non généré</span>';
+        const isUpToDate = s.paiementStatut === 'A jour';
+        const statusBadge = `<span class="badge ${isUpToDate ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span>`;
+        const toggleBtn = isUpToDate
+            ? `<button class="btn btn-sm btn-warning fw-bold text-dark" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'Bloquée / Impayé')"><i class="fa fa-ban"></i> Bloquer</button>`
+            : `<button class="btn btn-sm btn-success fw-bold" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'A jour')"><i class="fa fa-check"></i> Débloquer</button>`;
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 50%;" class="border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;object-fit:contain;border-radius:50%;" class="border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
                 <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
-                <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><code>${escapeHtml(s.secretCode)}</code><br><code class="text-danger">${escapeHtml(dirCode)}</code></td>
+                <td>${statusBadge}</td>
+                <td>Madras: <code>${escapeHtml(s.secretCode)}</code><br>Directeur: ${dirCodeDisplay}</td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-exchange-alt"></i> Statut</button>
-                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
+                    <div class="d-flex gap-1 flex-wrap">
+                        ${toggleBtn}
+                        <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    </div>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id) {
+function toggleSchoolPaymentStatus(id, newStatus) {
     const s = appData.schools.find(x => x.id === id);
     if(s) {
-        s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloquée / Impayé' : 'A jour';
+        s.paiementStatut = newStatus;
         saveData();
         renderAdminCentralTable();
         renderSchoolsList();
-        CommicoAlert("Statut mis à jour : " + s.paiementStatut);
+        CommicoAlert("Statut de la Madras mis à jour : " + newStatus);
     }
+}
+
+function openDirectRegistrationModal() {
+    if(!appData.schools || !appData.schools.length) {
+        CommicoAlert("Veuillez d'abord créer une Madras (Bouton 1).");
+        return;
+    }
+    const s = appData.schools[0];
+    CommicoPrompt("Entrez le code secret de la Madras (" + s.name + ") :", function(code) {
+        if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+            checkAndOpenSchoolDashboard(s.id);
+        } else if(code !== null) {
+            CommicoAlert("Code secret incorrect.");
+        }
+    });
 }
 
 function downloadSectionData(sectionName) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ school: s.name, section: sectionName, data: yData }, null, 2));
-    const dlAnchor = document.createElement('a');
-    dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", `COMICO_${escapeHtml(s.name)}_${sectionName}.json`);
-    document.body.appendChild(dlAnchor);
-    dlAnchor.click();
-    dlAnchor.remove();
+    const dataToSave = yData[sectionName] || s[sectionName] || [];
+    const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `COMICO_${s.name}_${sectionName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 </script>
 </body>
