@@ -452,7 +452,6 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Frais & Trésorerie</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Cours</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-liste-presence-journaliere', this)"><i class="fa fa-list-check me-2"></i> Liste de présence journalière</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
@@ -461,7 +460,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptOwnerOnlyHoraireAccess(this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptOwnerOnlyTabAccess('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
@@ -947,85 +946,72 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </form>
 <table class="table table-bordered table-sm align-middle"><thead><tr><th>Élève</th><th>Classe</th><th>Statut</th><th>Date</th><th>Heure</th><th>Jour</th><th>Nom</th><th class="no-print">Action</th></tr></thead><tbody id="presenceCustomTableBody"></tbody></table>
-</div>
-</div>
 
-<!-- LISTE DE PRÉSENCE JOURNALIÈRE -->
-<div class="tab-pane" id="tab-liste-presence-journaliere">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-list-check me-2"></i>Liste de présence journalière</h5>
-<form id="formListePresenceJour" onsubmit="handleSaveListePresenceJour(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded border">
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">Choisir classe :</label>
-        <select id="lpjClassSelect" class="form-select form-select-sm" onchange="onLpjClassChange()" required>
-            <option value="">-- Choisir classe --</option>
-        </select>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">Mat Élève :</label>
-        <select id="lpjMatSelect" class="form-select form-select-sm" onchange="onLpjStudentByMatChange()" required>
-            <option value="">-- Mat Élève --</option>
-        </select>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">nom postnom,prenom :</label>
-        <input type="text" id="lpjNomPostnomPrenom" class="form-control form-control-sm" placeholder="nom postnom,prenom" required>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">date :</label>
-        <input type="date" id="lpjDate" class="form-control form-control-sm" required>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">jour :</label>
-        <select id="lpjJour" class="form-select form-select-sm" required>
-            <option value="Lundi">Lundi</option>
-            <option value="Mardi">Mardi</option>
-            <option value="Mercredi">Mercredi</option>
-            <option value="Jeudi">Jeudi</option>
-            <option value="Vendredi">Vendredi</option>
-            <option value="Samedi">Samedi</option>
-            <option value="Dimanche">Dimanche</option>
-        </select>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">heure :</label>
-        <input type="time" id="lpjHeure" class="form-control form-control-sm" required>
-    </div>
-    <div class="col-md-12">
-        <label class="form-label small fw-bold">Enseignant / Responsable :</label>
-        <input type="text" id="lpjEnseignantNom" class="form-control form-control-sm" placeholder="Nom de l'enseignant" oninput="updateLpjSignatureDisplay()">
-    </div>
-    <div class="col-12 action-bar mt-2">
-        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteLastListePresenceJour()"><i class="fa fa-trash me-1"></i> Supprimer</button>
-        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadListePresenceJour()"><i class="fa fa-download me-1"></i> Télécharger</button>
-        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
-        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
-    </div>
-</form>
+<!-- LISTE DE PRÉSENCE JOURNALIÈRE PAR CLASSE -->
+<div class="card shadow-sm border-0 mt-4 p-3 bg-light" id="dailyAttendanceCard">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-calendar-day me-2"></i>Liste de Présence Journalière par Classe</h5>
 
-<div class="table-responsive">
-<table class="table table-bordered table-sm align-middle bg-white">
-    <thead>
+  <div class="row g-2 mb-3 no-print bg-white p-3 rounded border align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Choisir classe :</label>
+      <select id="dailyAttendanceClassSelect" class="form-select form-select-sm" onchange="renderDailyAttendanceSheet()">
+        <option value="">-- Choisir une classe --</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Date :</label>
+      <input type="date" id="dailyAttendanceDate" class="form-control form-control-sm" onchange="updateDailyAttendanceDayAndLoad()">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-bold">Jour :</label>
+      <input type="text" id="dailyAttendanceDay" class="form-control form-control-sm bg-light" readonly>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-bold">Heure :</label>
+      <input type="text" id="dailyAttendanceTime" class="form-control form-control-sm" placeholder="08:30">
+    </div>
+  </div>
+
+  <div class="action-bar mb-3 no-print">
+    <button type="button" class="btn btn-success btn-sm fw-bold" onclick="saveDailyAttendanceSheet()"><i class="fa fa-save me-1"></i> Enregistrer</button>
+    <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteDailyAttendanceSheet()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
+    <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadDailyAttendanceSheet()"><i class="fa fa-download me-1"></i> Télécharger</button>
+    <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+  </div>
+
+  <div class="table-responsive bg-white p-2 rounded border">
+    <table class="table table-bordered table-sm align-middle mb-0">
+      <thead>
         <tr class="table-primary">
-            <th>Classe</th>
-            <th>Mat Élève</th>
-            <th>nom postnom,prenom</th>
-            <th>date</th>
-            <th>jour</th>
-            <th>heure</th>
-            <th class="no-print">Action</th>
+          <th>Mat Élève</th>
+          <th>Nom Postnom Prénom</th>
+          <th>Date</th>
+          <th>Jour</th>
+          <th>Heure</th>
+          <th>Présence</th>
         </tr>
-    </thead>
-    <tbody id="listePresenceJourTableBody"></tbody>
-</table>
-</div>
+      </thead>
+      <tbody id="dailyAttendanceTableBody">
+        <tr><td colspan="6" class="text-center text-muted">Choisissez une classe pour afficher la liste de présence journalière.</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-end flex-wrap gap-3">
-    <div class="small text-muted" id="lpjClasseResume">Classe : -</div>
-    <div class="text-end" style="min-width: 240px;">
-        <div class="fw-bold small mb-3">Signature de l'enseignant :</div>
-        <div id="lpjSignatureName" class="small fst-italic border-bottom pb-1">__________________________</div>
+  <div class="mt-4 pt-3 border-top">
+    <div class="row align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small fw-bold no-print">Nom / Signature de l'enseignant :</label>
+        <input type="text" id="dailyAttendanceTeacherSignature" class="form-control form-control-sm mb-2 no-print" placeholder="Nom et signature de l'enseignant" oninput="syncDailySignatureDisplay()">
+        <div class="small"><b>Enseignant :</b> <span id="dailySignatureNameDisplay">-</span></div>
+      </div>
+      <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="small fw-bold">Signature de l'enseignant :</div>
+        <div id="dailySignatureBox" class="mt-2 pt-2 border-bottom border-dark d-inline-block" style="min-width: 220px; font-style: italic;">&nbsp;</div>
+      </div>
     </div>
+  </div>
+</div>
 </div>
 </div>
 
@@ -1155,7 +1141,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Image / PDF :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
     <div class="col-md-6 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="promptOwnerDeleteSelectedOrLastCourrier()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteSelectedOrLastCourrier()"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('courriers')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -1272,18 +1258,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- HORAIRES DES COURS (CODE PROPRIÉTAIRE SEULEMENT) -->
 <div class="tab-pane" id="tab-horaires-cours">
-<div id="horaireOwnerAuthArea" class="mb-3 p-3 bg-light rounded border no-print">
-    <label class="form-label small fw-bold">Authentification Propriétaire (Saisissez le Code Secret du Propriétaire / Directeur) :</label>
-    <div class="input-group input-group-sm" style="max-width: 350px;">
-        <input type="password" id="horaireOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
-        <button class="btn btn-primary fw-bold" type="button" onclick="verifyHoraireOwnerAccess()">Déverrouiller</button>
-    </div>
-</div>
-<div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light" style="display: none;">
-  <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-    <h5 class="text-primary fw-bold m-0"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Propriétaire)</h5>
-    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="lockHoraireOwnerArea()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
-  </div>
+<div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light">
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Code Propriétaire Seulement)</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
     <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
@@ -1291,7 +1267,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-3"><input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Cours" required></div>
     <div class="col-12 action-bar mt-2">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="promptOwnerDeleteLastHoraire()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('horaires')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="CommicoAlert('Horaires publiés !')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
@@ -1328,27 +1304,6 @@ let currentCreatedDirectorCode = "";
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
-let horaireOwnerUnlocked = false;
-
-function getOwnerSecretCode(school) {
-    if (!school) return '';
-    return (school.direction && school.direction.length > 0 && school.direction[0].secretCode)
-        ? school.direction[0].secretCode
-        : (school.secretCode || '');
-}
-
-function verifyOwnerSecretCode(codeInput, callback) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const validOwnerCode = getOwnerSecretCode(s);
-    const cleanCode = (codeInput || '').trim().toUpperCase();
-    if (cleanCode && validOwnerCode && cleanCode === validOwnerCode.toUpperCase()) {
-        callback(true, s);
-    } else {
-        CommicoAlert("Accès refusé : Code propriétaire incorrect.");
-        callback(false, s);
-    }
-}
 
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -1369,6 +1324,34 @@ function escapeJsAttr(str) {
         .replace(/\n/g, ' ');
 }
 
+function getOwnerSecretCode(school) {
+    if (!school) return '';
+    if (school.direction && school.direction.length > 0) {
+        const dirEntry = school.direction.find(d => d.role === 'Directeur / Propriétaire' && d.secretCode);
+        if (dirEntry && dirEntry.secretCode) return dirEntry.secretCode;
+    }
+    return school.secretCode || '';
+}
+
+function requireOwnerCodeAction(callback) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const ownerCode = getOwnerSecretCode(s);
+    CommicoPrompt("Entrez le Code Secret du Propriétaire :", function(code) {
+        if (code && code.trim().toUpperCase() === ownerCode.toUpperCase()) {
+            callback();
+        } else if (code !== null) {
+            CommicoAlert("Accès refusé : Code Secret du Propriétaire incorrect.");
+        }
+    });
+}
+
+function promptOwnerOnlyTabAccess(tabId, element) {
+    requireOwnerCodeAction(function() {
+        switchTab(tabId, element);
+    });
+}
+
 function getActiveYearData(school) {
     if (!school) return null;
     if (!school.activeYear) school.activeYear = "2025-2026";
@@ -1376,23 +1359,22 @@ function getActiveYearData(school) {
     if (!school.yearsData[school.activeYear]) {
         school.yearsData[school.activeYear] = {
             classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
-            caisse: [], studentPayments: [], discipline: [], presenceStudents: [], listePresenceJournaliere: [],
+            caisse: [], studentPayments: [], discipline: [], presenceStudents: [], dailyAttendanceSheets: [],
             savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
         };
     }
-    if (!school.yearsData[school.activeYear].listePresenceJournaliere) {
-        school.yearsData[school.activeYear].listePresenceJournaliere = [];
+    if (!school.yearsData[school.activeYear].dailyAttendanceSheets) {
+        school.yearsData[school.activeYear].dailyAttendanceSheets = [];
     }
     return school.yearsData[school.activeYear];
 }
 
 function resetLockedWorkspaces() {
-    horaireOwnerUnlocked = false;
-    ['treasurerWorkspace', 'momoWorkspace', 'presenceWorkspace', 'disciplineWorkspace', 'calWorkspace', 'commWorkspace', 'notesWorkspace', 'bulletinWorkspace', 'bulletinPerWorkspace', 'courseWorkspace', 'salleClasseWorkspace', 'horaireOwnerOnlyArea'].forEach(id => {
+    ['treasurerWorkspace', 'momoWorkspace', 'presenceWorkspace', 'disciplineWorkspace', 'calWorkspace', 'commWorkspace', 'notesWorkspace', 'bulletinWorkspace', 'bulletinPerWorkspace', 'courseWorkspace', 'salleClasseWorkspace'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    ['treasurerAuthArea', 'momoAuthArea', 'presenceAuthArea', 'disciplineAuthArea', 'calAuthArea', 'commAuthArea', 'teacherAccessCheckArea', 'bulletinAccessArea', 'bulletinPerAccessArea', 'courseAuthArea', 'horaireOwnerAuthArea'].forEach(id => {
+    ['treasurerAuthArea', 'momoAuthArea', 'presenceAuthArea', 'disciplineAuthArea', 'calAuthArea', 'commAuthArea', 'teacherAccessCheckArea', 'bulletinAccessArea', 'bulletinPerAccessArea', 'courseAuthArea'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
@@ -1435,6 +1417,7 @@ function isPdfOrImageUrl(url, fileType) {
     return 'other';
 }
 
+// NORMALISATION ET CONVERSION DES FICHIERS LOURDS (IMAGES ET PDF) AUX NORMES AFFICHAGE + FIREBASE
 function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
     const img = new Image();
     img.onload = function() {
@@ -1643,7 +1626,7 @@ function loadDataFromLocal() {
                     studentPayments: s.studentPayments || [],
                     discipline: [],
                     presenceStudents: [],
-                    listePresenceJournaliere: [],
+                    dailyAttendanceSheets: [],
                     savedCards: [],
                     courriers: [],
                     dossiersArchive: [],
@@ -1651,8 +1634,6 @@ function loadDataFromLocal() {
                     horairesCours: []
                 }
             };
-        } else if(!s.yearsData[s.activeYear].listePresenceJournaliere) {
-            s.yearsData[s.activeYear].listePresenceJournaliere = [];
         }
     });
 
@@ -1759,7 +1740,7 @@ function finishSavingSchool(name, province, division, subDivision, commune, addr
         yearsData: {
             "2025-2026": {
                 classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
-                caisse: [], presenceStudents: [], listePresenceJournaliere: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
+                caisse: [], presenceStudents: [], dailyAttendanceSheets: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
             }
         },
         direction: [], communications: [], armoiries: '', armoiriesType: '', devise: ''
@@ -2012,8 +1993,8 @@ function proceedToDashboardOpen(id) {
     const dashLogo = document.getElementById('dashSchoolLogo');
     applyImageSrcSafe(dashLogo, s.logoUrl, 70, 'MD');
     
+    initDailyAttendanceDefaults();
     populateSchoolYearsSelect();
-    initListePresenceJourDefaults();
     refreshAllDropdowns();
     showSection('view-school-dashboard');
 }
@@ -2055,7 +2036,7 @@ function openNewSchoolYearWizard() {
         const cleanYear = newYear ? newYear.trim() : '';
         if(cleanYear && !s.yearsData[cleanYear]) {
             s.activeYear = cleanYear;
-            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], listePresenceJournaliere: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
+            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], dailyAttendanceSheets: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
             authenticatedTeacher = null;
             resetLockedWorkspaces();
             saveData();
@@ -2070,43 +2051,6 @@ function openNewSchoolYearWizard() {
 
 function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
-}
-
-function promptOwnerOnlyHoraireAccess(element) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour accéder aux Horaires des Cours :", function(code) {
-        if (code === null) return;
-        verifyOwnerSecretCode(code, function(ok) {
-            if (ok) {
-                horaireOwnerUnlocked = true;
-                switchTab('tab-horaires-cours', element);
-                document.getElementById('horaireOwnerAuthArea').style.display = 'none';
-                document.getElementById('horaireOwnerOnlyArea').style.display = 'block';
-                renderHorairesTable();
-            }
-        });
-    });
-}
-
-function verifyHoraireOwnerAccess() {
-    const code = document.getElementById('horaireOwnerSecretInput').value;
-    verifyOwnerSecretCode(code, function(ok) {
-        if (ok) {
-            horaireOwnerUnlocked = true;
-            document.getElementById('horaireOwnerSecretInput').value = '';
-            document.getElementById('horaireOwnerAuthArea').style.display = 'none';
-            document.getElementById('horaireOwnerOnlyArea').style.display = 'block';
-            renderHorairesTable();
-            CommicoAlert("Accès Propriétaire validé pour les Horaires des Cours.");
-        }
-    });
-}
-
-function lockHoraireOwnerArea() {
-    horaireOwnerUnlocked = false;
-    document.getElementById('horaireOwnerOnlyArea').style.display = 'none';
-    document.getElementById('horaireOwnerAuthArea').style.display = 'block';
 }
 
 function promptSecureTabAccess(tabId, element) {
@@ -2210,9 +2154,15 @@ function refreshAllDropdowns() {
     const yData = getActiveYearData(s);
     
     const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect', 'lpjClassSelect'].forEach(id => {
+    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect', 'dailyAttendanceClassSelect'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.innerHTML = classOptions;
+        if(el) {
+            const prevVal = el.value;
+            el.innerHTML = classOptions;
+            if (prevVal && Array.from(el.options).some(o => o.value === prevVal)) {
+                el.value = prevVal;
+            }
+        }
     });
 
     const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${escapeHtml(st.matricule)}">${escapeHtml(st.matricule)} - ${escapeHtml(st.name)} (${escapeHtml(st.classe)})</option>`).join('');
@@ -2222,7 +2172,6 @@ function refreshAllDropdowns() {
     });
 
     updateCaissePersonSelect();
-    onLpjClassChange();
 
     renderDirectionTable();
     renderClassesTable();
@@ -2234,7 +2183,7 @@ function refreshAllDropdowns() {
     renderDossiersTable();
     renderCalendrierTable();
     renderHorairesTable();
-    renderListePresenceJourTable();
+    renderDailyAttendanceSheet();
     const jobsUnlocked = document.getElementById('jobsUnlockedContainer');
     if(jobsUnlocked && jobsUnlocked.style.display !== 'none') {
         renderSchoolJobsTable();
@@ -3138,7 +3087,9 @@ function verifyPresenceAccess() {
         
         const allStudents = yData.students || [];
         document.getElementById('presStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + allStudents.map(st => `<option value="${escapeHtml(st.name)}">${escapeHtml(st.name)} (${escapeHtml(st.classe)})</option>`).join('');
+        initDailyAttendanceDefaults();
         renderPresenceTable();
+        renderDailyAttendanceSheet();
         CommicoAlert("Accès Présences validé (Propriétaire).");
     } else if(teacher) {
         authenticatedTeacher = teacher;
@@ -3146,221 +3097,13 @@ function verifyPresenceAccess() {
         document.getElementById('presenceAuthArea').style.display = 'none';
         document.getElementById('presClassDisplay').value = teacher.classe + " (Votre Classe)";
         loadStudentsForPresence();
+        initDailyAttendanceDefaults(teacher);
         renderPresenceTable();
+        renderDailyAttendanceSheet();
         CommicoAlert("Accès Présences validé pour l'enseignant : " + teacher.name);
     } else {
         CommicoAlert("Code secret incorrect.");
     }
-}
-
-// LISTE DE PRÉSENCE JOURNALIÈRE
-function initListePresenceJourDefaults() {
-    const dateEl = document.getElementById('lpjDate');
-    const jourEl = document.getElementById('lpjJour');
-    const heureEl = document.getElementById('lpjHeure');
-    const now = new Date();
-    if (dateEl && !dateEl.value) {
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        dateEl.value = `${yyyy}-${mm}-${dd}`;
-    }
-    if (jourEl) {
-        const rawDay = now.toLocaleDateString('fr-FR', { weekday: 'long' });
-        const capDay = rawDay.charAt(0).toUpperCase() + rawDay.slice(1);
-        const matchOpt = Array.from(jourEl.options).find(o => o.value.toLowerCase() === capDay.toLowerCase());
-        if (matchOpt) jourEl.value = matchOpt.value;
-    }
-    if (heureEl && !heureEl.value) {
-        heureEl.value = now.toTimeString().slice(0, 5);
-    }
-    updateLpjSignatureDisplay();
-}
-
-function onLpjClassChange() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const classSel = document.getElementById('lpjClassSelect');
-    const matSel = document.getElementById('lpjMatSelect');
-    const nomInput = document.getElementById('lpjNomPostnomPrenom');
-    const resumeEl = document.getElementById('lpjClasseResume');
-    if (!s || !classSel || !matSel) return;
-
-    const yData = getActiveYearData(s);
-    const chosenClass = classSel.value;
-    if (resumeEl) {
-        resumeEl.innerText = chosenClass ? `Classe : ${chosenClass}` : 'Classe : -';
-    }
-
-    const students = (yData.students || []).filter(st => !chosenClass || st.classe === chosenClass);
-    matSel.innerHTML = '<option value="">-- Mat Élève --</option>' + students.map(st =>
-        `<option value="${escapeHtml(st.matricule)}" data-name="${escapeHtml(st.name)}">${escapeHtml(st.matricule)} (${escapeHtml(st.classe)})</option>`
-    ).join('');
-    if (nomInput) nomInput.value = '';
-    renderListePresenceJourTable();
-}
-
-function onLpjStudentByMatChange() {
-    const matSel = document.getElementById('lpjMatSelect');
-    const nomInput = document.getElementById('lpjNomPostnomPrenom');
-    if (!matSel || !nomInput) return;
-    const selectedOpt = matSel.options[matSel.selectedIndex];
-    if (selectedOpt && selectedOpt.dataset && selectedOpt.dataset.name) {
-        nomInput.value = selectedOpt.dataset.name;
-    }
-}
-
-function updateLpjSignatureDisplay() {
-    const sigEl = document.getElementById('lpjSignatureName');
-    const ensInput = document.getElementById('lpjEnseignantNom');
-    if (!sigEl) return;
-    const val = ensInput ? ensInput.value.trim() : '';
-    sigEl.innerText = val ? `Signé : ${val}` : '__________________________';
-}
-
-function handleSaveListePresenceJour(e) {
-    e.preventDefault();
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-
-    const classe = document.getElementById('lpjClassSelect').value.trim();
-    const matricule = document.getElementById('lpjMatSelect').value.trim();
-    const nomPostnomPrenom = document.getElementById('lpjNomPostnomPrenom').value.trim();
-    const dateVal = document.getElementById('lpjDate').value.trim();
-    const jourVal = document.getElementById('lpjJour').value.trim();
-    const heureVal = document.getElementById('lpjHeure').value.trim();
-    const enseignantNom = document.getElementById('lpjEnseignantNom').value.trim();
-
-    if (!yData.listePresenceJournaliere) yData.listePresenceJournaliere = [];
-    yData.listePresenceJournaliere.push({
-        id: 'LPJ-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        classe,
-        matricule,
-        nomPostnomPrenom,
-        date: dateVal,
-        jour: jourVal,
-        heure: heureVal,
-        enseignant: enseignantNom
-    });
-
-    saveData();
-    renderListePresenceJourTable();
-    document.getElementById('lpjMatSelect').value = '';
-    document.getElementById('lpjNomPostnomPrenom').value = '';
-    CommicoAlert("Présence journalière enregistrée !");
-}
-
-function renderListePresenceJourTable() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    const tbody = document.getElementById('listePresenceJourTableBody');
-    if (!tbody || !s) return;
-    const yData = getActiveYearData(s);
-    const classSel = document.getElementById('lpjClassSelect');
-    const chosenClass = classSel ? classSel.value : '';
-
-    let entries = (yData.listePresenceJournaliere || []).map((item, idx) => ({ item, realIndex: idx }));
-    if (chosenClass) {
-        entries = entries.filter(e => e.item.classe === chosenClass);
-    }
-
-    if (entries.length > 0 && entries[entries.length - 1].item.enseignant) {
-        const sigEl = document.getElementById('lpjSignatureName');
-        const ensInput = document.getElementById('lpjEnseignantNom');
-        if (ensInput && !ensInput.value.trim()) {
-            ensInput.value = entries[entries.length - 1].item.enseignant;
-        }
-        if (sigEl) {
-            sigEl.innerText = `Signé : ${entries[entries.length - 1].item.enseignant}`;
-        }
-    }
-
-    tbody.innerHTML = entries.map(entry => {
-        const p = entry.item;
-        const idx = entry.realIndex;
-        return `
-            <tr>
-                <td>${escapeHtml(p.classe || '-')}</td>
-                <td><code>${escapeHtml(p.matricule || '-')}</code></td>
-                <td>${escapeHtml(p.nomPostnomPrenom || '-')}</td>
-                <td>${escapeHtml(p.date || '-')}</td>
-                <td>${escapeHtml(p.jour || '-')}</td>
-                <td>${escapeHtml(p.heure || '-')}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteListePresenceJourItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
-            </tr>
-        `;
-    }).join('') || '<tr><td colspan="7" class="text-center text-muted">Aucune présence journalière enregistrée.</td></tr>';
-}
-
-function deleteListePresenceJourItem(index) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-    if (yData && Array.isArray(yData.listePresenceJournaliere) && yData.listePresenceJournaliere[index] !== undefined) {
-        yData.listePresenceJournaliere.splice(index, 1);
-        saveData();
-        renderListePresenceJourTable();
-        CommicoAlert("Ligne supprimée.");
-    }
-}
-
-function deleteLastListePresenceJour() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-    const arr = yData.listePresenceJournaliere || [];
-    if (!arr.length) {
-        CommicoAlert("Aucune ligne de présence journalière à supprimer.");
-        return;
-    }
-    const chosenClass = document.getElementById('lpjClassSelect') ? document.getElementById('lpjClassSelect').value : '';
-    if (chosenClass) {
-        for (let i = arr.length - 1; i >= 0; i--) {
-            if (arr[i].classe === chosenClass) {
-                arr.splice(i, 1);
-                saveData();
-                renderListePresenceJourTable();
-                CommicoAlert("Dernière présence de la classe supprimée.");
-                return;
-            }
-        }
-    }
-    arr.pop();
-    saveData();
-    renderListePresenceJourTable();
-    CommicoAlert("Dernière présence journalière supprimée.");
-}
-
-function downloadListePresenceJour() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-    const chosenClass = document.getElementById('lpjClassSelect') ? document.getElementById('lpjClassSelect').value : '';
-    const rows = (yData.listePresenceJournaliere || []).filter(p => !chosenClass || p.classe === chosenClass);
-    const ensVal = (document.getElementById('lpjEnseignantNom') ? document.getElementById('lpjEnseignantNom').value.trim() : '') || (rows.length ? rows[rows.length - 1].enseignant : '');
-
-    const csvHeader = ["Classe", "Mat Eleve", "nom postnom,prenom", "date", "jour", "heure", "Signature de l'enseignant"];
-    const csvLines = [csvHeader.join(';')];
-    rows.forEach(p => {
-        const line = [
-            p.classe || '',
-            p.matricule || '',
-            p.nomPostnomPrenom || '',
-            p.date || '',
-            p.jour || '',
-            p.heure || '',
-            p.enseignant || ensVal || ''
-        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';');
-        csvLines.push(line);
-    });
-    const blob = new Blob(["\uFEFF" + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `liste_presence_journaliere_${(chosenClass || 'toutes_classes').replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 }
 
 function verifyDisciplineAccess() {
@@ -3667,6 +3410,244 @@ function deletePresenceItemActive() {
         saveData();
         renderPresenceTable();
     }
+}
+
+// LISTE DE PRÉSENCE JOURNALIÈRE PAR CLASSE
+function formatDayNameFromDateStr(dateStr) {
+    if (!dateStr) return new Date().toLocaleDateString('fr-FR', { weekday: 'long' });
+    const parts = dateStr.split('-');
+    let d = new Date();
+    if (parts.length === 3) {
+        d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    } else {
+        d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return '';
+    const dayName = d.toLocaleDateString('fr-FR', { weekday: 'long' });
+    return dayName.charAt(0).toUpperCase() + dayName.slice(1);
+}
+
+function initDailyAttendanceDefaults(teacher) {
+    const dateInput = document.getElementById('dailyAttendanceDate');
+    const dayInput = document.getElementById('dailyAttendanceDay');
+    const timeInput = document.getElementById('dailyAttendanceTime');
+    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
+    const classSelect = document.getElementById('dailyAttendanceClassSelect');
+    const now = new Date();
+
+    if (dateInput && !dateInput.value) {
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+    if (dayInput) {
+        dayInput.value = formatDayNameFromDateStr(dateInput ? dateInput.value : '');
+    }
+    if (timeInput && !timeInput.value) {
+        timeInput.value = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+    if (teacher && teacher.classe && classSelect) {
+        classSelect.value = teacher.classe;
+    }
+    if (teacher && teacher.name && sigInput && !sigInput.value) {
+        sigInput.value = teacher.name;
+    }
+    syncDailySignatureDisplay();
+}
+
+function syncDailySignatureDisplay() {
+    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
+    const nameEl = document.getElementById('dailySignatureNameDisplay');
+    const boxEl = document.getElementById('dailySignatureBox');
+    const val = sigInput ? sigInput.value.trim() : '';
+    if (nameEl) nameEl.innerText = val || '-';
+    if (boxEl) boxEl.innerText = val || '\u00A0';
+}
+
+function updateDailyAttendanceDayAndLoad() {
+    const dateInput = document.getElementById('dailyAttendanceDate');
+    const dayInput = document.getElementById('dailyAttendanceDay');
+    if (dayInput && dateInput) {
+        dayInput.value = formatDayNameFromDateStr(dateInput.value);
+    }
+    renderDailyAttendanceSheet();
+}
+
+function renderDailyAttendanceSheet() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('dailyAttendanceTableBody');
+    const classSelect = document.getElementById('dailyAttendanceClassSelect');
+    if (!tbody || !s) return;
+
+    const yData = getActiveYearData(s);
+    const cls = classSelect ? classSelect.value : '';
+    const dateVal = document.getElementById('dailyAttendanceDate') ? document.getElementById('dailyAttendanceDate').value : '';
+    const dayVal = document.getElementById('dailyAttendanceDay') ? document.getElementById('dailyAttendanceDay').value : '';
+    const timeVal = document.getElementById('dailyAttendanceTime') ? document.getElementById('dailyAttendanceTime').value : '';
+
+    if (!cls) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Choisissez une classe pour afficher la liste de présence journalière.</td></tr>';
+        return;
+    }
+
+    const students = (yData.students || []).filter(st => st.classe === cls);
+    const savedSheet = (yData.dailyAttendanceSheets || []).find(sh => sh.classe === cls && sh.date === dateVal);
+    const savedMap = {};
+    if (savedSheet && Array.isArray(savedSheet.rows)) {
+        savedSheet.rows.forEach(r => { savedMap[r.matricule] = r; });
+        if (timeVal === '' && savedSheet.heure && document.getElementById('dailyAttendanceTime')) {
+            document.getElementById('dailyAttendanceTime').value = savedSheet.heure;
+        }
+        if (savedSheet.signature && document.getElementById('dailyAttendanceTeacherSignature')) {
+            document.getElementById('dailyAttendanceTeacherSignature').value = savedSheet.signature;
+            syncDailySignatureDisplay();
+        }
+    }
+
+    const activeTime = document.getElementById('dailyAttendanceTime') ? document.getElementById('dailyAttendanceTime').value : timeVal;
+
+    if (!students.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Aucun élève inscrit dans la classe "${escapeHtml(cls)}".</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = students.map(st => {
+        const rec = savedMap[st.matricule] || {};
+        const status = rec.presence || 'Présent';
+        return `
+            <tr data-matricule="${escapeJsAttr(st.matricule)}" data-name="${escapeJsAttr(st.name)}">
+                <td><code>${escapeHtml(st.matricule)}</code></td>
+                <td><b>${escapeHtml(st.name)}</b></td>
+                <td>${escapeHtml(rec.date || dateVal || '-')}</td>
+                <td>${escapeHtml(rec.jour || dayVal || '-')}</td>
+                <td>${escapeHtml(rec.heure || activeTime || '-')}</td>
+                <td>
+                    <select class="form-select form-select-sm daily-presence-select">
+                        <option value="Présent" ${status === 'Présent' ? 'selected' : ''}>Présent</option>
+                        <option value="Absent" ${status === 'Absent' ? 'selected' : ''}>Absent</option>
+                        <option value="Retard" ${status === 'Retard' ? 'selected' : ''}>Retard</option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function saveDailyAttendanceSheet() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const cls = document.getElementById('dailyAttendanceClassSelect').value;
+    const dateVal = document.getElementById('dailyAttendanceDate').value;
+    const dayVal = document.getElementById('dailyAttendanceDay').value || formatDayNameFromDateStr(dateVal);
+    const timeVal = document.getElementById('dailyAttendanceTime').value.trim() || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const sigVal = document.getElementById('dailyAttendanceTeacherSignature').value.trim();
+
+    if (!cls) {
+        CommicoAlert("Veuillez choisir une classe.");
+        return;
+    }
+
+    const trs = document.querySelectorAll('#dailyAttendanceTableBody tr[data-matricule]');
+    if (!trs.length) {
+        CommicoAlert("Aucun élève dans cette classe à enregistrer.");
+        return;
+    }
+
+    const rows = Array.from(trs).map(tr => ({
+        matricule: tr.getAttribute('data-matricule'),
+        name: tr.getAttribute('data-name'),
+        date: dateVal,
+        jour: dayVal,
+        heure: timeVal,
+        presence: tr.querySelector('.daily-presence-select') ? tr.querySelector('.daily-presence-select').value : 'Présent'
+    }));
+
+    if (!yData.dailyAttendanceSheets) yData.dailyAttendanceSheets = [];
+    const existingIdx = yData.dailyAttendanceSheets.findIndex(sh => sh.classe === cls && sh.date === dateVal);
+    const sheetObj = {
+        id: existingIdx !== -1 ? yData.dailyAttendanceSheets[existingIdx].id : ('ATT-' + Date.now()),
+        classe: cls,
+        date: dateVal,
+        jour: dayVal,
+        heure: timeVal,
+        signature: sigVal,
+        rows: rows
+    };
+
+    if (existingIdx !== -1) {
+        yData.dailyAttendanceSheets[existingIdx] = sheetObj;
+    } else {
+        yData.dailyAttendanceSheets.push(sheetObj);
+    }
+
+    saveData();
+    renderDailyAttendanceSheet();
+    CommicoAlert("Liste de présence journalière enregistrée avec succès !");
+}
+
+function deleteDailyAttendanceSheet() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const cls = document.getElementById('dailyAttendanceClassSelect').value;
+    const dateVal = document.getElementById('dailyAttendanceDate').value;
+
+    if (!cls) {
+        CommicoAlert("Veuillez choisir une classe.");
+        return;
+    }
+
+    if (!yData.dailyAttendanceSheets || !yData.dailyAttendanceSheets.length) {
+        CommicoAlert("Aucune liste de présence journalière enregistrée à supprimer.");
+        return;
+    }
+
+    const beforeLen = yData.dailyAttendanceSheets.length;
+    yData.dailyAttendanceSheets = yData.dailyAttendanceSheets.filter(sh => !(sh.classe === cls && (!dateVal || sh.date === dateVal)));
+    if (yData.dailyAttendanceSheets.length === beforeLen) {
+        CommicoAlert("Aucune fiche trouvée pour cette classe et cette date.");
+        return;
+    }
+
+    saveData();
+    renderDailyAttendanceSheet();
+    CommicoAlert("Liste de présence journalière supprimée avec succès.");
+}
+
+function downloadDailyAttendanceSheet() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const cls = document.getElementById('dailyAttendanceClassSelect').value || 'Classe';
+    const dateVal = document.getElementById('dailyAttendanceDate').value || '';
+    const dayVal = document.getElementById('dailyAttendanceDay').value || '';
+    const timeVal = document.getElementById('dailyAttendanceTime').value || '';
+    const sigVal = document.getElementById('dailyAttendanceTeacherSignature').value || '';
+
+    const trs = document.querySelectorAll('#dailyAttendanceTableBody tr[data-matricule]');
+    const lines = [
+        `Madras: ${s.name}`,
+        `Classe: ${cls} | Date: ${dateVal} | Jour: ${dayVal} | Heure: ${timeVal}`,
+        `Mat Eleve;Nom Postnom Prenom;Date;Jour;Heure;Presence`
+    ];
+    trs.forEach(tr => {
+        const mat = tr.getAttribute('data-matricule') || '';
+        const name = tr.getAttribute('data-name') || '';
+        const pres = tr.querySelector('.daily-presence-select') ? tr.querySelector('.daily-presence-select').value : '';
+        lines.push(`${mat};${name};${dateVal};${dayVal};${timeVal};${pres}`);
+    });
+    lines.push(`Signature de l'enseignant: ${sigVal}`);
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Presence_Journaliere_${cls.replace(/[^a-zA-Z0-9_-]/g, '_')}_${dateVal || 'liste'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function loadStudentsForDiscipline() {
@@ -3983,42 +3964,26 @@ function renderCourriersTable() {
             <tr>
                 <td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.type)}</td><td><code>${escapeHtml(c.numDoc || '-')}</code></td><td>${escapeHtml(c.exp)}</td><td>${escapeHtml(c.dest || '-')}</td><td>${escapeHtml(c.objet)}</td><td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="promptOwnerDeleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
             </tr>
         `;
     }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-function promptOwnerDeleteCourrierItem(index) {
-    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer cette correspondance :", function(code) {
-        if (code === null) return;
-        verifyOwnerSecretCode(code, function(ok) {
-            if (ok) deleteCourrierItem(index);
-        });
-    });
-}
-
 function deleteCourrierItem(index) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    if (!yData.courriers || !yData.courriers[index]) return;
-    const removed = yData.courriers.splice(index, 1)[0];
-    if (removed && removed.numDoc && Array.isArray(yData.dossiersArchive)) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== removed.numDoc.toUpperCase());
-    }
-    saveData();
-    renderCourriersTable();
-    renderDossiersTable();
-    CommicoAlert("Correspondance supprimée avec succès.");
-}
-
-function promptOwnerDeleteSelectedOrLastCourrier() {
-    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer la correspondance :", function(code) {
-        if (code === null) return;
-        verifyOwnerSecretCode(code, function(ok) {
-            if (ok) deleteSelectedOrLastCourrier();
-        });
+    requireOwnerCodeAction(function() {
+        const s = appData.schools.find(x => x.id === activeSchoolId);
+        if(!s) return;
+        const yData = getActiveYearData(s);
+        if (!yData.courriers || !yData.courriers[index]) return;
+        const removed = yData.courriers.splice(index, 1)[0];
+        if (removed && removed.numDoc && Array.isArray(yData.dossiersArchive)) {
+            yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== removed.numDoc.toUpperCase());
+        }
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+        CommicoAlert("Correspondance supprimée avec succès.");
     });
 }
 
@@ -4087,146 +4052,165 @@ function buildArchiveCorrespondanceRowsHtml(list, highlightClass) {
                 <td>${escapeHtml(c.heure || '')} ${c.jour ? '(' + escapeHtml(c.jour) + ')' : ''}</td>
                 <td>${docBtn}</td>
                 <td class="no-print">
-                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
+                    <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-function renderDossiersTable(customList, highlightClass) {
+function renderDossiersTable(forceAll, isSearchMode) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
     if (!tbody || !s) return;
-    const list = Array.isArray(customList) ? customList : getFilteredArchiveCorrespondances(false);
     const classeurType = getSelectedArchiveClasseurType();
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    const list = getFilteredArchiveCorrespondances(Boolean(forceAll));
+
     if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans le classeur « ${escapeHtml(classeurType)} ».</td></tr>`;
+        if (isSearchMode && query) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Aucune correspondance "${escapeHtml(classeurType)}" trouvée pour le N° "${escapeHtml(query)}".</td></tr>`;
+        } else {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance "${escapeHtml(classeurType)}" enregistrée.</td></tr>`;
+        }
         return;
     }
-    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, highlightClass);
+
+    const rowHighlight = (!forceAll && query) ? 'table-warning' : '';
+    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, rowHighlight);
 }
 
 function onArchiveClasseurOrSearchChange() {
-    renderDossiersTable();
+    renderDossiersTable(false, true);
 }
 
 function searchArchiveByNumDoc() {
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-    const classeurType = getSelectedArchiveClasseurType();
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const query = document.getElementById('searchArchiveNumInput').value.trim();
     if (!query) {
-        CommicoAlert("Veuillez saisir le Numéro du document (NumDoc) à rechercher.");
-        renderDossiersTable();
+        CommicoAlert("Veuillez introduire le numéro du document (NumDoc).");
         return;
     }
-    const matches = getFilteredArchiveCorrespondances(false);
-    if (!matches.length) {
-        CommicoAlert(`Aucune correspondance trouvée avec le N° Doc « ${inputEl.value.trim()} » dans le classeur ${classeurType}.`);
-        renderDossiersTable([], '');
-        return;
-    }
-    renderDossiersTable(matches, 'table-success');
+    renderDossiersTable(false, true);
 }
 
 function showAllArchiveCorrespondances() {
     const inputEl = document.getElementById('searchArchiveNumInput');
     if (inputEl) inputEl.value = '';
-    const allInClasseur = getFilteredArchiveCorrespondances(true);
-    renderDossiersTable(allInClasseur, '');
+    renderDossiersTable(true, false);
 }
 
-function archiveCorrespondenceByNumDoc(numDoc) {
+function archiveCorrespondenceByNumDoc(numDoc, typeVal) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
+    const targetType = typeVal || getSelectedArchiveClasseurType();
     const targetNum = (numDoc || '').trim().toUpperCase();
-    const corr = (yData.courriers || []).find(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
-    if (!corr) {
-        CommicoAlert("Correspondance introuvable.");
+    const match = (yData.courriers || []).find(c =>
+        (c.type || '').toLowerCase() === targetType.toLowerCase() &&
+        (!targetNum || (c.numDoc || '').trim().toUpperCase() === targetNum)
+    );
+    if (!match) {
+        CommicoAlert("Correspondance introuvable à enregistrer.");
         return;
     }
     if (!yData.dossiersArchive) yData.dossiersArchive = [];
-    const existingIdx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').trim().toUpperCase() === targetNum);
-    const archivedRecord = {
-        classeur: corr.type || getSelectedArchiveClasseurType(),
-        numDoc: corr.numDoc || '',
-        date: corr.date || '',
-        exp: corr.exp || '',
-        dest: corr.dest || '',
-        objet: corr.objet || '',
-        heure: corr.heure || '',
-        jour: corr.jour || '',
-        fileUrl: corr.fileUrl || '',
-        fileName: corr.fileName || '',
-        fileType: corr.fileType || '',
+    const entry = {
+        classeur: match.type,
+        numDoc: match.numDoc,
+        date: match.date,
+        heure: match.heure || '',
+        jour: match.jour || '',
+        exp: match.exp,
+        dest: match.dest || '',
+        objet: match.objet,
+        fileUrl: match.fileUrl || '',
+        fileName: match.fileName || '',
+        fileType: match.fileType || '',
         archivedAt: new Date().toLocaleString()
     };
+    const existingIdx = yData.dossiersArchive.findIndex(d =>
+        (d.classeur || '').toLowerCase() === (entry.classeur || '').toLowerCase() &&
+        (d.numDoc || '').trim().toUpperCase() === (entry.numDoc || '').trim().toUpperCase()
+    );
     if (existingIdx !== -1) {
-        yData.dossiersArchive[existingIdx] = archivedRecord;
+        yData.dossiersArchive[existingIdx] = entry;
     } else {
-        yData.dossiersArchive.push(archivedRecord);
+        yData.dossiersArchive.push(entry);
     }
     saveData();
-    CommicoAlert(`Correspondance N° ${corr.numDoc} enregistrée dans le classeur ${archivedRecord.classeur}.`);
+    CommicoAlert("Correspondance enregistrée dans les archives (" + targetType + " - N° " + (entry.numDoc || '-') + ") !");
 }
 
 function saveCurrentArchiveCorrespondence() {
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-    const matches = getFilteredArchiveCorrespondances(false);
+    const classeurType = getSelectedArchiveClasseurType();
+    const query = document.getElementById('searchArchiveNumInput').value.trim();
     if (query) {
-        if (!matches.length) {
-            CommicoAlert("Aucune correspondance correspondante à enregistrer.");
-            return;
-        }
-        matches.forEach(c => archiveCorrespondenceByNumDoc(c.numDoc));
+        archiveCorrespondenceByNumDoc(query, classeurType);
         return;
     }
-    const allInClasseur = getFilteredArchiveCorrespondances(true);
-    if (!allInClasseur.length) {
-        CommicoAlert("Aucune correspondance à enregistrer dans ce classeur.");
+    const list = getFilteredArchiveCorrespondances(false);
+    if (!list.length) {
+        CommicoAlert("Aucune correspondance disponible à enregistrer dans ce classeur.");
         return;
     }
-    allInClasseur.forEach(c => archiveCorrespondenceByNumDoc(c.numDoc));
+    const first = list[list.length - 1];
+    archiveCorrespondenceByNumDoc(first.numDoc, first.type);
 }
 
-function deleteCorrespondenceByNumDoc(numDoc) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-    const targetNum = (numDoc || '').trim().toUpperCase();
-    if (!targetNum) return;
+function deleteArchiveCorrespondenceByNumDoc(numDoc, typeVal) {
+    requireOwnerCodeAction(function() {
+        const s = appData.schools.find(x => x.id === activeSchoolId);
+        if (!s) return;
+        const yData = getActiveYearData(s);
+        const targetType = typeVal || getSelectedArchiveClasseurType();
+        const targetNum = (numDoc || '').trim().toUpperCase();
 
-    const beforeLen = (yData.courriers || []).length;
-    yData.courriers = (yData.courriers || []).filter(c => (c.numDoc || '').trim().toUpperCase() !== targetNum);
-    if (Array.isArray(yData.dossiersArchive)) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').trim().toUpperCase() !== targetNum);
-    }
-    saveData();
-    renderCourriersTable();
-    renderDossiersTable();
-    if ((yData.courriers || []).length < beforeLen) {
-        CommicoAlert(`Correspondance N° ${numDoc} supprimée.`);
-    } else {
-        CommicoAlert("Correspondance introuvable.");
-    }
+        const beforeCourriers = (yData.courriers || []).length;
+        yData.courriers = (yData.courriers || []).filter(c => {
+            const sameType = (c.type || '').toLowerCase() === targetType.toLowerCase();
+            const sameNum = targetNum ? ((c.numDoc || '').trim().toUpperCase() === targetNum) : false;
+            return !(sameType && sameNum);
+        });
+
+        if (Array.isArray(yData.dossiersArchive)) {
+            yData.dossiersArchive = yData.dossiersArchive.filter(d => {
+                const sameType = (d.classeur || '').toLowerCase() === targetType.toLowerCase();
+                const sameNum = targetNum ? ((d.numDoc || '').trim().toUpperCase() === targetNum) : false;
+                return !(sameType && sameNum);
+            });
+        }
+
+        if ((yData.courriers || []).length === beforeCourriers) {
+            CommicoAlert("Aucune correspondance correspondante à supprimer.");
+            return;
+        }
+
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable(false, true);
+        CommicoAlert("Correspondance supprimée avec succès.");
+    });
 }
 
 function deleteCurrentArchiveCorrespondence() {
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-    const matches = getFilteredArchiveCorrespondances(false);
-    if (!query) {
-        CommicoAlert("Veuillez saisir le NumDoc de la correspondance à supprimer.");
+    const classeurType = getSelectedArchiveClasseurType();
+    const query = document.getElementById('searchArchiveNumInput').value.trim();
+    if (query) {
+        deleteArchiveCorrespondenceByNumDoc(query, classeurType);
         return;
     }
-    if (!matches.length) {
-        CommicoAlert("Aucune correspondance trouvée pour ce NumDoc.");
+    const list = getFilteredArchiveCorrespondances(false);
+    if (!list.length) {
+        CommicoAlert("Aucune correspondance à supprimer dans ce classeur.");
         return;
     }
-    matches.forEach(c => deleteCorrespondenceByNumDoc(c.numDoc));
+    const last = list[list.length - 1];
+    deleteArchiveCorrespondenceByNumDoc(last.numDoc, last.type);
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4244,7 +4228,7 @@ function handleSaveCalendrierScolaire(e) {
     saveData();
     renderCalendrierTable();
     document.getElementById('formCalendrierScolaire').reset();
-    CommicoAlert("Événement ajouté au Calendrier Scolaire !");
+    CommicoAlert("Événement du calendrier enregistré !");
 }
 
 function renderCalendrierTable() {
@@ -4252,57 +4236,54 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const filterEl = document.getElementById('calendarFilterSelect');
-    const filterVal = filterEl ? filterEl.value : 'Tous';
-    const rawList = (yData.calendrierVacances || []).map((c, idx) => ({ item: c, realIndex: idx }));
-    const filteredList = rawList.filter(entry => filterVal === 'Tous' || entry.item.type === filterVal);
+    const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
+    
+    let list = (yData.calendrierVacances || []).map((c, idx) => ({ item: c, realIndex: idx }));
+    if (filterVal !== 'Tous') {
+        list = list.filter(entry => entry.item.type === filterVal);
+    }
 
-    tbody.innerHTML = filteredList.map(entry => {
+    tbody.innerHTML = list.map(entry => {
         const c = entry.item;
         const idx = entry.realIndex;
         return `
-            <tr>
-                <td><span class="badge ${c.type.includes('Islamique') ? 'bg-success' : 'bg-primary'}">${escapeHtml(c.type)}</span></td>
-                <td><b>${escapeHtml(c.titre)}</b></td>
-                <td>${escapeHtml(c.debut)}</td>
-                <td>${escapeHtml(c.fin)}</td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
-            </tr>
+            <tr><td><b>${escapeHtml(c.type || 'Calendrier Solaire (Chrétien)')}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
         `;
-    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré pour ce filtre.</td></tr>';
 }
 
 function deleteCalendrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if (yData && yData.calendrierVacances[index] !== undefined) {
-        yData.calendrierVacances.splice(index, 1);
-        saveData();
-        renderCalendrierTable();
-    }
+    yData.calendrierVacances.splice(index, 1);
+    saveData();
+    renderCalendrierTable();
 }
 
 function handleSaveHoraireCours(e) {
     e.preventDefault();
-    if (!horaireOwnerUnlocked) {
-        CommicoAlert("Accès réservé au propriétaire : veuillez déverrouiller avec votre code propriétaire.");
-        return;
-    }
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    const yData = getActiveYearData(s);
-    if(!yData.horairesCours) yData.horairesCours = [];
-    yData.horairesCours.push({
-        classe: document.getElementById('horaireClassSelect').value,
-        jour: document.getElementById('horaireJour').value,
-        plage: document.getElementById('horairePlage').value.trim(),
-        cours: document.getElementById('horaireCoursNom').value.trim()
+    const cls = document.getElementById('horaireClassSelect').value;
+    const jour = document.getElementById('horaireJour').value;
+    const plage = document.getElementById('horairePlage').value.trim();
+    const cours = document.getElementById('horaireCoursNom').value.trim();
+
+    requireOwnerCodeAction(function() {
+        const yData = getActiveYearData(s);
+        if(!yData.horairesCours) yData.horairesCours = [];
+        yData.horairesCours.push({
+            classe: cls,
+            jour: jour,
+            plage: plage,
+            cours: cours
+        });
+        saveData();
+        renderHorairesTable();
+        document.getElementById('formHoraireCours').reset();
+        CommicoAlert("Horaire de cours enregistré avec succès !");
     });
-    saveData();
-    renderHorairesTable();
-    document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire de cours enregistré !");
 }
 
 function renderHorairesTable() {
@@ -4311,56 +4292,22 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr>
-            <td><b>${escapeHtml(h.classe)}</b></td>
-            <td>${escapeHtml(h.jour)}</td>
-            <td>${escapeHtml(h.plage)}</td>
-            <td>${escapeHtml(h.cours)}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="promptOwnerDeleteHoraire(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-        </tr>
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
-function promptOwnerDeleteHoraire(index) {
-    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer cet horaire :", function(code) {
-        if (code === null) return;
-        verifyOwnerSecretCode(code, function(ok) {
-            if (ok) deleteHoraireItem(index);
-        });
-    });
-}
-
-function promptOwnerDeleteLastHoraire() {
-    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer l'horaire :", function(code) {
-        if (code === null) return;
-        verifyOwnerSecretCode(code, function(ok) {
-            if (ok) {
-                const s = appData.schools.find(x => x.id === activeSchoolId);
-                if (!s) return;
-                const yData = getActiveYearData(s);
-                if (yData && Array.isArray(yData.horairesCours) && yData.horairesCours.length > 0) {
-                    yData.horairesCours.pop();
-                    saveData();
-                    renderHorairesTable();
-                    CommicoAlert("Dernier horaire supprimé.");
-                } else {
-                    CommicoAlert("Aucun horaire à supprimer.");
-                }
-            }
-        });
-    });
-}
-
 function deleteHoraireItem(index) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    if (yData && yData.horairesCours[index] !== undefined) {
-        yData.horairesCours.splice(index, 1);
-        saveData();
-        renderHorairesTable();
-        CommicoAlert("Horaire supprimé.");
-    }
+    requireOwnerCodeAction(function() {
+        const s = appData.schools.find(x => x.id === activeSchoolId);
+        if(!s) return;
+        const yData = getActiveYearData(s);
+        if (yData && yData.horairesCours && yData.horairesCours[index] !== undefined) {
+            yData.horairesCours.splice(index, 1);
+            saveData();
+            renderHorairesTable();
+            CommicoAlert("Horaire supprimé avec succès.");
+        }
+    });
 }
 
 function renderStatistiques() {
@@ -4368,30 +4315,71 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
-
-    const studentsCount = (yData.students || []).length;
-    const classesCount = (yData.classes || []).length;
-    const teachersCount = (yData.teachers || []).length;
     
-    let totalUSD = 0, totalFC = 0;
+    const nClasses = (yData.classes || []).length;
+    const nTeachers = (yData.teachers || []).length;
+    const nStudents = (yData.students || []).length;
+    
+    let totalUsd = 0, totalFc = 0;
     (yData.caisse || []).forEach(c => {
-        if(c.devise === 'FC') totalFC += parseFloat(c.montant || 0);
-        else totalUSD += parseFloat(c.montant || 0);
+        if(c.devise === '$') totalUsd += parseFloat(c.montant) || 0;
+        if(c.devise === 'FC') totalFc += parseFloat(c.montant) || 0;
     });
 
     container.innerHTML = `
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-primary"><h6>Élèves Inscrits</h6><h3 class="fw-bold text-primary">${studentsCount}</h3></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-success"><h6>Classes / Niveaux</h6><h3 class="fw-bold text-success">${classesCount}</h3></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-warning"><h6>Enseignants</h6><h3 class="fw-bold text-warning">${teachersCount}</h3></div></div>
-        <div class="col-md-6"><div class="card p-3 bg-light border-start border-4 border-info"><h6>Total Trésorerie (USD)</h6><h4 class="fw-bold text-info">$ ${totalUSD.toFixed(2)}</h4></div></div>
-        <div class="col-md-6"><div class="card p-3 bg-light border-start border-4 border-danger"><h6>Total Trésorerie (FC)</h6><h4 class="fw-bold text-danger">${totalFC.toFixed(0)} FC</h4></div></div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-primary text-white text-center shadow-sm">
+                <i class="fa fa-door-open fa-2x mb-2"></i>
+                <h6 class="m-0">Classes / Niveaux</h6>
+                <h2 class="fw-bold my-1">${escapeHtml(nClasses)}</h2>
+                <small>Année ${escapeHtml(s.activeYear)}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-success text-white text-center shadow-sm">
+                <i class="fa fa-chalkboard-teacher fa-2x mb-2"></i>
+                <h6 class="m-0">Enseignants & Maîtres</h6>
+                <h2 class="fw-bold my-1">${escapeHtml(nTeachers)}</h2>
+                <small>Actifs</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-info text-white text-center shadow-sm">
+                <i class="fa fa-user-graduate fa-2x mb-2"></i>
+                <h6 class="m-0">Élèves / Étudiants</h6>
+                <h2 class="fw-bold my-1">${escapeHtml(nStudents)}</h2>
+                <small>Inscrits</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-warning text-dark text-center shadow-sm">
+                <i class="fa fa-wallet fa-2x mb-2"></i>
+                <h6 class="m-0">Caisse Total</h6>
+                <div class="fw-bold fs-6 mt-1">USD : $${escapeHtml(totalUsd.toLocaleString())}</div>
+                <div class="fw-bold fs-6">FC : ${escapeHtml(totalFc.toLocaleString())} FC</div>
+            </div>
+        </div>
     `;
+}
+
+function downloadSectionData(sectionName) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(yData[sectionName] || [], null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href",     dataStr);
+    dlAnchorElem.setAttribute("download", "COMICO_" + s.name.replace(/[^a-zA-Z0-9]/g, '_') + "_" + sectionName + ".json");
+    document.body.appendChild(dlAnchorElem);
+    dlAnchorElem.click();
+    document.body.removeChild(dlAnchorElem);
 }
 
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if(pass === ADMIN_MASTER_PASSWORD) {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
+            renderAdminLitigiousMessages();
             showSection('view-admin-central');
         } else if(pass !== null) {
             CommicoAlert("Mot de passe incorrect.");
@@ -4402,53 +4390,49 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => {
-        const dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : 'Non généré';
+    tbody.innerHTML = (appData.schools || []).map((s, idx) => {
+        let dirCode = 'Non généré (1er param.)';
+        if(s.direction && s.direction.length > 0 && s.direction[0].secretCode) {
+            dirCode = s.direction[0].secretCode;
+        }
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:45px;height:45px;border-radius:50%;object-fit:contain;" onerror="handleLogoFallback(this, 45, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;object-fit:contain;" class="border rounded-circle" onerror="handleLogoFallback(this, 40, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
                 <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision || '-')}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><code>${escapeHtml(s.secretCode)}</code> / <code>${escapeHtml(dirCode)}</code></td>
+                <td><code>${escapeHtml(s.secretCode)}</code><br><code class="text-danger">${escapeHtml(dirCode)}</code></td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-sync"></i> Statut</button>
-                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
+                    <button class="btn btn-sm btn-warning fw-bold" onclick="toggleSchoolPaymentStatus(${idx})"><i class="fa fa-exchange-alt"></i> Statut</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id) {
-    const s = appData.schools.find(x => x.id === id);
+function toggleSchoolPaymentStatus(idx) {
+    const s = appData.schools[idx];
     if(!s) return;
     s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
     saveData();
     renderAdminCentralTable();
     renderSchoolsList();
-}
-
-function downloadSectionData(sectionName) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    let dataStr = JSON.stringify(yData[sectionName] || s[sectionName] || [], null, 2);
-    const blob = new Blob([dataStr], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `commico_${sectionName}_${s.name}.json`;
-    a.click();
+    CommicoAlert("Statut de la Madras mis à jour : " + s.paiementStatut);
 }
 
 function openDirectRegistrationModal() {
     if (!appData.schools || appData.schools.length === 0) {
-        CommicoAlert("Veuillez d'abord créer une Madras.");
+        CommicoAlert("Veuillez d'abord créer une Madras (Étape 1).");
         return;
     }
-    const targetSchool = appData.schools[appData.schools.length - 1];
-    promptLoginCode(targetSchool.id);
+    const s = appData.schools[0];
+    CommicoPrompt("Entrez le code secret Madras (" + s.name + ") :", function(code) {
+        if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+            checkAndOpenSchoolDashboard(s.id);
+        } else if(code !== null) {
+            CommicoAlert("Code secret Madras incorrect.");
+        }
+    });
 }
 </script>
 </body>
