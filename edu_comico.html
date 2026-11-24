@@ -158,16 +158,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   </div>
 </div>
 
-<!-- MODALE D'AFFICHAGE DU CODE DE SUIVI CANDIDATURE -->
-<div id="jobTrackingCodeModal" class="secret-modal-overlay no-print">
+<!-- MODALE D'AFFICHAGE DU CODE SECRET DE SUIVI CANDIDATURE -->
+<div id="candidateCodeModal" class="secret-modal-overlay no-print">
   <div class="secret-modal-card">
     <i class="fa fa-key fa-4x text-warning mb-3"></i>
     <h3 class="fw-bold">Candidature Envoyée !</h3>
-    <p class="text-muted small">Voici votre <b>Code de Suivi de Candidature</b> généré automatiquement. Gardez-le bien pour vérifier la réponse du propriétaire :</p>
-    <div id="modalJobTrackingCodeDisplay" class="secret-code-badge">CND-0000</div>
+    <p class="text-muted small">Voici votre <b>Code Secret de Suivi</b> généré par le système. Gardez-le pour vérifier la réponse du propriétaire :</p>
+    <div id="modalCandidateCodeDisplay" class="secret-code-badge">CND-0000</div>
     <div>
-      <button class="btn btn-outline-primary btn-sm me-2" onclick="copyJobTrackingCodeModal()"><i class="fa fa-copy me-1"></i> Copier</button>
-      <button class="btn btn-warning btn-sm fw-bold px-4" onclick="closeJobTrackingCodeModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
+      <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="copyCandidateTrackingCode()"><i class="fa fa-copy me-1"></i> Copier le code</button>
+      <button type="button" class="btn btn-success btn-sm fw-bold px-4" onclick="closeCandidateCodeModal()"><i class="fa fa-check me-1"></i> J'ai noté le code</button>
     </div>
   </div>
 </div>
@@ -418,7 +418,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- DEMANDE EMPLOI / MISSION -->
 <div id="view-job-application" class="view-section">
 <button class="btn btn-secondary btn-sm mb-3 no-print" onclick="showSection('view-portal')"><i class="fa fa-arrow-left me-1"></i> Retour</button>
-<div class="card shadow-sm border-0">
+<div class="card shadow-sm border-0 mb-4">
 <div class="card-header bg-warning text-dark"><h4 class="m-0 fw-bold">Soumettre une Candidature / Poste</h4></div>
 <div class="card-body p-4">
 <form onsubmit="handleSendJobApplication(event)">
@@ -432,17 +432,19 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 </form>
+</div>
+</div>
 
-<!-- SUIVI DE CANDIDATURE PAR CODE -->
-<div class="mt-4 pt-4 border-top no-print">
-<h5 class="text-primary fw-bold mb-2"><i class="fa fa-search me-2"></i>Suivi de Candidature (Vérifier la Réponse du Propriétaire)</h5>
-<p class="text-muted small mb-2">Introduisez votre code ou mot de passe de suivi reçu lors de l'envoi de votre candidature pour consulter la réponse du propriétaire.</p>
-<div class="input-group input-group-sm" style="max-width: 420px;">
-<input type="text" id="jobTrackingLookupInput" class="form-control" placeholder="Entrez votre code de suivi (ex: CND-XXXX)...">
-<button type="button" class="btn btn-primary fw-bold" onclick="checkJobApplicationResponse()"><i class="fa fa-check-circle me-1"></i> Vérifier la réponse</button>
+<!-- SUIVI DE CANDIDATURE & LECTURE DE LA RÉPONSE DU PROPRIÉTAIRE -->
+<div class="card shadow-sm border-0 border-start border-4 border-primary">
+<div class="card-header bg-primary text-white"><h5 class="m-0 text-white"><i class="fa fa-search me-2"></i>Suivi de Candidature & Réponse du Propriétaire</h5></div>
+<div class="card-body p-4">
+<p class="text-muted small">Introduisez votre <b>Code Secret de Suivi</b> reçu après l'envoi de votre candidature pour ouvrir et lire la réponse ou le message du propriétaire de la Madras.</p>
+<div class="input-group mb-3 no-print" style="max-width: 450px;">
+<input type="text" id="candidateTrackingCodeInput" class="form-control" placeholder="Ex: CND-1234">
+<button type="button" class="btn btn-primary fw-bold" onclick="openCandidateResponseSection()"><i class="fa fa-envelope-open-text me-1"></i> Ouvrir et Lire la Réponse</button>
 </div>
-<div id="jobTrackingResultArea" class="mt-3"></div>
-</div>
+<div id="candidateResponseDisplayArea" style="display: none;"></div>
 </div>
 </div>
 </div>
@@ -1117,7 +1119,21 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
         <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
-    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Code Suivi</th><th>Réponse Propriétaire</th><th class="no-print">Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+    <table class="table table-bordered"><thead><tr><th>Candidat</th><th>Poste / Fonction</th><th>Code Suivi / Réponse</th><th class="no-print">Action</th></tr></thead><tbody id="schoolJobsTableBody"></tbody></table>
+
+    <!-- ZONE DE RÉPONSE À LA CANDIDATURE CHOISIE -->
+    <div id="jobReplyEditorBox" class="card p-3 bg-light border mt-3 no-print" style="display: none;">
+        <h6 class="text-primary fw-bold mb-2"><i class="fa fa-reply me-1"></i> Répondre à la Candidature Sélectionnée</h6>
+        <div id="selectedJobSummary" class="small mb-2 p-2 bg-white border rounded"></div>
+        <div class="mb-2">
+            <label class="form-label small fw-bold">Message / Réponse au candidat :</label>
+            <textarea id="jobOwnerReplyText" class="form-control form-control-sm" rows="3" placeholder="Écrivez votre réponse ou message pour cette personne..."></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm fw-bold" onclick="sendJobOwnerReply()"><i class="fa fa-paper-plane me-1"></i> Envoyer la Réponse</button>
+            <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="closeJobReplyEditor()">Annuler</button>
+        </div>
+    </div>
 </div>
 </div>
 
@@ -1339,7 +1355,8 @@ let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
 let currentCreatedDirectorCode = "";
-let currentCreatedJobTrackingCode = "";
+let currentCreatedCandidateCode = "";
+let selectedJobIndexForReply = null;
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
@@ -1578,14 +1595,12 @@ function CommicoAlert(msg) {
     modal.style.display = 'flex';
 }
 
-function CommicoPrompt(msg, callback, inputType, placeholderText) {
+function CommicoPrompt(msg, callback) {
     const modal = document.getElementById('commicoCustomModal');
     document.getElementById('commicoModalMessage').innerText = msg;
     const inputArea = document.getElementById('commicoModalInputArea');
     inputArea.style.display = 'block';
     const inputField = document.getElementById('commicoModalInput');
-    inputField.type = inputType || 'password';
-    inputField.placeholder = placeholderText || 'Saisir votre code...';
     inputField.value = '';
     document.getElementById('commicoModalBtnCancel').style.display = 'inline-block';
     const okBtn = document.getElementById('commicoModalBtnOk');
@@ -2164,6 +2179,7 @@ function promptUnlockJobs() {
         document.getElementById('jobsUnlockedContainer').style.display = 'block';
         document.getElementById('jobsLockedContainer').style.display = 'none';
         document.getElementById('jobOwnerSecretInput').value = '';
+        closeJobReplyEditor();
         renderSchoolJobsTable();
     } else {
         CommicoAlert("Code secret directeur incorrect.");
@@ -2173,6 +2189,7 @@ function promptUnlockJobs() {
 function lockJobs() {
     document.getElementById('jobsUnlockedContainer').style.display = 'none';
     document.getElementById('jobsLockedContainer').style.display = 'block';
+    closeJobReplyEditor();
 }
 
 function switchTab(tabId, element) {
@@ -3840,17 +3857,17 @@ function deleteCommItem(index) {
 function openJobApplicationSection() {
     const select = document.getElementById('jobSchoolSelect');
     select.innerHTML = (appData.schools || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
-    document.getElementById('jobTrackingResultArea').innerHTML = '';
+    document.getElementById('candidateResponseDisplayArea').style.display = 'none';
     showSection('view-job-application');
 }
 
-function generateUniqueJobTrackingCode() {
+function generateUniqueCandidateTrackingCode() {
     let code = '';
     let exists = true;
     while (exists) {
         code = 'CND-' + Math.floor(1000 + Math.random() * 9000);
         exists = (appData.schools || []).some(sch =>
-            (sch.jobApplications || []).some(app => app.trackingCode && app.trackingCode.toUpperCase() === code)
+            (sch.jobApplications || []).some(app => (app.trackingCode || '').toUpperCase() === code)
         );
     }
     return code;
@@ -3862,69 +3879,75 @@ function handleSendJobApplication(e) {
     const s = appData.schools.find(x => x.id === schId);
     if(s) {
         if(!s.jobApplications) s.jobApplications = [];
-        const trackingCode = generateUniqueJobTrackingCode();
+        const trackingCode = generateUniqueCandidateTrackingCode();
         s.jobApplications.push({
             id: 'JOB-' + Date.now(),
             trackingCode: trackingCode,
             name: document.getElementById('jobApplicantName').value.trim(),
             role: document.getElementById('jobRole').value.trim(),
+            submittedAt: new Date().toLocaleString(),
             ownerReply: '',
             repliedAt: ''
         });
         saveData();
-        currentCreatedJobTrackingCode = trackingCode;
-        document.getElementById('modalJobTrackingCodeDisplay').innerText = trackingCode;
-        document.getElementById('jobTrackingCodeModal').style.display = 'flex';
+        currentCreatedCandidateCode = trackingCode;
+        document.getElementById('modalCandidateCodeDisplay').innerText = trackingCode;
+        document.getElementById('candidateCodeModal').style.display = 'flex';
         e.target.reset();
     }
 }
 
-function copyJobTrackingCodeModal() {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(currentCreatedJobTrackingCode);
+function copyCandidateTrackingCode() {
+    if (navigator.clipboard && currentCreatedCandidateCode) {
+        navigator.clipboard.writeText(currentCreatedCandidateCode);
     }
-    CommicoAlert("Code de suivi copié !");
+    CommicoAlert("Code secret de suivi copié !");
 }
 
-function closeJobTrackingCodeModal() {
-    document.getElementById('jobTrackingCodeModal').style.display = 'none';
+function closeCandidateCodeModal() {
+    document.getElementById('candidateCodeModal').style.display = 'none';
+    showSection('view-portal');
 }
 
-function checkJobApplicationResponse() {
-    const inputEl = document.getElementById('jobTrackingLookupInput');
-    const resultArea = document.getElementById('jobTrackingResultArea');
-    const code = inputEl ? inputEl.value.trim().toUpperCase() : '';
+function openCandidateResponseSection() {
+    const codeInput = document.getElementById('candidateTrackingCodeInput');
+    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    const displayArea = document.getElementById('candidateResponseDisplayArea');
     if (!code) {
-        CommicoAlert("Veuillez introduire votre code ou mot de passe de suivi.");
+        CommicoAlert("Veuillez introduire votre code secret de suivi de candidature.");
         return;
     }
 
-    let foundApp = null;
     let foundSchool = null;
+    let foundApp = null;
     (appData.schools || []).forEach(sch => {
-        const match = (sch.jobApplications || []).find(app => app.trackingCode && app.trackingCode.toUpperCase() === code);
+        const match = (sch.jobApplications || []).find(app => (app.trackingCode || '').toUpperCase() === code);
         if (match) {
-            foundApp = match;
             foundSchool = sch;
+            foundApp = match;
         }
     });
 
+    displayArea.style.display = 'block';
     if (!foundApp) {
-        resultArea.innerHTML = `<div class="alert alert-danger py-2 small mb-0">Aucune candidature trouvée avec le code <b>${escapeHtml(code)}</b>.</div>`;
+        displayArea.innerHTML = `<div class="alert alert-danger mb-0">Aucune candidature trouvée avec le code secret <b>${escapeHtml(code)}</b>.</div>`;
         return;
     }
 
     const replyHtml = foundApp.ownerReply
-        ? `<div class="alert alert-success py-2 small mb-0">
-               <div><b>Madras :</b> ${escapeHtml(foundSchool ? foundSchool.name : '-')} | <b>Candidat :</b> ${escapeHtml(foundApp.name)} (${escapeHtml(foundApp.role)})</div>
-               <div class="mt-1"><b>Réponse du Propriétaire :</b> ${escapeHtml(foundApp.ownerReply)}</div>
-               ${foundApp.repliedAt ? `<div class="text-muted" style="font-size:11px;">Répondu le : ${escapeHtml(foundApp.repliedAt)}</div>` : ''}
+        ? `<div class="p-3 bg-success bg-opacity-10 border border-success rounded mt-2">
+               <div class="fw-bold text-success mb-1"><i class="fa fa-check-circle me-1"></i> Réponse du Propriétaire (${escapeHtml(foundApp.repliedAt || '')}) :</div>
+               <div>${escapeHtml(foundApp.ownerReply)}</div>
            </div>`
-        : `<div class="alert alert-info py-2 small mb-0">
-               <div><b>Madras :</b> ${escapeHtml(foundSchool ? foundSchool.name : '-')} | <b>Candidat :</b> ${escapeHtml(foundApp.name)} (${escapeHtml(foundApp.role)})</div>
-               <div class="mt-1">Le propriétaire n'a pas encore répondu à cette candidature.</div>
-           </div>`;
-    resultArea.innerHTML = replyHtml;
+        : `<div class="alert alert-warning mb-0 mt-2"><i class="fa fa-clock me-1"></i> En attente de réponse du propriétaire de la Madras.</div>`;
+
+    displayArea.innerHTML = `
+        <div class="card p-3 bg-light border">
+            <div class="small text-muted mb-1"><b>Madras :</b> ${escapeHtml(foundSchool ? foundSchool.name : '-')} | <b>Code Suivi :</b> <code>${escapeHtml(foundApp.trackingCode)}</code></div>
+            <div class="small"><b>Candidat :</b> ${escapeHtml(foundApp.name)} | <b>Poste :</b> ${escapeHtml(foundApp.role)}</div>
+            ${replyHtml}
+        </div>
+    `;
 }
 
 function renderSchoolJobsTable() {
@@ -3935,35 +3958,63 @@ function renderSchoolJobsTable() {
         <tr>
             <td><b>${escapeHtml(j.name)}</b></td>
             <td>${escapeHtml(j.role)}</td>
-            <td><code>${escapeHtml(j.trackingCode || '-')}</code></td>
-            <td>${j.ownerReply ? `<span class="badge bg-success text-wrap text-start">${escapeHtml(j.ownerReply)}</span>` : '<span class="text-muted small">En attente de réponse</span>'}</td>
+            <td>
+                <div><code>${escapeHtml(j.trackingCode || '-')}</code></div>
+                <div class="small mt-1">${j.ownerReply ? `<span class="badge bg-success">Répondu</span> <span class="text-dark">${escapeHtml(j.ownerReply)}</span>` : '<span class="badge bg-secondary">Sans réponse</span>'}</div>
+            </td>
             <td class="no-print">
-                <button class="btn btn-sm btn-success me-1" onclick="replyToSchoolJob(${i})"><i class="fa fa-reply"></i> Répondre</button>
+                <button class="btn btn-sm btn-success me-1" onclick="openJobReplyEditor(${i})"><i class="fa fa-reply"></i> Ouvrir / Répondre</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteSchoolJob(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue sur la zone propriétaire.</td></tr>';
 }
 
-function replyToSchoolJob(index) {
+function openJobReplyEditor(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s || !s.jobApplications || !s.jobApplications[index]) return;
     const job = s.jobApplications[index];
-    CommicoPrompt("Saisissez votre réponse pour " + job.name + " :", function(replyText) {
-        if (replyText && replyText.trim() !== '') {
-            job.ownerReply = replyText.trim();
-            job.repliedAt = new Date().toLocaleString('fr-FR');
-            saveData();
-            renderSchoolJobsTable();
-            CommicoAlert("Réponse enregistrée ! Le candidat pourra la consulter avec son code : " + (job.trackingCode || ''));
-        }
-    }, 'text', 'Écrire votre réponse au candidat...');
+    selectedJobIndexForReply = index;
+    document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(job.name)} | <b>Poste :</b> ${escapeHtml(job.role)} | <b>Code Suivi :</b> <code>${escapeHtml(job.trackingCode || '-')}</code>`;
+    document.getElementById('jobOwnerReplyText').value = job.ownerReply || '';
+    document.getElementById('jobReplyEditorBox').style.display = 'block';
+    document.getElementById('jobOwnerReplyText').focus();
+}
+
+function closeJobReplyEditor() {
+    selectedJobIndexForReply = null;
+    const box = document.getElementById('jobReplyEditorBox');
+    const txt = document.getElementById('jobOwnerReplyText');
+    if (txt) txt.value = '';
+    if (box) box.style.display = 'none';
+}
+
+function sendJobOwnerReply() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s || selectedJobIndexForReply === null || !s.jobApplications || !s.jobApplications[selectedJobIndexForReply]) return;
+    const replyText = document.getElementById('jobOwnerReplyText').value.trim();
+    if (!replyText) {
+        CommicoAlert("Veuillez écrire un message ou une réponse avant d'envoyer.");
+        return;
+    }
+    const job = s.jobApplications[selectedJobIndexForReply];
+    job.ownerReply = replyText;
+    job.repliedAt = new Date().toLocaleString();
+    saveData();
+    closeJobReplyEditor();
+    renderSchoolJobsTable();
+    CommicoAlert("Réponse envoyée à " + job.name + " (Code suivi : " + (job.trackingCode || '') + ") !");
 }
 
 function deleteSchoolJob(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s || !s.jobApplications) return;
     s.jobApplications.splice(index, 1);
+    if (selectedJobIndexForReply === index) {
+        closeJobReplyEditor();
+    } else if (selectedJobIndexForReply !== null && selectedJobIndexForReply > index) {
+        selectedJobIndexForReply--;
+    }
     saveData();
     renderSchoolJobsTable();
 }
@@ -4073,7 +4124,7 @@ function handleSaveCourrier(e) {
         renderCourriersTable();
         renderDossiersTable();
         document.getElementById('formCourrier').reset();
-        CommicoAlert("Correspondance enregistrée et normalisée !");
+        CommicoAlert("Correspondance enregistrée avec succès !");
     });
 }
 
@@ -4082,250 +4133,165 @@ function renderCourriersTable() {
     const tbody = document.getElementById('courriersTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    tbody.innerHTML = (yData.courriers || []).map((c, i) => {
-        const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
-        const docBtn = c.fileUrl
-            ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-danger no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-info text-white no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
-            : 'Aucun';
-        return `
-            <tr>
-                <td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.type)}</td><td><code>${escapeHtml(c.numDoc || '-')}</code></td><td>${escapeHtml(c.exp)}</td><td>${escapeHtml(c.dest || '-')}</td><td>${escapeHtml(c.objet)}</td><td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
-                <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-            </tr>
-        `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
+    tbody.innerHTML = (yData.courriers || []).map((c, i) => `
+        <tr>
+            <td>${escapeHtml(c.date)}</td>
+            <td><span class="badge ${c.type === 'Entrant' ? 'bg-primary' : 'bg-info'}">${escapeHtml(c.type)}</span></td>
+            <td><code>${escapeHtml(c.numDoc)}</code></td>
+            <td>${escapeHtml(c.exp)}</td>
+            <td>${escapeHtml(c.dest)}</td>
+            <td>${escapeHtml(c.objet)}</td>
+            <td>${escapeHtml(c.heure || '-')} / ${escapeHtml(c.jour || '-')}</td>
+            <td>${c.fileUrl ? `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye me-1"></i> ${escapeHtml(c.fileName || 'Voir')}</button>` : '-'}</td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-function deleteCourrierItem(index) {
-    requireOwnerCodeAction(function() {
-        const s = appData.schools.find(x => x.id === activeSchoolId);
-        if(!s) return;
-        const yData = getActiveYearData(s);
-        if (!yData.courriers || !yData.courriers[index]) return;
-        const removed = yData.courriers.splice(index, 1)[0];
-        if (removed && removed.numDoc && Array.isArray(yData.dossiersArchive)) {
-            yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== removed.numDoc.toUpperCase());
-        }
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert("Correspondance supprimée avec succès.");
-    });
+function deleteCourrier(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    yData.courriers.splice(index, 1);
+    saveData();
+    renderCourriersTable();
+    renderDossiersTable();
 }
 
 function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.courriers || !yData.courriers.length) {
+    if(yData.courriers && yData.courriers.length > 0) {
+        yData.courriers.pop();
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+        CommicoAlert("Dernière correspondance supprimée.");
+    } else {
         CommicoAlert("Aucune correspondance à supprimer.");
-        return;
     }
-    deleteCourrierItem(yData.courriers.length - 1);
 }
 
-// ARCHIVES & DOSSIERS
-let archiveFilterNumDoc = '';
-let archiveShowAllMode = false;
+let archiveFilterMode = 'all';
 
-function getCombinedArchiveRecords(yData) {
-    const map = new Map();
-    (yData.dossiersArchive || []).forEach(d => {
-        const key = (d.numDoc || '').trim().toUpperCase() || ('ARCH-' + Math.random());
-        map.set(key, {
-            classeur: d.classeur || d.type || 'Entrant',
-            numDoc: d.numDoc || '-',
-            date: d.date || '-',
-            exp: d.exp || '-',
-            dest: d.dest || '-',
-            objet: d.objet || '-',
-            heure: d.heure || '',
-            jour: d.jour || '',
-            fileUrl: d.fileUrl || '',
-            fileName: d.fileName || '',
-            fileType: d.fileType || ''
+function getFilteredArchiveCorrespondances() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return [];
+    const yData = getActiveYearData(s);
+    const allCourriers = yData.courriers || [];
+    const classeurEl = document.getElementById('archiveClasseur');
+    const searchEl = document.getElementById('searchArchiveNumInput');
+    const selectedClasseur = classeurEl ? classeurEl.value : '';
+    const searchNum = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+    return allCourriers
+        .map((c, idx) => ({ item: c, index: idx }))
+        .filter(entry => {
+            const c = entry.item;
+            const matchesClasseur = (archiveFilterMode === 'all' && !searchNum) ? true : (!selectedClasseur || c.type === selectedClasseur);
+            const matchesNum = !searchNum || (c.numDoc || '').toLowerCase().includes(searchNum);
+            return matchesClasseur && matchesNum;
         });
-    });
-    (yData.courriers || []).forEach(c => {
-        const key = (c.numDoc || '').trim().toUpperCase() || ('COUR-' + Math.random());
-        if (!map.has(key)) {
-            map.set(key, {
-                classeur: c.type || 'Entrant',
-                numDoc: c.numDoc || '-',
-                date: c.date || '-',
-                exp: c.exp || '-',
-                dest: c.dest || '-',
-                objet: c.objet || '-',
-                heure: c.heure || '',
-                jour: c.jour || '',
-                fileUrl: c.fileUrl || '',
-                fileName: c.fileName || '',
-                fileType: c.fileType || ''
-            });
-        }
-    });
-    return Array.from(map.values());
 }
 
 function onArchiveClasseurOrSearchChange() {
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    archiveFilterNumDoc = searchInput ? searchInput.value.trim() : '';
+    const searchEl = document.getElementById('searchArchiveNumInput');
+    if (searchEl && searchEl.value.trim() !== '') {
+        archiveFilterMode = 'filtered';
+    }
     renderDossiersTable();
 }
 
 function searchArchiveByNumDoc() {
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    archiveFilterNumDoc = searchInput ? searchInput.value.trim() : '';
+    archiveFilterMode = 'filtered';
     renderDossiersTable();
+    const matches = getFilteredArchiveCorrespondances();
+    const searchNum = (document.getElementById('searchArchiveNumInput').value || '').trim();
+    if (!searchNum) {
+        CommicoAlert("Veuillez saisir un Numéro de Document (NumDoc) pour rechercher.");
+        return;
+    }
+    if (matches.length === 0) {
+        CommicoAlert("Aucun document trouvé pour le N° : " + searchNum);
+    }
 }
 
 function showAllArchiveCorrespondances() {
-    archiveShowAllMode = true;
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    if (searchInput) searchInput.value = '';
-    archiveFilterNumDoc = '';
+    archiveFilterMode = 'all';
+    const searchEl = document.getElementById('searchArchiveNumInput');
+    if (searchEl) searchEl.value = '';
     renderDossiersTable();
 }
 
 function saveCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
+    if (!s) return;
     const yData = getActiveYearData(s);
-    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
-    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-
     if (!yData.dossiersArchive) yData.dossiersArchive = [];
-    const sourceList = getCombinedArchiveRecords(yData);
-    let candidate = null;
-
-    if (numQuery) {
-        candidate = sourceList.find(item => (item.numDoc || '').toUpperCase() === numQuery.toUpperCase());
-    } else {
-        const matchingClasseur = sourceList.filter(item => item.classeur === classeur);
-        candidate = matchingClasseur.length ? matchingClasseur[matchingClasseur.length - 1] : (sourceList.length ? sourceList[sourceList.length - 1] : null);
-    }
-
-    if (!candidate) {
-        CommicoAlert("Aucune correspondance trouvée à archiver.");
+    const filtered = getFilteredArchiveCorrespondances().map(e => e.item);
+    const itemsToSave = filtered.length > 0 ? filtered : (yData.courriers || []);
+    if (!itemsToSave.length) {
+        CommicoAlert("Aucune correspondance à enregistrer dans les archives.");
         return;
     }
-
-    const existsIdx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').toUpperCase() === (candidate.numDoc || '').toUpperCase());
-    const entryToSave = {
-        classeur: classeur,
-        numDoc: candidate.numDoc,
-        date: candidate.date,
-        exp: candidate.exp,
-        dest: candidate.dest,
-        objet: candidate.objet,
-        heure: candidate.heure,
-        jour: candidate.jour,
-        fileUrl: candidate.fileUrl,
-        fileName: candidate.fileName,
-        fileType: candidate.fileType
-    };
-
-    if (existsIdx !== -1) {
-        yData.dossiersArchive[existsIdx] = entryToSave;
-    } else {
-        yData.dossiersArchive.push(entryToSave);
-    }
-
+    const classeurName = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    yData.dossiersArchive.push({
+        id: 'ARCH-' + Date.now(),
+        classeur: classeurName,
+        savedAt: new Date().toLocaleString(),
+        items: itemsToSave
+    });
     saveData();
-    renderDossiersTable();
-    CommicoAlert("Correspondance enregistrée dans les Archives (" + classeur + ") !");
+    CommicoAlert("Correspondances enregistrées dans les archives (" + classeurName + ") !");
 }
 
 function deleteCurrentArchiveCorrespondence() {
-    requireOwnerCodeAction(function() {
-        const s = appData.schools.find(x => x.id === activeSchoolId);
-        if(!s) return;
-        const yData = getActiveYearData(s);
-        const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
-        const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-
-        if (!yData.dossiersArchive) yData.dossiersArchive = [];
-        let deleted = false;
-
-        if (numQuery) {
-            const before = yData.dossiersArchive.length;
-            yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== numQuery.toUpperCase());
-            if (yData.courriers) {
-                yData.courriers = yData.courriers.filter(c => (c.numDoc || '').toUpperCase() !== numQuery.toUpperCase());
-            }
-            deleted = yData.dossiersArchive.length < before;
-        } else {
-            const idx = yData.dossiersArchive.map(d => d.classeur).lastIndexOf(classeur);
-            if (idx !== -1) {
-                yData.dossiersArchive.splice(idx, 1);
-                deleted = true;
-            }
-        }
-
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert(deleted ? "Archive supprimée avec succès." : "Aucune archive correspondante à supprimer.");
-    });
-}
-
-function deleteArchiveByNumDoc(numDoc, classeur) {
-    requireOwnerCodeAction(function() {
-        const s = appData.schools.find(x => x.id === activeSchoolId);
-        if(!s) return;
-        const yData = getActiveYearData(s);
-        if (yData.dossiersArchive) {
-            yData.dossiersArchive = yData.dossiersArchive.filter(d => !((d.numDoc || '') === numDoc && (!classeur || d.classeur === classeur)));
-        }
-        if (yData.courriers) {
-            yData.courriers = yData.courriers.filter(c => (c.numDoc || '') !== numDoc);
-        }
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert("Correspondance archivée supprimée avec succès.");
-    });
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    if (!yData.courriers || yData.courriers.length === 0) {
+        CommicoAlert("Aucune correspondance à supprimer.");
+        return;
+    }
+    const matches = getFilteredArchiveCorrespondances();
+    if (matches.length > 0) {
+        const targetIdx = matches[matches.length - 1].index;
+        yData.courriers.splice(targetIdx, 1);
+    } else {
+        yData.courriers.pop();
+    }
+    saveData();
+    renderCourriersTable();
+    renderDossiersTable();
+    CommicoAlert("Correspondance supprimée avec succès.");
 }
 
 function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
-    if(!tbody || !s) return;
-    const yData = getActiveYearData(s);
-    const classeurSel = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
-    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : (archiveFilterNumDoc || '').toLowerCase();
-
-    let records = getCombinedArchiveRecords(yData);
-    if (searchVal) {
-        records = records.filter(r => (r.numDoc || '').toLowerCase().includes(searchVal));
-    } else if (!archiveShowAllMode) {
-        records = records.filter(r => r.classeur === classeurSel);
-    }
-
-    tbody.innerHTML = records.map(r => {
-        const kind = isPdfOrImageUrl(r.fileUrl, r.fileType);
-        const docBtn = r.fileUrl
-            ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-danger no-print" onclick="viewDocumentModal('${escapeJsAttr(r.fileUrl)}', '${escapeJsAttr(r.fileName || r.objet)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-info text-white no-print" onclick="viewDocumentModal('${escapeJsAttr(r.fileUrl)}', '${escapeJsAttr(r.fileName || r.objet)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
-            : 'Aucun';
+    if (!tbody || !s) return;
+    const entries = getFilteredArchiveCorrespondances();
+    tbody.innerHTML = entries.map(entry => {
+        const c = entry.item;
+        const idx = entry.index;
+        const docBtn = c.fileUrl
+            ? `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye me-1"></i> ${escapeHtml(c.fileName || 'Voir')}</button>`
+            : '-';
         return `
             <tr>
-                <td><span class="badge ${r.classeur === 'Entrant' ? 'bg-primary' : 'bg-secondary'}">${escapeHtml(r.classeur)}</span></td>
-                <td><code>${escapeHtml(r.numDoc)}</code></td>
-                <td>${escapeHtml(r.date)}</td>
-                <td>${escapeHtml(r.exp)}</td>
-                <td>${escapeHtml(r.dest)}</td>
-                <td>${escapeHtml(r.objet)}</td>
-                <td>${escapeHtml(r.heure || '')} (${escapeHtml(r.jour || '')})</td>
+                <td><span class="badge ${c.type === 'Entrant' ? 'bg-primary' : 'bg-info'}">${escapeHtml(c.type || '-')}</span></td>
+                <td><code>${escapeHtml(c.numDoc || '-')}</code></td>
+                <td>${escapeHtml(c.date || '-')}</td>
+                <td>${escapeHtml(c.exp || '-')}</td>
+                <td>${escapeHtml(c.dest || '-')}</td>
+                <td>${escapeHtml(c.objet || '-')}</td>
+                <td>${escapeHtml(c.heure || '-')} / ${escapeHtml(c.jour || '-')}</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveByNumDoc('${escapeJsAttr(r.numDoc)}', '${escapeJsAttr(r.classeur)}')"><i class="fa fa-trash"></i> Supprimer</button></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrier(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans les archives.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance archivée trouvée.</td></tr>';
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4343,7 +4309,7 @@ function handleSaveCalendrierScolaire(e) {
     saveData();
     renderCalendrierTable();
     document.getElementById('formCalendrierScolaire').reset();
-    CommicoAlert("Événement ajouté au calendrier !");
+    CommicoAlert("Événement ajouté au calendrier scolaire !");
 }
 
 function renderCalendrierTable() {
@@ -4351,23 +4317,39 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    let list = yData.calendrierVacances || [];
+    const filterEl = document.getElementById('calendarFilterSelect');
+    const filterVal = filterEl ? filterEl.value : 'Tous';
+
+    let items = (yData.calendrierVacances || []).map((ev, origIdx) => ({ ev, origIdx }));
     if(filterVal !== 'Tous') {
-        list = list.filter(item => item.type === filterVal);
+        items = items.filter(entry => entry.ev.type === filterVal);
     }
-    tbody.innerHTML = list.map((c, i) => `
-        <tr><td><b>${escapeHtml(c.type || '-')}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
+
+    tbody.innerHTML = items.map(entry => {
+        const ev = entry.ev;
+        const i = entry.origIdx;
+        const badgeClass = ev.type.includes('Islamique') ? 'bg-success' : 'bg-primary';
+        return `
+            <tr>
+                <td><span class="badge ${badgeClass}">${escapeHtml(ev.type || 'Calendrier')}</span></td>
+                <td><b>${escapeHtml(ev.titre)}</b></td>
+                <td>${escapeHtml(ev.debut)}</td>
+                <td>${escapeHtml(ev.fin)}</td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement planifié pour ce filtre.</td></tr>';
 }
 
 function deleteCalendrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.calendrierVacances.splice(index, 1);
-    saveData();
-    renderCalendrierTable();
+    if(yData.calendrierVacances) {
+        yData.calendrierVacances.splice(index, 1);
+        saveData();
+        renderCalendrierTable();
+    }
 }
 
 function handleSaveHoraireCours(e) {
@@ -4385,7 +4367,7 @@ function handleSaveHoraireCours(e) {
     saveData();
     renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré !");
+    CommicoAlert("Horaire ajouté avec succès !");
 }
 
 function renderHorairesTable() {
@@ -4394,17 +4376,25 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+        <tr>
+            <td><b>${escapeHtml(h.classe)}</b></td>
+            <td>${escapeHtml(h.jour)}</td>
+            <td>${escapeHtml(h.plage)}</td>
+            <td>${escapeHtml(h.cours)}</td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire défini.</td></tr>';
 }
 
 function deleteHoraireItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.horairesCours.splice(index, 1);
-    saveData();
-    renderHorairesTable();
+    if(yData.horairesCours) {
+        yData.horairesCours.splice(index, 1);
+        saveData();
+        renderHorairesTable();
+    }
 }
 
 function renderStatistiques() {
@@ -4412,11 +4402,66 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
+
+    const nbClasses = (yData.classes || []).length;
+    const nbTeachers = (yData.teachers || []).length;
+    const nbStudents = (yData.students || []).length;
+    let totalCourses = 0;
+    Object.values(yData.courses || {}).forEach(arr => totalCourses += arr.length);
+
+    let totalUSD = 0, totalFC = 0;
+    (yData.caisse || []).forEach(c => {
+        const amt = parseFloat(c.montant) || 0;
+        if(c.devise === 'FC') totalFC += amt; else totalUSD += amt;
+    });
+    (yData.studentPayments || []).forEach(m => totalUSD += (parseFloat(m.amount) || 0));
+
+    let totalPresences = (yData.presenceStudents || []).length;
+    let totalDiscipline = (yData.discipline || []).length;
+
     container.innerHTML = `
-        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-primary"><h6>Élèves Inscrits</h6><h3 class="fw-bold text-primary">${(yData.students || []).length}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-success"><h6>Enseignants</h6><h3 class="fw-bold text-success">${(yData.teachers || []).length}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-warning"><h6>Classes</h6><h3 class="fw-bold text-warning">${(yData.classes || []).length}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-light text-center border-start border-4 border-info"><h6>Transactions Caisse</h6><h3 class="fw-bold text-info">${(yData.caisse || []).length}</h3></div></div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light border-0 shadow-sm text-center">
+                <i class="fa fa-door-open fa-2x text-primary mb-2"></i>
+                <h3 class="fw-bold text-primary mb-0">${nbClasses}</h3>
+                <small class="text-muted">Classes Actives</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light border-0 shadow-sm text-center">
+                <i class="fa fa-chalkboard-teacher fa-2x text-success mb-2"></i>
+                <h3 class="fw-bold text-success mb-0">${nbTeachers}</h3>
+                <small class="text-muted">Enseignants</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light border-0 shadow-sm text-center">
+                <i class="fa fa-user-graduate fa-2x text-info mb-2"></i>
+                <h3 class="fw-bold text-info mb-0">${nbStudents}</h3>
+                <small class="text-muted">Élèves Inscrits</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light border-0 shadow-sm text-center">
+                <i class="fa fa-book-open fa-2x text-warning mb-2"></i>
+                <h3 class="fw-bold text-warning mb-0">${totalCourses}</h3>
+                <small class="text-muted">Matières Enregistrées</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 bg-light border-0 shadow-sm">
+                <h6 class="fw-bold text-primary"><i class="fa fa-wallet me-2"></i>Aperçu Trésorerie & Paiements</h6>
+                <div class="small">Total Encaissements USD : <b>$${totalUSD.toFixed(2)}</b></div>
+                <div class="small">Total Encaissements FC : <b>${totalFC.toFixed(2)} FC</b></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 bg-light border-0 shadow-sm">
+                <h6 class="fw-bold text-primary"><i class="fa fa-clipboard-list me-2"></i>Assiduité & Discipline</h6>
+                <div class="small">Présences enregistrées : <b>${totalPresences}</b></div>
+                <div class="small">Dossiers disciplinaires : <b>${totalDiscipline}</b></div>
+            </div>
+        </div>
     `;
 }
 
@@ -4426,7 +4471,7 @@ function openAdminCentralPanel() {
             renderAdminCentralTable();
             showSection('view-admin-central');
         } else if(pass !== null) {
-            CommicoAlert("Mot de passe Administrateur Central incorrect.");
+            CommicoAlert("Mot de passe incorrect.");
         }
     });
 }
@@ -4434,72 +4479,92 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => {
-        const dirEntry = (s.direction || []).find(d => d.role === 'Directeur / Propriétaire' && d.secretCode);
-        const dirCodeDisplay = dirEntry ? `<code>${escapeHtml(dirEntry.secretCode)}</code>` : '<span class="text-muted small">Non généré</span>';
-        const isUpToDate = s.paiementStatut === 'A jour';
-        const statusBadge = `<span class="badge ${isUpToDate ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span>`;
-        const toggleBtn = isUpToDate
-            ? `<button class="btn btn-sm btn-warning fw-bold text-dark" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'Bloquée / Impayé')"><i class="fa fa-ban"></i> Bloquer</button>`
-            : `<button class="btn btn-sm btn-success fw-bold" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'A jour')"><i class="fa fa-check"></i> Débloquer</button>`;
+    tbody.innerHTML = (appData.schools || []).map((s, i) => {
+        let dirCode = "Non généré";
+        if(s.direction && s.direction.length > 0) {
+            const d = s.direction.find(x => x.secretCode);
+            if(d) dirCode = d.secretCode;
+        }
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;object-fit:contain;border-radius:50%;" class="border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:35px;height:35px;object-fit:contain;" class="rounded-circle" onerror="handleLogoFallback(this, 35, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
-                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
-                <td>${statusBadge}</td>
-                <td>Madras: <code>${escapeHtml(s.secretCode)}</code><br>Directeur: ${dirCodeDisplay}</td>
+                <td>${escapeHtml(s.province)} (${escapeHtml(s.subDivision)})</td>
+                <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
+                <td><code>${escapeHtml(s.secretCode)}</code> / <code class="text-danger">${escapeHtml(dirCode)}</code></td>
                 <td class="no-print">
-                    <div class="d-flex gap-1 flex-wrap">
-                        ${toggleBtn}
-                        <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Supprimer</button>
-                    </div>
+                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus(${i})">${s.paiementStatut === 'A jour' ? 'Bloquer' : 'Débloquer'}</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteSchoolCentral(${i})"><i class="fa fa-trash"></i> Supprimer</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id, newStatus) {
-    const s = appData.schools.find(x => x.id === id);
+function toggleSchoolPaymentStatus(index) {
+    const s = appData.schools[index];
     if(s) {
-        s.paiementStatut = newStatus;
+        s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
         saveData();
         renderAdminCentralTable();
         renderSchoolsList();
-        CommicoAlert("Statut de la Madras mis à jour : " + newStatus);
     }
 }
 
+function deleteSchoolCentral(index) {
+    appData.schools.splice(index, 1);
+    saveData();
+    renderAdminCentralTable();
+    renderSchoolsList();
+}
+
 function openDirectRegistrationModal() {
-    if(!appData.schools || !appData.schools.length) {
-        CommicoAlert("Veuillez d'abord créer une Madras (Bouton 1).");
+    if (!appData.schools || !appData.schools.length) {
+        CommicoAlert("Aucune Madras enregistrée.");
         return;
     }
-    const s = appData.schools[0];
-    CommicoPrompt("Entrez le code secret de la Madras (" + s.name + ") :", function(code) {
-        if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
-            checkAndOpenSchoolDashboard(s.id);
-        } else if(code !== null) {
-            CommicoAlert("Code secret incorrect.");
+    CommicoPrompt("Entrez le code secret de la Madras (MAD-XXXX) :", function(code) {
+        if(!code) return;
+        const found = appData.schools.find(s => s.secretCode.toUpperCase() === code.trim().toUpperCase());
+        if(found) {
+            activeSchoolId = found.id;
+            const s = appData.schools.find(x => x.id === activeSchoolId);
+            if(!s) return;
+            const yData = getActiveYearData(s);
+            let validOwnerCode = getOwnerSecretCode(s);
+            
+            CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour déverrouiller l'inscription :", function(ownerCode) {
+                if(ownerCode && ownerCode.trim().toUpperCase() === validOwnerCode.toUpperCase()) {
+                    proceedToDashboardOpen(found.id);
+                    switchTab('tab-eleves-reg');
+                    document.getElementById('studentsUnlockedContainer').style.display = 'block';
+                    document.getElementById('studentsLockedContainer').style.display = 'none';
+                    document.getElementById('studentAccessBadge').innerHTML = '<i class="fa fa-unlock me-1"></i> Déverrouillé (Propriétaire)';
+                    
+                    const classSelect = document.getElementById('secureStudentClassSelect');
+                    classSelect.innerHTML = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+                } else if(ownerCode !== null) {
+                    CommicoAlert("Accès refusé : Code Secret du Propriétaire incorrect.");
+                }
+            });
+        } else {
+            CommicoAlert("Code secret Madras non trouvé.");
         }
     });
 }
 
 function downloadSectionData(sectionName) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
+    if(!s) { CommicoAlert("Aucune Madras active."); return; }
     const yData = getActiveYearData(s);
-    const dataToSave = yData[sectionName] || s[sectionName] || [];
-    const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `COMICO_${s.name}_${sectionName}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ madras: s.name, section: sectionName, data: yData }, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `${s.name}_${sectionName}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+    CommicoAlert(`Données (${sectionName}) téléchargées avec succès !`);
 }
 </script>
 </body>
