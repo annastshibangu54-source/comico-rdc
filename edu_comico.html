@@ -452,7 +452,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Frais & Trésorerie</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Cours</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-liste-presence-journaliere', this)"><i class="fa fa-list-alt me-2"></i> Liste de présence journalière</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-liste-presence-journaliere', this)"><i class="fa fa-list-check me-2"></i> Liste de présence journalière</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
@@ -461,7 +461,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptOwnerOnlyHoraireAccess(this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
@@ -952,48 +952,79 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
 <!-- LISTE DE PRÉSENCE JOURNALIÈRE -->
 <div class="tab-pane" id="tab-liste-presence-journaliere">
-<h5 class="text-primary fw-bold mb-3"><i class="fa fa-list-alt me-2"></i>Liste de présence journalière</h5>
-
-<div class="row g-2 mb-3 no-print bg-light p-3 rounded border align-items-end">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-list-check me-2"></i>Liste de présence journalière</h5>
+<form id="formListePresenceJour" onsubmit="handleSaveListePresenceJour(event)" class="row g-2 mb-3 no-print bg-light p-3 rounded border">
     <div class="col-md-4">
         <label class="form-label small fw-bold">Choisir classe :</label>
-        <select id="dailyPresenceClassSelect" class="form-select form-select-sm" onchange="renderDailyAttendanceList()">
-            <option value="">-- Choisir une classe --</option>
+        <select id="lpjClassSelect" class="form-select form-select-sm" onchange="onLpjClassChange()" required>
+            <option value="">-- Choisir classe --</option>
         </select>
     </div>
-    <div class="col-md-8 action-bar m-0">
-        <button type="button" class="btn btn-success btn-sm fw-bold" onclick="saveDailyAttendanceList()"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-info btn-sm fw-bold text-white" onclick="editDailyAttendanceList()"><i class="fa fa-edit me-1"></i> Modifier</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteDailyAttendanceList()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">Mat Élève :</label>
+        <select id="lpjMatSelect" class="form-select form-select-sm" onchange="onLpjStudentByMatChange()" required>
+            <option value="">-- Mat Élève --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">nom postnom,prenom :</label>
+        <input type="text" id="lpjNomPostnomPrenom" class="form-control form-control-sm" placeholder="nom postnom,prenom" required>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">date :</label>
+        <input type="date" id="lpjDate" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">jour :</label>
+        <select id="lpjJour" class="form-select form-select-sm" required>
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+            <option value="Samedi">Samedi</option>
+            <option value="Dimanche">Dimanche</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">heure :</label>
+        <input type="time" id="lpjHeure" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-12">
+        <label class="form-label small fw-bold">Enseignant / Responsable :</label>
+        <input type="text" id="lpjEnseignantNom" class="form-control form-control-sm" placeholder="Nom de l'enseignant" oninput="updateLpjSignatureDisplay()">
+    </div>
+    <div class="col-12 action-bar mt-2">
+        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteLastListePresenceJour()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadListePresenceJour()"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
     </div>
-</div>
+</form>
 
 <div class="table-responsive">
-<table class="table table-bordered table-sm align-middle">
-<thead>
-<tr class="table-primary">
-    <th>Mat Élève</th>
-    <th>nom</th>
-    <th>postnom</th>
-    <th>prenom</th>
-    <th>date</th>
-    <th>jour</th>
-    <th>heure</th>
-</tr>
-</thead>
-<tbody id="dailyAttendanceTableBody"></tbody>
+<table class="table table-bordered table-sm align-middle bg-white">
+    <thead>
+        <tr class="table-primary">
+            <th>Classe</th>
+            <th>Mat Élève</th>
+            <th>nom postnom,prenom</th>
+            <th>date</th>
+            <th>jour</th>
+            <th>heure</th>
+            <th class="no-print">Action</th>
+        </tr>
+    </thead>
+    <tbody id="listePresenceJourTableBody"></tbody>
 </table>
 </div>
 
-<div class="mt-4 pt-3 border-top">
-    <div class="row">
-        <div class="col-md-6">
-            <label class="form-label small fw-bold">Signature de l'enseignant :</label>
-            <input type="text" id="dailyAttendanceTeacherSignature" class="form-control form-control-sm" placeholder="Nom et signature de l'enseignant" oninput="saveDailyAttendanceSignature(this.value)">
-            <div class="mt-2 small text-muted">Signature : <span id="dailyAttendanceSignaturePrintDisplay" class="fw-bold text-dark"></span></div>
-        </div>
+<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-end flex-wrap gap-3">
+    <div class="small text-muted" id="lpjClasseResume">Classe : -</div>
+    <div class="text-end" style="min-width: 240px;">
+        <div class="fw-bold small mb-3">Signature de l'enseignant :</div>
+        <div id="lpjSignatureName" class="small fst-italic border-bottom pb-1">__________________________</div>
     </div>
 </div>
 </div>
@@ -1124,7 +1155,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Image / PDF :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
     <div class="col-md-6 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteSelectedOrLastCourrier()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="promptOwnerDeleteSelectedOrLastCourrier()"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('courriers')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -1239,10 +1270,20 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- HORAIRES DES COURS (CODE D'ACCÈS PROPRIÉTAIRE SEULEMENT) -->
+<!-- HORAIRES DES COURS (CODE PROPRIÉTAIRE SEULEMENT) -->
 <div class="tab-pane" id="tab-horaires-cours">
-<div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Code Propriétaire)</h5>
+<div id="horaireOwnerAuthArea" class="mb-3 p-3 bg-light rounded border no-print">
+    <label class="form-label small fw-bold">Authentification Propriétaire (Saisissez le Code Secret du Propriétaire / Directeur) :</label>
+    <div class="input-group input-group-sm" style="max-width: 350px;">
+        <input type="password" id="horaireOwnerSecretInput" class="form-control" placeholder="Code secret propriétaire...">
+        <button class="btn btn-primary fw-bold" type="button" onclick="verifyHoraireOwnerAccess()">Déverrouiller</button>
+    </div>
+</div>
+<div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light" style="display: none;">
+  <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <h5 class="text-primary fw-bold m-0"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Propriétaire)</h5>
+    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="lockHoraireOwnerArea()"><i class="fa fa-lock me-1"></i> Verrouiller</button>
+  </div>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
     <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
@@ -1250,7 +1291,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-3"><input type="text" id="horaireCoursNom" class="form-control form-control-sm" placeholder="Cours" required></div>
     <div class="col-12 action-bar mt-2">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="CommicoAlert('Supprimé')"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="promptOwnerDeleteLastHoraire()"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('horaires')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="CommicoAlert('Horaires publiés !')"><i class="fa fa-bullhorn me-1"></i> Publier</button>
@@ -1287,6 +1328,27 @@ let currentCreatedDirectorCode = "";
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
+let horaireOwnerUnlocked = false;
+
+function getOwnerSecretCode(school) {
+    if (!school) return '';
+    return (school.direction && school.direction.length > 0 && school.direction[0].secretCode)
+        ? school.direction[0].secretCode
+        : (school.secretCode || '');
+}
+
+function verifyOwnerSecretCode(codeInput, callback) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const validOwnerCode = getOwnerSecretCode(s);
+    const cleanCode = (codeInput || '').trim().toUpperCase();
+    if (cleanCode && validOwnerCode && cleanCode === validOwnerCode.toUpperCase()) {
+        callback(true, s);
+    } else {
+        CommicoAlert("Accès refusé : Code propriétaire incorrect.");
+        callback(false, s);
+    }
+}
 
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -1314,31 +1376,23 @@ function getActiveYearData(school) {
     if (!school.yearsData[school.activeYear]) {
         school.yearsData[school.activeYear] = {
             classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
-            caisse: [], studentPayments: [], discipline: [], presenceStudents: [],
-            dailyAttendanceLists: {},
+            caisse: [], studentPayments: [], discipline: [], presenceStudents: [], listePresenceJournaliere: [],
             savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
         };
     }
-    if (!school.yearsData[school.activeYear].dailyAttendanceLists) {
-        school.yearsData[school.activeYear].dailyAttendanceLists = {};
+    if (!school.yearsData[school.activeYear].listePresenceJournaliere) {
+        school.yearsData[school.activeYear].listePresenceJournaliere = [];
     }
     return school.yearsData[school.activeYear];
 }
 
-function isOwnerSecretCode(school, code) {
-    if (!school || !code) return false;
-    const validOwnerCode = (school.direction && school.direction.length > 0 && school.direction[0].secretCode)
-        ? school.direction[0].secretCode
-        : school.secretCode;
-    return Boolean(validOwnerCode) && code.trim().toUpperCase() === String(validOwnerCode).trim().toUpperCase();
-}
-
 function resetLockedWorkspaces() {
-    ['treasurerWorkspace', 'momoWorkspace', 'presenceWorkspace', 'disciplineWorkspace', 'calWorkspace', 'commWorkspace', 'notesWorkspace', 'bulletinWorkspace', 'bulletinPerWorkspace', 'courseWorkspace', 'salleClasseWorkspace'].forEach(id => {
+    horaireOwnerUnlocked = false;
+    ['treasurerWorkspace', 'momoWorkspace', 'presenceWorkspace', 'disciplineWorkspace', 'calWorkspace', 'commWorkspace', 'notesWorkspace', 'bulletinWorkspace', 'bulletinPerWorkspace', 'courseWorkspace', 'salleClasseWorkspace', 'horaireOwnerOnlyArea'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    ['treasurerAuthArea', 'momoAuthArea', 'presenceAuthArea', 'disciplineAuthArea', 'calAuthArea', 'commAuthArea', 'teacherAccessCheckArea', 'bulletinAccessArea', 'bulletinPerAccessArea', 'courseAuthArea'].forEach(id => {
+    ['treasurerAuthArea', 'momoAuthArea', 'presenceAuthArea', 'disciplineAuthArea', 'calAuthArea', 'commAuthArea', 'teacherAccessCheckArea', 'bulletinAccessArea', 'bulletinPerAccessArea', 'courseAuthArea', 'horaireOwnerAuthArea'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
@@ -1381,7 +1435,6 @@ function isPdfOrImageUrl(url, fileType) {
     return 'other';
 }
 
-// NORMALISATION ET CONVERSION DES FICHIERS LOURDS (IMAGES ET PDF) AUX NORMES AFFICHAGE + FIREBASE
 function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
     const img = new Image();
     img.onload = function() {
@@ -1590,7 +1643,7 @@ function loadDataFromLocal() {
                     studentPayments: s.studentPayments || [],
                     discipline: [],
                     presenceStudents: [],
-                    dailyAttendanceLists: {},
+                    listePresenceJournaliere: [],
                     savedCards: [],
                     courriers: [],
                     dossiersArchive: [],
@@ -1598,6 +1651,8 @@ function loadDataFromLocal() {
                     horairesCours: []
                 }
             };
+        } else if(!s.yearsData[s.activeYear].listePresenceJournaliere) {
+            s.yearsData[s.activeYear].listePresenceJournaliere = [];
         }
     });
 
@@ -1704,7 +1759,7 @@ function finishSavingSchool(name, province, division, subDivision, commune, addr
         yearsData: {
             "2025-2026": {
                 classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
-                caisse: [], presenceStudents: [], dailyAttendanceLists: {}, studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
+                caisse: [], presenceStudents: [], listePresenceJournaliere: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
             }
         },
         direction: [], communications: [], armoiries: '', armoiriesType: '', devise: ''
@@ -1958,6 +2013,7 @@ function proceedToDashboardOpen(id) {
     applyImageSrcSafe(dashLogo, s.logoUrl, 70, 'MD');
     
     populateSchoolYearsSelect();
+    initListePresenceJourDefaults();
     refreshAllDropdowns();
     showSection('view-school-dashboard');
 }
@@ -1999,7 +2055,7 @@ function openNewSchoolYearWizard() {
         const cleanYear = newYear ? newYear.trim() : '';
         if(cleanYear && !s.yearsData[cleanYear]) {
             s.activeYear = cleanYear;
-            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], dailyAttendanceLists: {}, studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
+            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], listePresenceJournaliere: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
             authenticatedTeacher = null;
             resetLockedWorkspaces();
             saveData();
@@ -2016,11 +2072,48 @@ function toggleParamsSubmenu() {
     document.getElementById('paramsSubmenu').classList.toggle('show');
 }
 
+function promptOwnerOnlyHoraireAccess(element) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour accéder aux Horaires des Cours :", function(code) {
+        if (code === null) return;
+        verifyOwnerSecretCode(code, function(ok) {
+            if (ok) {
+                horaireOwnerUnlocked = true;
+                switchTab('tab-horaires-cours', element);
+                document.getElementById('horaireOwnerAuthArea').style.display = 'none';
+                document.getElementById('horaireOwnerOnlyArea').style.display = 'block';
+                renderHorairesTable();
+            }
+        });
+    });
+}
+
+function verifyHoraireOwnerAccess() {
+    const code = document.getElementById('horaireOwnerSecretInput').value;
+    verifyOwnerSecretCode(code, function(ok) {
+        if (ok) {
+            horaireOwnerUnlocked = true;
+            document.getElementById('horaireOwnerSecretInput').value = '';
+            document.getElementById('horaireOwnerAuthArea').style.display = 'none';
+            document.getElementById('horaireOwnerOnlyArea').style.display = 'block';
+            renderHorairesTable();
+            CommicoAlert("Accès Propriétaire validé pour les Horaires des Cours.");
+        }
+    });
+}
+
+function lockHoraireOwnerArea() {
+    horaireOwnerUnlocked = false;
+    document.getElementById('horaireOwnerOnlyArea').style.display = 'none';
+    document.getElementById('horaireOwnerAuthArea').style.display = 'block';
+}
+
 function promptSecureTabAccess(tabId, element) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    let validOwnerCode = getOwnerSecretCode(s);
     
     CommicoPrompt("Entrez votre code d'accès :", function(code) {
         if(!code) return;
@@ -2028,18 +2121,9 @@ function promptSecureTabAccess(tabId, element) {
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (yData.teachers || []).some(t => t.secretCode.toUpperCase() === code);
 
-        if(tabId === 'tab-horaires-cours') {
-            if(!isOwner) {
-                CommicoAlert("Accès refusé : Seul le code d'accès propriétaire peut ouvrir Horaires des Cours.");
-                return;
-            }
-            switchTab(tabId, element);
-            return;
-        }
-
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
-            'tab-jobs-received', 'tab-armoiries', 'tab-dossiers-archivage'
+            'tab-jobs-received', 'tab-armoiries', 'tab-dossiers-archivage', 'tab-horaires-cours'
         ];
 
         if(isTeacher && restrictedForTeachers.includes(tabId)) {
@@ -2059,7 +2143,7 @@ function promptSecureTabAccess(tabId, element) {
 function verifyCalAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    let validOwnerCode = getOwnerSecretCode(s);
     const code = document.getElementById('calSecretInput').value.trim();
     if(code && code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('calWorkspace').style.display = 'block';
@@ -2075,7 +2159,7 @@ function promptUnlockCard() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('cardOwnerSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    let validOwnerCode = getOwnerSecretCode(s);
     if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('cardUnlockedContainer').style.display = 'block';
         document.getElementById('cardLockedContainer').style.display = 'none';
@@ -2090,7 +2174,7 @@ function promptUnlockJobs() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('jobOwnerSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
+    let validOwnerCode = getOwnerSecretCode(s);
     if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('jobsUnlockedContainer').style.display = 'block';
         document.getElementById('jobsLockedContainer').style.display = 'none';
@@ -2126,15 +2210,9 @@ function refreshAllDropdowns() {
     const yData = getActiveYearData(s);
     
     const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect', 'dailyPresenceClassSelect'].forEach(id => {
+    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect', 'lpjClassSelect'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) {
-            const prevVal = el.value;
-            el.innerHTML = classOptions;
-            if (prevVal && Array.from(el.options).some(opt => opt.value === prevVal)) {
-                el.value = prevVal;
-            }
-        }
+        if(el) el.innerHTML = classOptions;
     });
 
     const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${escapeHtml(st.matricule)}">${escapeHtml(st.matricule)} - ${escapeHtml(st.name)} (${escapeHtml(st.classe)})</option>`).join('');
@@ -2144,6 +2222,7 @@ function refreshAllDropdowns() {
     });
 
     updateCaissePersonSelect();
+    onLpjClassChange();
 
     renderDirectionTable();
     renderClassesTable();
@@ -2155,7 +2234,7 @@ function refreshAllDropdowns() {
     renderDossiersTable();
     renderCalendrierTable();
     renderHorairesTable();
-    renderDailyAttendanceList();
+    renderListePresenceJourTable();
     const jobsUnlocked = document.getElementById('jobsUnlockedContainer');
     if(jobsUnlocked && jobsUnlocked.style.display !== 'none') {
         renderSchoolJobsTable();
@@ -2303,7 +2382,8 @@ function verifySalleClasseAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('salleClasseAuthInput').value.trim();
-    const isOwner = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isOwner = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isOwner || teacher) {
@@ -2334,7 +2414,8 @@ function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const input = document.getElementById('ownerSecretInput').value.trim();
-    if(isOwnerSecretCode(s, input)) {
+    let validOwnerCode = getOwnerSecretCode(s);
+    if(input.toUpperCase() === validOwnerCode.toUpperCase()) {
         teachersUnlocked = true;
         document.getElementById('teachersUnlockedContainer').style.display = 'block';
         document.getElementById('teachersLockedContainer').style.display = 'none';
@@ -2415,8 +2496,9 @@ function openOwnerStudentRegistration() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('studentOwnerSecretInput').value.trim();
+    let validOwnerCode = getOwnerSecretCode(s);
     
-    if(isOwnerSecretCode(s, code)) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('studentsUnlockedContainer').style.display = 'block';
         document.getElementById('studentsLockedContainer').style.display = 'none';
         document.getElementById('studentOwnerSecretInput').value = '';
@@ -2742,7 +2824,8 @@ function verifyTeacherAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('teacherAuthCode').value.trim();
-    const isProprio = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2847,7 +2930,8 @@ function verifyBulletinAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('bulletinAuthCode').value.trim();
-    const isProprio = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2881,7 +2965,8 @@ function verifyPeriodicBulletinAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('bulletinPerAuthCode').value.trim();
-    const isProprio = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -3041,7 +3126,8 @@ function verifyPresenceAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('presenceSecretInput').value.trim();
-    const isProprio = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -3068,174 +3154,213 @@ function verifyPresenceAccess() {
 }
 
 // LISTE DE PRÉSENCE JOURNALIÈRE
-function splitStudentNameParts(fullName) {
-    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) {
-        return { nom: '-', postnom: '-', prenom: '-' };
+function initListePresenceJourDefaults() {
+    const dateEl = document.getElementById('lpjDate');
+    const jourEl = document.getElementById('lpjJour');
+    const heureEl = document.getElementById('lpjHeure');
+    const now = new Date();
+    if (dateEl && !dateEl.value) {
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        dateEl.value = `${yyyy}-${mm}-${dd}`;
     }
-    if (parts.length === 1) {
-        return { nom: parts[0], postnom: '-', prenom: '-' };
+    if (jourEl) {
+        const rawDay = now.toLocaleDateString('fr-FR', { weekday: 'long' });
+        const capDay = rawDay.charAt(0).toUpperCase() + rawDay.slice(1);
+        const matchOpt = Array.from(jourEl.options).find(o => o.value.toLowerCase() === capDay.toLowerCase());
+        if (matchOpt) jourEl.value = matchOpt.value;
     }
-    if (parts.length === 2) {
-        return { nom: parts[0], postnom: '-', prenom: parts[1] };
+    if (heureEl && !heureEl.value) {
+        heureEl.value = now.toTimeString().slice(0, 5);
     }
-    return {
-        nom: parts[0],
-        postnom: parts[1],
-        prenom: parts.slice(2).join(' ')
-    };
+    updateLpjSignatureDisplay();
 }
 
-function renderDailyAttendanceList() {
+function onLpjClassChange() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const tbody = document.getElementById('dailyAttendanceTableBody');
-    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
-    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
-    const classSelect = document.getElementById('dailyPresenceClassSelect');
-    if (!tbody || !s) return;
+    const classSel = document.getElementById('lpjClassSelect');
+    const matSel = document.getElementById('lpjMatSelect');
+    const nomInput = document.getElementById('lpjNomPostnomPrenom');
+    const resumeEl = document.getElementById('lpjClasseResume');
+    if (!s || !classSel || !matSel) return;
 
     const yData = getActiveYearData(s);
-    const selectedClass = classSelect ? classSelect.value : '';
-    const savedClassRecord = (selectedClass && yData.dailyAttendanceLists && yData.dailyAttendanceLists[selectedClass])
-        ? yData.dailyAttendanceLists[selectedClass]
-        : null;
-
-    if (sigInput) {
-        sigInput.value = savedClassRecord && savedClassRecord.signature ? savedClassRecord.signature : '';
-    }
-    if (sigDisplay) {
-        sigDisplay.textContent = sigInput && sigInput.value ? sigInput.value : '';
+    const chosenClass = classSel.value;
+    if (resumeEl) {
+        resumeEl.innerText = chosenClass ? `Classe : ${chosenClass}` : 'Classe : -';
     }
 
-    if (!selectedClass) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Veuillez choisir une classe pour afficher la liste de présence journalière.</td></tr>';
-        return;
-    }
-
-    const now = new Date();
-    const defaultDate = now.toLocaleDateString('fr-FR');
-    const defaultJour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
-    const defaultHeure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-    const studentsInClass = (yData.students || []).filter(st => st.classe === selectedClass);
-    if (!studentsInClass.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun élève inscrit dans cette classe.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = studentsInClass.map(st => {
-        const parts = splitStudentNameParts(st.name);
-        const savedRow = (savedClassRecord && savedClassRecord.rows && savedClassRecord.rows[st.matricule])
-            ? savedClassRecord.rows[st.matricule]
-            : null;
-        const rowDate = savedRow && savedRow.date ? savedRow.date : defaultDate;
-        const rowJour = savedRow && savedRow.jour ? savedRow.jour : defaultJour;
-        const rowHeure = savedRow && savedRow.heure ? savedRow.heure : defaultHeure;
-        return `
-            <tr>
-                <td><code>${escapeHtml(st.matricule)}</code></td>
-                <td>${escapeHtml(parts.nom)}</td>
-                <td>${escapeHtml(parts.postnom)}</td>
-                <td>${escapeHtml(parts.prenom)}</td>
-                <td>${escapeHtml(rowDate)}</td>
-                <td>${escapeHtml(rowJour)}</td>
-                <td>${escapeHtml(rowHeure)}</td>
-            </tr>
-        `;
-    }).join('');
+    const students = (yData.students || []).filter(st => !chosenClass || st.classe === chosenClass);
+    matSel.innerHTML = '<option value="">-- Mat Élève --</option>' + students.map(st =>
+        `<option value="${escapeHtml(st.matricule)}" data-name="${escapeHtml(st.name)}">${escapeHtml(st.matricule)} (${escapeHtml(st.classe)})</option>`
+    ).join('');
+    if (nomInput) nomInput.value = '';
+    renderListePresenceJourTable();
 }
 
-function saveDailyAttendanceList() {
+function onLpjStudentByMatChange() {
+    const matSel = document.getElementById('lpjMatSelect');
+    const nomInput = document.getElementById('lpjNomPostnomPrenom');
+    if (!matSel || !nomInput) return;
+    const selectedOpt = matSel.options[matSel.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset && selectedOpt.dataset.name) {
+        nomInput.value = selectedOpt.dataset.name;
+    }
+}
+
+function updateLpjSignatureDisplay() {
+    const sigEl = document.getElementById('lpjSignatureName');
+    const ensInput = document.getElementById('lpjEnseignantNom');
+    if (!sigEl) return;
+    const val = ensInput ? ensInput.value.trim() : '';
+    sigEl.innerText = val ? `Signé : ${val}` : '__________________________';
+}
+
+function handleSaveListePresenceJour(e) {
+    e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
-    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
-    if (!selectedClass) {
-        CommicoAlert("Veuillez choisir une classe.");
-        return;
-    }
     const yData = getActiveYearData(s);
-    const now = new Date();
-    const currentDate = now.toLocaleDateString('fr-FR');
-    const currentJour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
-    const currentHeure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const sigVal = document.getElementById('dailyAttendanceTeacherSignature').value.trim();
 
-    const rowsMap = {};
-    (yData.students || []).filter(st => st.classe === selectedClass).forEach(st => {
-        rowsMap[st.matricule] = {
-            date: currentDate,
-            jour: currentJour,
-            heure: currentHeure
-        };
+    const classe = document.getElementById('lpjClassSelect').value.trim();
+    const matricule = document.getElementById('lpjMatSelect').value.trim();
+    const nomPostnomPrenom = document.getElementById('lpjNomPostnomPrenom').value.trim();
+    const dateVal = document.getElementById('lpjDate').value.trim();
+    const jourVal = document.getElementById('lpjJour').value.trim();
+    const heureVal = document.getElementById('lpjHeure').value.trim();
+    const enseignantNom = document.getElementById('lpjEnseignantNom').value.trim();
+
+    if (!yData.listePresenceJournaliere) yData.listePresenceJournaliere = [];
+    yData.listePresenceJournaliere.push({
+        id: 'LPJ-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        classe,
+        matricule,
+        nomPostnomPrenom,
+        date: dateVal,
+        jour: jourVal,
+        heure: heureVal,
+        enseignant: enseignantNom
     });
 
-    yData.dailyAttendanceLists[selectedClass] = {
-        date: currentDate,
-        jour: currentJour,
-        heure: currentHeure,
-        signature: sigVal,
-        rows: rowsMap
-    };
     saveData();
-    renderDailyAttendanceList();
-    CommicoAlert("Liste de présence journalière enregistrée pour la classe : " + selectedClass);
+    renderListePresenceJourTable();
+    document.getElementById('lpjMatSelect').value = '';
+    document.getElementById('lpjNomPostnomPrenom').value = '';
+    CommicoAlert("Présence journalière enregistrée !");
 }
 
-function editDailyAttendanceList() {
+function renderListePresenceJourTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
-    if (!selectedClass) {
-        CommicoAlert("Veuillez choisir une classe.");
-        return;
-    }
-    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
-    if (sigInput) sigInput.focus();
-    CommicoAlert("Mode modification activé pour la liste de présence journalière (" + selectedClass + ").");
-}
-
-function deleteDailyAttendanceList() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
-    if (!selectedClass) {
-        CommicoAlert("Veuillez choisir une classe.");
-        return;
-    }
+    const tbody = document.getElementById('listePresenceJourTableBody');
+    if (!tbody || !s) return;
     const yData = getActiveYearData(s);
-    if (yData.dailyAttendanceLists && yData.dailyAttendanceLists[selectedClass]) {
-        delete yData.dailyAttendanceLists[selectedClass];
+    const classSel = document.getElementById('lpjClassSelect');
+    const chosenClass = classSel ? classSel.value : '';
+
+    let entries = (yData.listePresenceJournaliere || []).map((item, idx) => ({ item, realIndex: idx }));
+    if (chosenClass) {
+        entries = entries.filter(e => e.item.classe === chosenClass);
+    }
+
+    if (entries.length > 0 && entries[entries.length - 1].item.enseignant) {
+        const sigEl = document.getElementById('lpjSignatureName');
+        const ensInput = document.getElementById('lpjEnseignantNom');
+        if (ensInput && !ensInput.value.trim()) {
+            ensInput.value = entries[entries.length - 1].item.enseignant;
+        }
+        if (sigEl) {
+            sigEl.innerText = `Signé : ${entries[entries.length - 1].item.enseignant}`;
+        }
+    }
+
+    tbody.innerHTML = entries.map(entry => {
+        const p = entry.item;
+        const idx = entry.realIndex;
+        return `
+            <tr>
+                <td>${escapeHtml(p.classe || '-')}</td>
+                <td><code>${escapeHtml(p.matricule || '-')}</code></td>
+                <td>${escapeHtml(p.nomPostnomPrenom || '-')}</td>
+                <td>${escapeHtml(p.date || '-')}</td>
+                <td>${escapeHtml(p.jour || '-')}</td>
+                <td>${escapeHtml(p.heure || '-')}</td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteListePresenceJourItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="7" class="text-center text-muted">Aucune présence journalière enregistrée.</td></tr>';
+}
+
+function deleteListePresenceJourItem(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    if (yData && Array.isArray(yData.listePresenceJournaliere) && yData.listePresenceJournaliere[index] !== undefined) {
+        yData.listePresenceJournaliere.splice(index, 1);
         saveData();
+        renderListePresenceJourTable();
+        CommicoAlert("Ligne supprimée.");
     }
-    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
-    if (sigInput) sigInput.value = '';
-    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
-    if (sigDisplay) sigDisplay.textContent = '';
-    renderDailyAttendanceList();
-    CommicoAlert("Liste de présence journalière supprimée pour la classe : " + selectedClass);
 }
 
-function saveDailyAttendanceSignature(val) {
-    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
-    if (sigDisplay) sigDisplay.textContent = val;
-
+function deleteLastListePresenceJour() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    const selectedClass = document.getElementById('dailyPresenceClassSelect') ? document.getElementById('dailyPresenceClassSelect').value : '';
-    if (!s || !selectedClass) return;
+    if (!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.dailyAttendanceLists[selectedClass]) {
-        const now = new Date();
-        yData.dailyAttendanceLists[selectedClass] = {
-            date: now.toLocaleDateString('fr-FR'),
-            jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
-            heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            signature: val,
-            rows: {}
-        };
-    } else {
-        yData.dailyAttendanceLists[selectedClass].signature = val;
+    const arr = yData.listePresenceJournaliere || [];
+    if (!arr.length) {
+        CommicoAlert("Aucune ligne de présence journalière à supprimer.");
+        return;
     }
+    const chosenClass = document.getElementById('lpjClassSelect') ? document.getElementById('lpjClassSelect').value : '';
+    if (chosenClass) {
+        for (let i = arr.length - 1; i >= 0; i--) {
+            if (arr[i].classe === chosenClass) {
+                arr.splice(i, 1);
+                saveData();
+                renderListePresenceJourTable();
+                CommicoAlert("Dernière présence de la classe supprimée.");
+                return;
+            }
+        }
+    }
+    arr.pop();
     saveData();
+    renderListePresenceJourTable();
+    CommicoAlert("Dernière présence journalière supprimée.");
+}
+
+function downloadListePresenceJour() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const chosenClass = document.getElementById('lpjClassSelect') ? document.getElementById('lpjClassSelect').value : '';
+    const rows = (yData.listePresenceJournaliere || []).filter(p => !chosenClass || p.classe === chosenClass);
+    const ensVal = (document.getElementById('lpjEnseignantNom') ? document.getElementById('lpjEnseignantNom').value.trim() : '') || (rows.length ? rows[rows.length - 1].enseignant : '');
+
+    const csvHeader = ["Classe", "Mat Eleve", "nom postnom,prenom", "date", "jour", "heure", "Signature de l'enseignant"];
+    const csvLines = [csvHeader.join(';')];
+    rows.forEach(p => {
+        const line = [
+            p.classe || '',
+            p.matricule || '',
+            p.nomPostnomPrenom || '',
+            p.date || '',
+            p.jour || '',
+            p.heure || '',
+            p.enseignant || ensVal || ''
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';');
+        csvLines.push(line);
+    });
+    const blob = new Blob(["\uFEFF" + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `liste_presence_journaliere_${(chosenClass || 'toutes_classes').replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function verifyDisciplineAccess() {
@@ -3243,7 +3368,8 @@ function verifyDisciplineAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('disciplineSecretInput').value.trim();
-    const isProprio = isOwnerSecretCode(s, code);
+    let validOwnerCode = getOwnerSecretCode(s);
+    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -3276,6 +3402,7 @@ function verifyTreasurerAccess() {
     const code = document.getElementById('treasurerSecretInput').value.trim();
     if (!code) { CommicoAlert("Veuillez saisir un code d'accès."); return; }
 
+    let validOwnerCode = getOwnerSecretCode(s);
     let treasurerCode = "";
     if(s.direction) {
         const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
@@ -3290,7 +3417,7 @@ function verifyTreasurerAccess() {
         return;
     }
     
-    if(isOwnerSecretCode(s, code) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase() || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
         document.getElementById('treasurerWorkspace').style.display = 'block';
         document.getElementById('treasurerAuthArea').style.display = 'none';
         renderCaisseTable();
@@ -3391,13 +3518,14 @@ function verifyMomoAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('momoSecretInput').value.trim();
+    let validOwnerCode = getOwnerSecretCode(s);
     let treasurerCode = "";
     if(s.direction) {
         const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
         if(tr) treasurerCode = tr.treasurerCode;
     }
 
-    if(isOwnerSecretCode(s, code) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+    if(code.toUpperCase() === validOwnerCode.toUpperCase() || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
         document.getElementById('momoWorkspace').style.display = 'block';
         document.getElementById('momoAuthArea').style.display = 'none';
         renderMomoTable();
@@ -3602,7 +3730,8 @@ function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('commSecretInput').value.trim();
-    if(isOwnerSecretCode(s, code)) {
+    let validOwnerCode = getOwnerSecretCode(s);
+    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
@@ -3854,13 +3983,22 @@ function renderCourriersTable() {
             <tr>
                 <td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.type)}</td><td><code>${escapeHtml(c.numDoc || '-')}</code></td><td>${escapeHtml(c.exp)}</td><td>${escapeHtml(c.dest || '-')}</td><td>${escapeHtml(c.objet)}</td><td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="promptOwnerDeleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
             </tr>
         `;
     }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-function performDeleteCourrierItem(index) {
+function promptOwnerDeleteCourrierItem(index) {
+    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer cette correspondance :", function(code) {
+        if (code === null) return;
+        verifyOwnerSecretCode(code, function(ok) {
+            if (ok) deleteCourrierItem(index);
+        });
+    });
+}
+
+function deleteCourrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
@@ -3875,16 +4013,12 @@ function performDeleteCourrierItem(index) {
     CommicoAlert("Correspondance supprimée avec succès.");
 }
 
-function deleteCourrierItem(index) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    CommicoPrompt("Entrez votre code propriétaire pour supprimer cette correspondance :", function(code) {
+function promptOwnerDeleteSelectedOrLastCourrier() {
+    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer la correspondance :", function(code) {
         if (code === null) return;
-        if (!isOwnerSecretCode(s, code)) {
-            CommicoAlert("Accès refusé : Seul le propriétaire peut supprimer grâce à son code propriétaire.");
-            return;
-        }
-        performDeleteCourrierItem(index);
+        verifyOwnerSecretCode(code, function(ok) {
+            if (ok) deleteSelectedOrLastCourrier();
+        });
     });
 }
 
@@ -3896,23 +4030,16 @@ function deleteSelectedOrLastCourrier() {
         CommicoAlert("Aucune correspondance à supprimer.");
         return;
     }
-    CommicoPrompt("Entrez votre code propriétaire pour supprimer cette correspondance :", function(code) {
-        if (code === null) return;
-        if (!isOwnerSecretCode(s, code)) {
-            CommicoAlert("Accès refusé : Seul le propriétaire peut supprimer grâce à son code propriétaire.");
-            return;
-        }
-        const numInput = document.getElementById('courrierNumDoc');
-        const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
-        let idx = -1;
-        if (targetNum) {
-            idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
-        }
-        if (idx === -1) {
-            idx = yData.courriers.length - 1;
-        }
-        performDeleteCourrierItem(idx);
-    });
+    const numInput = document.getElementById('courrierNumDoc');
+    const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
+    let idx = -1;
+    if (targetNum) {
+        idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
+    }
+    if (idx === -1) {
+        idx = yData.courriers.length - 1;
+    }
+    deleteCourrierItem(idx);
 }
 
 // ARCHIVES & DOSSIERS (BASÉ SUR CORRESPONDANCES ET CLASSEUR ENTRANT / SORTANT)
@@ -3960,138 +4087,146 @@ function buildArchiveCorrespondanceRowsHtml(list, highlightClass) {
                 <td>${escapeHtml(c.heure || '')} ${c.jour ? '(' + escapeHtml(c.jour) + ')' : ''}</td>
                 <td>${docBtn}</td>
                 <td class="no-print">
-                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
-                    <button type="button" class="btn btn-sm btn-danger me-1" onclick="deleteArchiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}', '${escapeJsAttr(typeSafe)}')"><i class="fa fa-trash"></i> Supprimer</button>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()"><i class="fa fa-print"></i> Imprimer</button>
+                    <button type="button" class="btn btn-sm btn-success me-1" onclick="archiveCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}')"><i class="fa fa-save"></i> Enregistrer</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteCorrespondenceByNumDoc('${escapeJsAttr(numDocSafe)}')"><i class="fa fa-trash"></i> Supprimer</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-function renderDossiersTable(forceAll, isSearchMode) {
+function renderDossiersTable(customList, highlightClass) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
     if (!tbody || !s) return;
+    const list = Array.isArray(customList) ? customList : getFilteredArchiveCorrespondances(false);
     const classeurType = getSelectedArchiveClasseurType();
-    const inputEl = document.getElementById('searchArchiveNumInput');
-    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
-    const list = getFilteredArchiveCorrespondances(Boolean(forceAll));
-
     if (!list.length) {
-        if (isSearchMode && query) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Aucune correspondance "${escapeHtml(classeurType)}" trouvée pour le N° "${escapeHtml(query)}".</td></tr>`;
-        } else {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance "${escapeHtml(classeurType)}" enregistrée.</td></tr>`;
-        }
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans le classeur « ${escapeHtml(classeurType)} ».</td></tr>`;
         return;
     }
-
-    const rowHighlight = (!forceAll && query) ? 'table-warning' : '';
-    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, rowHighlight);
+    tbody.innerHTML = buildArchiveCorrespondanceRowsHtml(list, highlightClass);
 }
 
 function onArchiveClasseurOrSearchChange() {
-    renderDossiersTable(false, true);
+    renderDossiersTable();
 }
 
 function searchArchiveByNumDoc() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const query = document.getElementById('searchArchiveNumInput').value.trim();
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    const classeurType = getSelectedArchiveClasseurType();
     if (!query) {
-        CommicoAlert("Veuillez introduire le numéro du document (NumDoc).");
+        CommicoAlert("Veuillez saisir le Numéro du document (NumDoc) à rechercher.");
+        renderDossiersTable();
         return;
     }
-    renderDossiersTable(false, true);
+    const matches = getFilteredArchiveCorrespondances(false);
+    if (!matches.length) {
+        CommicoAlert(`Aucune correspondance trouvée avec le N° Doc « ${inputEl.value.trim()} » dans le classeur ${classeurType}.`);
+        renderDossiersTable([], '');
+        return;
+    }
+    renderDossiersTable(matches, 'table-success');
 }
 
 function showAllArchiveCorrespondances() {
     const inputEl = document.getElementById('searchArchiveNumInput');
     if (inputEl) inputEl.value = '';
-    renderDossiersTable(true, false);
+    const allInClasseur = getFilteredArchiveCorrespondances(true);
+    renderDossiersTable(allInClasseur, '');
 }
 
-function archiveCorrespondenceByNumDoc(numDoc, typeCourrier) {
+function archiveCorrespondenceByNumDoc(numDoc) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    const targetType = typeCourrier || getSelectedArchiveClasseurType();
-    const match = (yData.courriers || []).find(c =>
-        (c.type || '').toLowerCase() === targetType.toLowerCase() &&
-        (c.numDoc || '').trim().toUpperCase() === (numDoc || '').trim().toUpperCase()
-    );
-    if (!match) {
-        CommicoAlert("Document introuvable dans les correspondances.");
+    const targetNum = (numDoc || '').trim().toUpperCase();
+    const corr = (yData.courriers || []).find(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
+    if (!corr) {
+        CommicoAlert("Correspondance introuvable.");
         return;
     }
     if (!yData.dossiersArchive) yData.dossiersArchive = [];
-    const now = new Date();
-    const classeurLabel = targetType === 'Sortant' ? 'Doc Sortant' : 'Doc Entrant';
-    const existingIdx = yData.dossiersArchive.findIndex(d =>
-        (d.numDoc || '').toUpperCase() === (match.numDoc || '').toUpperCase() &&
-        (d.classeur || '').toLowerCase() === classeurLabel.toLowerCase()
-    );
-    const archiveRecord = {
-        id: existingIdx !== -1 ? yData.dossiersArchive[existingIdx].id : ('ARC-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
-        classeur: classeurLabel,
-        numDoc: match.numDoc,
-        date: match.date || now.toLocaleDateString(),
-        heure: match.heure || now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        jour: match.jour || now.toLocaleDateString('fr-FR', { weekday: 'long' }),
-        exp: match.exp || '',
-        dest: match.dest || '',
-        annee: s.activeYear,
-        nomDoc: match.objet || match.numDoc,
-        fileUrl: match.fileUrl || '',
-        fileName: match.fileName || '',
-        fileType: match.fileType || ''
+    const existingIdx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').trim().toUpperCase() === targetNum);
+    const archivedRecord = {
+        classeur: corr.type || getSelectedArchiveClasseurType(),
+        numDoc: corr.numDoc || '',
+        date: corr.date || '',
+        exp: corr.exp || '',
+        dest: corr.dest || '',
+        objet: corr.objet || '',
+        heure: corr.heure || '',
+        jour: corr.jour || '',
+        fileUrl: corr.fileUrl || '',
+        fileName: corr.fileName || '',
+        fileType: corr.fileType || '',
+        archivedAt: new Date().toLocaleString()
     };
     if (existingIdx !== -1) {
-        yData.dossiersArchive[existingIdx] = archiveRecord;
+        yData.dossiersArchive[existingIdx] = archivedRecord;
     } else {
-        yData.dossiersArchive.push(archiveRecord);
+        yData.dossiersArchive.push(archivedRecord);
     }
     saveData();
-    CommicoAlert(`Document N° ${match.numDoc} (${targetType}) enregistré dans les archives !`);
+    CommicoAlert(`Correspondance N° ${corr.numDoc} enregistrée dans le classeur ${archivedRecord.classeur}.`);
 }
 
-function deleteArchiveCorrespondenceByNumDoc(numDoc, typeCourrier) {
+function saveCurrentArchiveCorrespondence() {
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    const matches = getFilteredArchiveCorrespondances(false);
+    if (query) {
+        if (!matches.length) {
+            CommicoAlert("Aucune correspondance correspondante à enregistrer.");
+            return;
+        }
+        matches.forEach(c => archiveCorrespondenceByNumDoc(c.numDoc));
+        return;
+    }
+    const allInClasseur = getFilteredArchiveCorrespondances(true);
+    if (!allInClasseur.length) {
+        CommicoAlert("Aucune correspondance à enregistrer dans ce classeur.");
+        return;
+    }
+    allInClasseur.forEach(c => archiveCorrespondenceByNumDoc(c.numDoc));
+}
+
+function deleteCorrespondenceByNumDoc(numDoc) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    const targetType = typeCourrier || getSelectedArchiveClasseurType();
-    if (Array.isArray(yData.courriers)) {
-        yData.courriers = yData.courriers.filter(c => !(
-            (c.type || '').toLowerCase() === targetType.toLowerCase() &&
-            (c.numDoc || '').trim().toUpperCase() === (numDoc || '').trim().toUpperCase()
-        ));
-    }
+    const targetNum = (numDoc || '').trim().toUpperCase();
+    if (!targetNum) return;
+
+    const beforeLen = (yData.courriers || []).length;
+    yData.courriers = (yData.courriers || []).filter(c => (c.numDoc || '').trim().toUpperCase() !== targetNum);
     if (Array.isArray(yData.dossiersArchive)) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').trim().toUpperCase() !== (numDoc || '').trim().toUpperCase());
+        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').trim().toUpperCase() !== targetNum);
     }
     saveData();
     renderCourriersTable();
     renderDossiersTable();
-    CommicoAlert(`Document N° ${numDoc} supprimé avec succès.`);
+    if ((yData.courriers || []).length < beforeLen) {
+        CommicoAlert(`Correspondance N° ${numDoc} supprimée.`);
+    } else {
+        CommicoAlert("Correspondance introuvable.");
+    }
 }
 
 function deleteCurrentArchiveCorrespondence() {
-    const list = getFilteredArchiveCorrespondances(false);
-    if (!list.length) {
-        CommicoAlert("Aucun document correspondant à supprimer.");
+    const inputEl = document.getElementById('searchArchiveNumInput');
+    const query = inputEl ? inputEl.value.trim().toUpperCase() : '';
+    const matches = getFilteredArchiveCorrespondances(false);
+    if (!query) {
+        CommicoAlert("Veuillez saisir le NumDoc de la correspondance à supprimer.");
         return;
     }
-    deleteArchiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
-}
-
-function saveCurrentArchiveCorrespondence() {
-    const list = getFilteredArchiveCorrespondances(false);
-    if (!list.length) {
-        CommicoAlert("Aucun document correspondant à enregistrer.");
+    if (!matches.length) {
+        CommicoAlert("Aucune correspondance trouvée pour ce NumDoc.");
         return;
     }
-    archiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
+    matches.forEach(c => deleteCorrespondenceByNumDoc(c.numDoc));
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4099,16 +4234,17 @@ function handleSaveCalendrierScolaire(e) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    if(!yData.calendrierVacances) yData.calendrierVacances = [];
     yData.calendrierVacances.push({
-        id: 'CAL-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         type: document.getElementById('calType').value,
-        titre: document.getElementById('calTitre').value,
-        debut: document.getElementById('calDebut').value,
-        fin: document.getElementById('calFin').value
+        titre: document.getElementById('calTitre').value.trim(),
+        debut: document.getElementById('calDebut').value.trim(),
+        fin: document.getElementById('calFin').value.trim()
     });
-    saveData(); renderCalendrierTable();
+    saveData();
+    renderCalendrierTable();
     document.getElementById('formCalendrierScolaire').reset();
-    CommicoAlert("Calendrier enregistré et publié parfaitement !");
+    CommicoAlert("Événement ajouté au Calendrier Scolaire !");
 }
 
 function renderCalendrierTable() {
@@ -4116,32 +4252,32 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const filter = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    
-    let list = yData.calendrierVacances || [];
-    if(filter !== 'Tous') {
-        list = list.filter(c => c.type === filter);
-    }
-    
-    tbody.innerHTML = list.map((c) => `
-        <tr><td><b>${escapeHtml(c.type)}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem('${escapeJsAttr(c.id || '')}', '${escapeJsAttr(c.titre)}')"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement trouvé pour ce filtre.</td></tr>';
+    const filterEl = document.getElementById('calendarFilterSelect');
+    const filterVal = filterEl ? filterEl.value : 'Tous';
+    const rawList = (yData.calendrierVacances || []).map((c, idx) => ({ item: c, realIndex: idx }));
+    const filteredList = rawList.filter(entry => filterVal === 'Tous' || entry.item.type === filterVal);
+
+    tbody.innerHTML = filteredList.map(entry => {
+        const c = entry.item;
+        const idx = entry.realIndex;
+        return `
+            <tr>
+                <td><span class="badge ${c.type.includes('Islamique') ? 'bg-success' : 'bg-primary'}">${escapeHtml(c.type)}</span></td>
+                <td><b>${escapeHtml(c.titre)}</b></td>
+                <td>${escapeHtml(c.debut)}</td>
+                <td>${escapeHtml(c.fin)}</td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
 }
 
-function deleteCalendrierItem(id, titre) {
+function deleteCalendrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const list = yData.calendrierVacances || [];
-    let idx = -1;
-    if (id) {
-        idx = list.findIndex(c => c.id === id);
-    }
-    if (idx === -1) {
-        idx = list.findIndex(c => c.titre === titre);
-    }
-    if (idx !== -1) {
-        list.splice(idx, 1);
+    if (yData && yData.calendrierVacances[index] !== undefined) {
+        yData.calendrierVacances.splice(index, 1);
         saveData();
         renderCalendrierTable();
     }
@@ -4149,19 +4285,24 @@ function deleteCalendrierItem(id, titre) {
 
 function handleSaveHoraireCours(e) {
     e.preventDefault();
+    if (!horaireOwnerUnlocked) {
+        CommicoAlert("Accès réservé au propriétaire : veuillez déverrouiller avec votre code propriétaire.");
+        return;
+    }
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    if(!yData.horairesCours) yData.horairesCours = [];
     yData.horairesCours.push({
-        id: 'HOR-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         classe: document.getElementById('horaireClassSelect').value,
         jour: document.getElementById('horaireJour').value,
-        plage: document.getElementById('horairePlage').value,
-        cours: document.getElementById('horaireCoursNom').value
+        plage: document.getElementById('horairePlage').value.trim(),
+        cours: document.getElementById('horaireCoursNom').value.trim()
     });
-    saveData(); renderHorairesTable();
+    saveData();
+    renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré avec succès !");
+    CommicoAlert("Horaire de cours enregistré !");
 }
 
 function renderHorairesTable() {
@@ -4170,16 +4311,56 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td><b>${escapeHtml(h.cours)}</b></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+        <tr>
+            <td><b>${escapeHtml(h.classe)}</b></td>
+            <td>${escapeHtml(h.jour)}</td>
+            <td>${escapeHtml(h.plage)}</td>
+            <td>${escapeHtml(h.cours)}</td>
+            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="promptOwnerDeleteHoraire(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
+}
+
+function promptOwnerDeleteHoraire(index) {
+    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer cet horaire :", function(code) {
+        if (code === null) return;
+        verifyOwnerSecretCode(code, function(ok) {
+            if (ok) deleteHoraireItem(index);
+        });
+    });
+}
+
+function promptOwnerDeleteLastHoraire() {
+    CommicoPrompt("Entrez le Code Secret du Propriétaire (Directeur) pour supprimer l'horaire :", function(code) {
+        if (code === null) return;
+        verifyOwnerSecretCode(code, function(ok) {
+            if (ok) {
+                const s = appData.schools.find(x => x.id === activeSchoolId);
+                if (!s) return;
+                const yData = getActiveYearData(s);
+                if (yData && Array.isArray(yData.horairesCours) && yData.horairesCours.length > 0) {
+                    yData.horairesCours.pop();
+                    saveData();
+                    renderHorairesTable();
+                    CommicoAlert("Dernier horaire supprimé.");
+                } else {
+                    CommicoAlert("Aucun horaire à supprimer.");
+                }
+            }
+        });
+    });
 }
 
 function deleteHoraireItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.horairesCours.splice(index, 1);
-    saveData(); renderHorairesTable();
+    if (yData && yData.horairesCours[index] !== undefined) {
+        yData.horairesCours.splice(index, 1);
+        saveData();
+        renderHorairesTable();
+        CommicoAlert("Horaire supprimé.");
+    }
 }
 
 function renderStatistiques() {
@@ -4187,27 +4368,29 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
-    const nbStudents = (yData.students || []).length;
-    const nbTeachers = (yData.teachers || []).length;
-    const nbClasses = (yData.classes || []).length;
 
-    let totalCaisseUSD = 0, totalCaisseFC = 0;
+    const studentsCount = (yData.students || []).length;
+    const classesCount = (yData.classes || []).length;
+    const teachersCount = (yData.teachers || []).length;
+    
+    let totalUSD = 0, totalFC = 0;
     (yData.caisse || []).forEach(c => {
-        if(c.devise === 'FC') totalCaisseFC += parseFloat(c.montant || 0);
-        else totalCaisseUSD += parseFloat(c.montant || 0);
+        if(c.devise === 'FC') totalFC += parseFloat(c.montant || 0);
+        else totalUSD += parseFloat(c.montant || 0);
     });
 
     container.innerHTML = `
-        <div class="col-md-3"><div class="card p-3 bg-primary text-white text-center rounded shadow-sm"><h6 class="small">Élèves Inscrits</h6><h2 class="fw-bold m-0">${nbStudents}</h2></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-success text-white text-center rounded shadow-sm"><h6 class="small">Enseignants</h6><h2 class="fw-bold m-0">${nbTeachers}</h2></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-info text-white text-center rounded shadow-sm"><h6 class="small">Classes</h6><h2 class="fw-bold m-0">${nbClasses}</h2></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-warning text-dark text-center rounded shadow-sm"><h6 class="small">Recettes Caisse</h6><div class="fw-bold small mt-1">$${totalCaisseUSD} | ${totalCaisseFC} FC</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-primary"><h6>Élèves Inscrits</h6><h3 class="fw-bold text-primary">${studentsCount}</h3></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-success"><h6>Classes / Niveaux</h6><h3 class="fw-bold text-success">${classesCount}</h3></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-warning"><h6>Enseignants</h6><h3 class="fw-bold text-warning">${teachersCount}</h3></div></div>
+        <div class="col-md-6"><div class="card p-3 bg-light border-start border-4 border-info"><h6>Total Trésorerie (USD)</h6><h4 class="fw-bold text-info">$ ${totalUSD.toFixed(2)}</h4></div></div>
+        <div class="col-md-6"><div class="card p-3 bg-light border-start border-4 border-danger"><h6>Total Trésorerie (FC)</h6><h4 class="fw-bold text-danger">${totalFC.toFixed(0)} FC</h4></div></div>
     `;
 }
 
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if(pass === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
             showSection('view-admin-central');
         } else if(pass !== null) {
@@ -4223,24 +4406,24 @@ function renderAdminCentralTable() {
         const dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : 'Non généré';
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:35px;height:35px;object-fit:contain;border-radius:50%;" class="border" onerror="handleLogoFallback(this, 35, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:45px;height:45px;border-radius:50%;object-fit:contain;" onerror="handleLogoFallback(this, 45, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
-                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
+                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision || '-')}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><div>Madras: <code>${escapeHtml(s.secretCode)}</code></div><div>Dir: <code>${escapeHtml(dirCode)}</code></div></td>
+                <td><code>${escapeHtml(s.secretCode)}</code> / <code>${escapeHtml(dirCode)}</code></td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-exchange-alt"></i> Statut</button>
+                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-sync"></i> Statut</button>
                     <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
 }
 
 function toggleSchoolPaymentStatus(id) {
     const s = appData.schools.find(x => x.id === id);
     if(!s) return;
-    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloquée / Impayé' : 'A jour';
+    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
     saveData();
     renderAdminCentralTable();
     renderSchoolsList();
@@ -4250,17 +4433,22 @@ function downloadSectionData(sectionName) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const dataToDownload = { school: s.name, year: s.activeYear, section: sectionName, content: yData };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToDownload, null, 2));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `COMICO_${s.name}_${sectionName}_${s.activeYear}.json`);
-    dlAnchorElem.click();
-    CommicoAlert("Données téléchargées !");
+    let dataStr = JSON.stringify(yData[sectionName] || s[sectionName] || [], null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `commico_${sectionName}_${s.name}.json`;
+    a.click();
 }
 
 function openDirectRegistrationModal() {
-    CommicoAlert("Accès à l'inscription : Sélectionnez votre Madras dans la liste et ouvrez son tableau de bord.");
+    if (!appData.schools || appData.schools.length === 0) {
+        CommicoAlert("Veuillez d'abord créer une Madras.");
+        return;
+    }
+    const targetSchool = appData.schools[appData.schools.length - 1];
+    promptLoginCode(targetSchool.id);
 }
 </script>
 </body>
