@@ -452,6 +452,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-frais', this)"><i class="fa fa-wallet me-2"></i> Frais & Trésorerie</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-mobile-money', this)"><i class="fa fa-mobile-alt me-2"></i> Paiement Mobile Money</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-presences', this)"><i class="fa fa-clipboard-check me-2"></i> Présences Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-liste-presence-journaliere', this)"><i class="fa fa-list-alt me-2"></i> Liste de présence journalière</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-discipline', this)"><i class="fa fa-gavel me-2"></i> Discipline & Sanctions</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-communication', this)"><i class="fa fa-bullhorn me-2"></i> Communication</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-jobs-received', this)"><i class="fa fa-briefcase me-2"></i> Demandes Reçues</a>
@@ -460,7 +461,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-courriers', this)"><i class="fa fa-exchange-alt me-2"></i> Correspondances</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-dossiers-archivage', this)"><i class="fa fa-folder-open me-2"></i> Archives & Dossiers</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-calendrier-vacances', this)"><i class="fa fa-calendar-check me-2"></i> Calendrier Scolaire</a>
-<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
+<a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-horaires-cours', this)"><i class="fa fa-clock me-2"></i> Horaires des Cours</a>
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="switchTab('tab-statistiques', this)"><i class="fa fa-chart-pie me-2"></i> Statistiques & Analytique</a>
 </div>
 </div>
@@ -949,6 +950,54 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
+<!-- LISTE DE PRÉSENCE JOURNALIÈRE -->
+<div class="tab-pane" id="tab-liste-presence-journaliere">
+<h5 class="text-primary fw-bold mb-3"><i class="fa fa-list-alt me-2"></i>Liste de présence journalière</h5>
+
+<div class="row g-2 mb-3 no-print bg-light p-3 rounded border align-items-end">
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">Choisir classe :</label>
+        <select id="dailyPresenceClassSelect" class="form-select form-select-sm" onchange="renderDailyAttendanceList()">
+            <option value="">-- Choisir une classe --</option>
+        </select>
+    </div>
+    <div class="col-md-8 action-bar m-0">
+        <button type="button" class="btn btn-success btn-sm fw-bold" onclick="saveDailyAttendanceList()"><i class="fa fa-save me-1"></i> Enregistrer</button>
+        <button type="button" class="btn btn-info btn-sm fw-bold text-white" onclick="editDailyAttendanceList()"><i class="fa fa-edit me-1"></i> Modifier</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteDailyAttendanceList()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
+        <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
+    </div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-bordered table-sm align-middle">
+<thead>
+<tr class="table-primary">
+    <th>Mat Élève</th>
+    <th>nom</th>
+    <th>postnom</th>
+    <th>prenom</th>
+    <th>date</th>
+    <th>jour</th>
+    <th>heure</th>
+</tr>
+</thead>
+<tbody id="dailyAttendanceTableBody"></tbody>
+</table>
+</div>
+
+<div class="mt-4 pt-3 border-top">
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label small fw-bold">Signature de l'enseignant :</label>
+            <input type="text" id="dailyAttendanceTeacherSignature" class="form-control form-control-sm" placeholder="Nom et signature de l'enseignant" oninput="saveDailyAttendanceSignature(this.value)">
+            <div class="mt-2 small text-muted">Signature : <span id="dailyAttendanceSignaturePrintDisplay" class="fw-bold text-dark"></span></div>
+        </div>
+    </div>
+</div>
+</div>
+
 <!-- DISCIPLINE -->
 <div class="tab-pane" id="tab-discipline">
 <h5 class="text-primary fw-bold mb-3">Discipline & Sanctions (Répond au Code Secret Enseignant)</h5>
@@ -1190,10 +1239,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 </div>
 </div>
 
-<!-- HORAIRES DES COURS (SANS CODE SECRET) -->
+<!-- HORAIRES DES COURS (CODE D'ACCÈS PROPRIÉTAIRE SEULEMENT) -->
 <div class="tab-pane" id="tab-horaires-cours">
 <div id="horaireOwnerOnlyArea" class="card shadow-sm border-0 mt-4 p-3 bg-light">
-  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Sans Code Secret)</h5>
+  <h5 class="text-primary fw-bold mb-3"><i class="fa fa-clock me-2"></i>Gestion Horaires des Cours & Publication (Code Propriétaire)</h5>
   <form id="formHoraireCours" onsubmit="handleSaveHoraireCours(event)" class="row g-2 mb-4 no-print bg-white p-3 rounded border">
     <div class="col-md-3"><select id="horaireClassSelect" class="form-select form-select-sm" required></select></div>
     <div class="col-md-3"><select id="horaireJour" class="form-select form-select-sm" required><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option><option value="Samedi">Samedi</option></select></div>
@@ -1266,10 +1315,22 @@ function getActiveYearData(school) {
         school.yearsData[school.activeYear] = {
             classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
             caisse: [], studentPayments: [], discipline: [], presenceStudents: [],
+            dailyAttendanceLists: {},
             savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
         };
     }
+    if (!school.yearsData[school.activeYear].dailyAttendanceLists) {
+        school.yearsData[school.activeYear].dailyAttendanceLists = {};
+    }
     return school.yearsData[school.activeYear];
+}
+
+function isOwnerSecretCode(school, code) {
+    if (!school || !code) return false;
+    const validOwnerCode = (school.direction && school.direction.length > 0 && school.direction[0].secretCode)
+        ? school.direction[0].secretCode
+        : school.secretCode;
+    return Boolean(validOwnerCode) && code.trim().toUpperCase() === String(validOwnerCode).trim().toUpperCase();
 }
 
 function resetLockedWorkspaces() {
@@ -1361,8 +1422,6 @@ function normalizeHeavyPdfDataUrl(dataUrl, fileName, maxBytes, callback) {
         callback({ dataUrl: dataUrl, fileType: 'application/pdf', normalized: false });
         return;
     }
-    // Pour un PDF très lourd dépassant la norme d'un document Firestore (~1 Mo),
-    // on génère un document PDF normalisé léger contenant les métadonnées du courrier afin qu'il reste affichable et compatible Firebase.
     const safeName = String(fileName || 'Document.pdf').replace(/[()\\]/g, '');
     const sizeKo = Math.round((dataUrl.length * 0.75) / 1024);
     const pdfContent = `%PDF-1.4
@@ -1531,6 +1590,7 @@ function loadDataFromLocal() {
                     studentPayments: s.studentPayments || [],
                     discipline: [],
                     presenceStudents: [],
+                    dailyAttendanceLists: {},
                     savedCards: [],
                     courriers: [],
                     dossiersArchive: [],
@@ -1644,7 +1704,7 @@ function finishSavingSchool(name, province, division, subDivision, commune, addr
         yearsData: {
             "2025-2026": {
                 classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {},
-                caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
+                caisse: [], presenceStudents: [], dailyAttendanceLists: {}, studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: []
             }
         },
         direction: [], communications: [], armoiries: '', armoiriesType: '', devise: ''
@@ -1939,7 +1999,7 @@ function openNewSchoolYearWizard() {
         const cleanYear = newYear ? newYear.trim() : '';
         if(cleanYear && !s.yearsData[cleanYear]) {
             s.activeYear = cleanYear;
-            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
+            s.yearsData[cleanYear] = { classes: [], teachers: [], students: [], courses: {}, notes: {}, periodicNotes: {}, caisse: [], presenceStudents: [], dailyAttendanceLists: {}, studentPayments: [], discipline: [], savedCards: [], courriers: [], dossiersArchive: [], calendrierVacances: [], horairesCours: [] };
             authenticatedTeacher = null;
             resetLockedWorkspaces();
             saveData();
@@ -1967,6 +2027,15 @@ function promptSecureTabAccess(tabId, element) {
         code = code.trim().toUpperCase();
         const isOwner = (code === validOwnerCode.toUpperCase());
         const isTeacher = code.startsWith("ENS-") || (yData.teachers || []).some(t => t.secretCode.toUpperCase() === code);
+
+        if(tabId === 'tab-horaires-cours') {
+            if(!isOwner) {
+                CommicoAlert("Accès refusé : Seul le code d'accès propriétaire peut ouvrir Horaires des Cours.");
+                return;
+            }
+            switchTab(tabId, element);
+            return;
+        }
 
         const restrictedForTeachers = [
             'tab-direction', 'tab-classes', 'tab-profs', 'tab-communication', 
@@ -2057,9 +2126,15 @@ function refreshAllDropdowns() {
     const yData = getActiveYearData(s);
     
     const classOptions = '<option value="">-- Choisir une Classe --</option>' + (yData.classes || []).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect'].forEach(id => {
+    ['teacherClass', 'cardClassSelect', 'bulletinClassSelect', 'bulletinPerClassSelect', 'horaireClassSelect', 'secureStudentClassSelect', 'dailyPresenceClassSelect'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.innerHTML = classOptions;
+        if(el) {
+            const prevVal = el.value;
+            el.innerHTML = classOptions;
+            if (prevVal && Array.from(el.options).some(opt => opt.value === prevVal)) {
+                el.value = prevVal;
+            }
+        }
     });
 
     const studentOptions = '<option value="">-- Choisir un Élève --</option>' + (yData.students || []).map(st => `<option value="${escapeHtml(st.matricule)}">${escapeHtml(st.matricule)} - ${escapeHtml(st.name)} (${escapeHtml(st.classe)})</option>`).join('');
@@ -2080,6 +2155,7 @@ function refreshAllDropdowns() {
     renderDossiersTable();
     renderCalendrierTable();
     renderHorairesTable();
+    renderDailyAttendanceList();
     const jobsUnlocked = document.getElementById('jobsUnlockedContainer');
     if(jobsUnlocked && jobsUnlocked.style.display !== 'none') {
         renderSchoolJobsTable();
@@ -2227,8 +2303,7 @@ function verifySalleClasseAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('salleClasseAuthInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isOwner = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isOwner = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isOwner || teacher) {
@@ -2259,8 +2334,7 @@ function promptUnlockTeachers() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const input = document.getElementById('ownerSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(input.toUpperCase() === validOwnerCode.toUpperCase()) {
+    if(isOwnerSecretCode(s, input)) {
         teachersUnlocked = true;
         document.getElementById('teachersUnlockedContainer').style.display = 'block';
         document.getElementById('teachersLockedContainer').style.display = 'none';
@@ -2341,9 +2415,8 @@ function openOwnerStudentRegistration() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('studentOwnerSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     
-    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
+    if(isOwnerSecretCode(s, code)) {
         document.getElementById('studentsUnlockedContainer').style.display = 'block';
         document.getElementById('studentsLockedContainer').style.display = 'none';
         document.getElementById('studentOwnerSecretInput').value = '';
@@ -2669,8 +2742,7 @@ function verifyTeacherAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('teacherAuthCode').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isProprio = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2775,8 +2847,7 @@ function verifyBulletinAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('bulletinAuthCode').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isProprio = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2810,8 +2881,7 @@ function verifyPeriodicBulletinAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('bulletinPerAuthCode').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isProprio = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2971,8 +3041,7 @@ function verifyPresenceAccess() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('presenceSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isProprio = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -2998,13 +3067,183 @@ function verifyPresenceAccess() {
     }
 }
 
+// LISTE DE PRÉSENCE JOURNALIÈRE
+function splitStudentNameParts(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+        return { nom: '-', postnom: '-', prenom: '-' };
+    }
+    if (parts.length === 1) {
+        return { nom: parts[0], postnom: '-', prenom: '-' };
+    }
+    if (parts.length === 2) {
+        return { nom: parts[0], postnom: '-', prenom: parts[1] };
+    }
+    return {
+        nom: parts[0],
+        postnom: parts[1],
+        prenom: parts.slice(2).join(' ')
+    };
+}
+
+function renderDailyAttendanceList() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const tbody = document.getElementById('dailyAttendanceTableBody');
+    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
+    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
+    const classSelect = document.getElementById('dailyPresenceClassSelect');
+    if (!tbody || !s) return;
+
+    const yData = getActiveYearData(s);
+    const selectedClass = classSelect ? classSelect.value : '';
+    const savedClassRecord = (selectedClass && yData.dailyAttendanceLists && yData.dailyAttendanceLists[selectedClass])
+        ? yData.dailyAttendanceLists[selectedClass]
+        : null;
+
+    if (sigInput) {
+        sigInput.value = savedClassRecord && savedClassRecord.signature ? savedClassRecord.signature : '';
+    }
+    if (sigDisplay) {
+        sigDisplay.textContent = sigInput && sigInput.value ? sigInput.value : '';
+    }
+
+    if (!selectedClass) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Veuillez choisir une classe pour afficher la liste de présence journalière.</td></tr>';
+        return;
+    }
+
+    const now = new Date();
+    const defaultDate = now.toLocaleDateString('fr-FR');
+    const defaultJour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
+    const defaultHeure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    const studentsInClass = (yData.students || []).filter(st => st.classe === selectedClass);
+    if (!studentsInClass.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun élève inscrit dans cette classe.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = studentsInClass.map(st => {
+        const parts = splitStudentNameParts(st.name);
+        const savedRow = (savedClassRecord && savedClassRecord.rows && savedClassRecord.rows[st.matricule])
+            ? savedClassRecord.rows[st.matricule]
+            : null;
+        const rowDate = savedRow && savedRow.date ? savedRow.date : defaultDate;
+        const rowJour = savedRow && savedRow.jour ? savedRow.jour : defaultJour;
+        const rowHeure = savedRow && savedRow.heure ? savedRow.heure : defaultHeure;
+        return `
+            <tr>
+                <td><code>${escapeHtml(st.matricule)}</code></td>
+                <td>${escapeHtml(parts.nom)}</td>
+                <td>${escapeHtml(parts.postnom)}</td>
+                <td>${escapeHtml(parts.prenom)}</td>
+                <td>${escapeHtml(rowDate)}</td>
+                <td>${escapeHtml(rowJour)}</td>
+                <td>${escapeHtml(rowHeure)}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function saveDailyAttendanceList() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
+    if (!selectedClass) {
+        CommicoAlert("Veuillez choisir une classe.");
+        return;
+    }
+    const yData = getActiveYearData(s);
+    const now = new Date();
+    const currentDate = now.toLocaleDateString('fr-FR');
+    const currentJour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
+    const currentHeure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const sigVal = document.getElementById('dailyAttendanceTeacherSignature').value.trim();
+
+    const rowsMap = {};
+    (yData.students || []).filter(st => st.classe === selectedClass).forEach(st => {
+        rowsMap[st.matricule] = {
+            date: currentDate,
+            jour: currentJour,
+            heure: currentHeure
+        };
+    });
+
+    yData.dailyAttendanceLists[selectedClass] = {
+        date: currentDate,
+        jour: currentJour,
+        heure: currentHeure,
+        signature: sigVal,
+        rows: rowsMap
+    };
+    saveData();
+    renderDailyAttendanceList();
+    CommicoAlert("Liste de présence journalière enregistrée pour la classe : " + selectedClass);
+}
+
+function editDailyAttendanceList() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
+    if (!selectedClass) {
+        CommicoAlert("Veuillez choisir une classe.");
+        return;
+    }
+    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
+    if (sigInput) sigInput.focus();
+    CommicoAlert("Mode modification activé pour la liste de présence journalière (" + selectedClass + ").");
+}
+
+function deleteDailyAttendanceList() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const selectedClass = document.getElementById('dailyPresenceClassSelect').value;
+    if (!selectedClass) {
+        CommicoAlert("Veuillez choisir une classe.");
+        return;
+    }
+    const yData = getActiveYearData(s);
+    if (yData.dailyAttendanceLists && yData.dailyAttendanceLists[selectedClass]) {
+        delete yData.dailyAttendanceLists[selectedClass];
+        saveData();
+    }
+    const sigInput = document.getElementById('dailyAttendanceTeacherSignature');
+    if (sigInput) sigInput.value = '';
+    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
+    if (sigDisplay) sigDisplay.textContent = '';
+    renderDailyAttendanceList();
+    CommicoAlert("Liste de présence journalière supprimée pour la classe : " + selectedClass);
+}
+
+function saveDailyAttendanceSignature(val) {
+    const sigDisplay = document.getElementById('dailyAttendanceSignaturePrintDisplay');
+    if (sigDisplay) sigDisplay.textContent = val;
+
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const selectedClass = document.getElementById('dailyPresenceClassSelect') ? document.getElementById('dailyPresenceClassSelect').value : '';
+    if (!s || !selectedClass) return;
+    const yData = getActiveYearData(s);
+    if (!yData.dailyAttendanceLists[selectedClass]) {
+        const now = new Date();
+        yData.dailyAttendanceLists[selectedClass] = {
+            date: now.toLocaleDateString('fr-FR'),
+            jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+            heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            signature: val,
+            rows: {}
+        };
+    } else {
+        yData.dailyAttendanceLists[selectedClass].signature = val;
+    }
+    saveData();
+}
+
 function verifyDisciplineAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
     const code = document.getElementById('disciplineSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    const isProprio = (code.toUpperCase() === validOwnerCode.toUpperCase());
+    const isProprio = isOwnerSecretCode(s, code);
     const teacher = (yData.teachers || []).find(t => t.secretCode.toUpperCase() === code.toUpperCase());
     
     if(isProprio) {
@@ -3037,7 +3276,6 @@ function verifyTreasurerAccess() {
     const code = document.getElementById('treasurerSecretInput').value.trim();
     if (!code) { CommicoAlert("Veuillez saisir un code d'accès."); return; }
 
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     let treasurerCode = "";
     if(s.direction) {
         const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
@@ -3052,7 +3290,7 @@ function verifyTreasurerAccess() {
         return;
     }
     
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+    if(isOwnerSecretCode(s, code) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
         document.getElementById('treasurerWorkspace').style.display = 'block';
         document.getElementById('treasurerAuthArea').style.display = 'none';
         renderCaisseTable();
@@ -3153,14 +3391,13 @@ function verifyMomoAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('momoSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
     let treasurerCode = "";
     if(s.direction) {
         const tr = s.direction.find(d => d.treasurerCode && d.treasurerCode.toUpperCase() === code.toUpperCase());
         if(tr) treasurerCode = tr.treasurerCode;
     }
 
-    if(code.toUpperCase() === validOwnerCode.toUpperCase() || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
+    if(isOwnerSecretCode(s, code) || (treasurerCode && code.toUpperCase() === treasurerCode.toUpperCase())) {
         document.getElementById('momoWorkspace').style.display = 'block';
         document.getElementById('momoAuthArea').style.display = 'none';
         renderMomoTable();
@@ -3365,8 +3602,7 @@ function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const code = document.getElementById('commSecretInput').value.trim();
-    let validOwnerCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : s.secretCode;
-    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
+    if(isOwnerSecretCode(s, code)) {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
@@ -3624,7 +3860,7 @@ function renderCourriersTable() {
     }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
 }
 
-function deleteCourrierItem(index) {
+function performDeleteCourrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
@@ -3639,6 +3875,19 @@ function deleteCourrierItem(index) {
     CommicoAlert("Correspondance supprimée avec succès.");
 }
 
+function deleteCourrierItem(index) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    CommicoPrompt("Entrez votre code propriétaire pour supprimer cette correspondance :", function(code) {
+        if (code === null) return;
+        if (!isOwnerSecretCode(s, code)) {
+            CommicoAlert("Accès refusé : Seul le propriétaire peut supprimer grâce à son code propriétaire.");
+            return;
+        }
+        performDeleteCourrierItem(index);
+    });
+}
+
 function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
@@ -3647,16 +3896,23 @@ function deleteSelectedOrLastCourrier() {
         CommicoAlert("Aucune correspondance à supprimer.");
         return;
     }
-    const numInput = document.getElementById('courrierNumDoc');
-    const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
-    let idx = -1;
-    if (targetNum) {
-        idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
-    }
-    if (idx === -1) {
-        idx = yData.courriers.length - 1;
-    }
-    deleteCourrierItem(idx);
+    CommicoPrompt("Entrez votre code propriétaire pour supprimer cette correspondance :", function(code) {
+        if (code === null) return;
+        if (!isOwnerSecretCode(s, code)) {
+            CommicoAlert("Accès refusé : Seul le propriétaire peut supprimer grâce à son code propriétaire.");
+            return;
+        }
+        const numInput = document.getElementById('courrierNumDoc');
+        const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
+        let idx = -1;
+        if (targetNum) {
+            idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
+        }
+        if (idx === -1) {
+            idx = yData.courriers.length - 1;
+        }
+        performDeleteCourrierItem(idx);
+    });
 }
 
 // ARCHIVES & DOSSIERS (BASÉ SUR CORRESPONDANCES ET CLASSEUR ENTRANT / SORTANT)
@@ -3876,10 +4132,16 @@ function deleteCalendrierItem(id, titre) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const arr = yData.calendrierVacances || [];
-    const idx = arr.findIndex(item => (id && item.id === id) || (!id && item.titre === titre));
+    const list = yData.calendrierVacances || [];
+    let idx = -1;
+    if (id) {
+        idx = list.findIndex(c => c.id === id);
+    }
+    if (idx === -1) {
+        idx = list.findIndex(c => c.titre === titre);
+    }
     if (idx !== -1) {
-        arr.splice(idx, 1);
+        list.splice(idx, 1);
         saveData();
         renderCalendrierTable();
     }
@@ -3891,6 +4153,7 @@ function handleSaveHoraireCours(e) {
     if(!s) return;
     const yData = getActiveYearData(s);
     yData.horairesCours.push({
+        id: 'HOR-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         classe: document.getElementById('horaireClassSelect').value,
         jour: document.getElementById('horaireJour').value,
         plage: document.getElementById('horairePlage').value,
@@ -3898,7 +4161,7 @@ function handleSaveHoraireCours(e) {
     });
     saveData(); renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré et publié !");
+    CommicoAlert("Horaire enregistré avec succès !");
 }
 
 function renderHorairesTable() {
@@ -3907,8 +4170,8 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td><b>${escapeHtml(h.cours)}</b></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
 function deleteHoraireItem(index) {
@@ -3916,8 +4179,7 @@ function deleteHoraireItem(index) {
     if(!s) return;
     const yData = getActiveYearData(s);
     yData.horairesCours.splice(index, 1);
-    saveData();
-    renderHorairesTable();
+    saveData(); renderHorairesTable();
 }
 
 function renderStatistiques() {
@@ -3925,18 +4187,29 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
+    const nbStudents = (yData.students || []).length;
+    const nbTeachers = (yData.teachers || []).length;
+    const nbClasses = (yData.classes || []).length;
+
+    let totalCaisseUSD = 0, totalCaisseFC = 0;
+    (yData.caisse || []).forEach(c => {
+        if(c.devise === 'FC') totalCaisseFC += parseFloat(c.montant || 0);
+        else totalCaisseUSD += parseFloat(c.montant || 0);
+    });
+
     container.innerHTML = `
-        <div class="col-md-4"><div class="card p-3 bg-primary text-white text-center"><h2>${(yData.students || []).length}</h2><div>Total Élèves</div></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-success text-white text-center"><h2>${(yData.teachers || []).length}</h2><div>Total Enseignants</div></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-warning text-dark text-center"><h2>${(yData.classes || []).length}</h2><div>Total Classes</div></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-primary text-white text-center rounded shadow-sm"><h6 class="small">Élèves Inscrits</h6><h2 class="fw-bold m-0">${nbStudents}</h2></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-success text-white text-center rounded shadow-sm"><h6 class="small">Enseignants</h6><h2 class="fw-bold m-0">${nbTeachers}</h2></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-info text-white text-center rounded shadow-sm"><h6 class="small">Classes</h6><h2 class="fw-bold m-0">${nbClasses}</h2></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-warning text-dark text-center rounded shadow-sm"><h6 class="small">Recettes Caisse</h6><div class="fw-bold small mt-1">$${totalCaisseUSD} | ${totalCaisseFC} FC</div></div></div>
     `;
 }
 
 function openAdminCentralPanel() {
-    CommicoPrompt("Mot de passe Admin Central :", function(pass) {
-        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
-            showSection('view-admin-central');
+    CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
+            showSection('view-admin-central');
         } else if(pass !== null) {
             CommicoAlert("Mot de passe incorrect.");
         }
@@ -3947,26 +4220,48 @@ function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
     tbody.innerHTML = (appData.schools || []).map(s => {
-        let dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : '<span class="text-danger">Non défini</span>';
+        const dirCode = (s.direction && s.direction.length > 0) ? s.direction[0].secretCode : 'Non généré';
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" class="school-logo-display" alt="Logo" onerror="handleLogoFallback(this, 70, 'MD');"></td>
-                <td><b>${escapeHtml(s.name)}</b><br><small class="text-muted">${escapeHtml(s.regime || '')}</small></td>
-                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision || '-')}</td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:35px;height:35px;object-fit:contain;border-radius:50%;" class="border" onerror="handleLogoFallback(this, 35, 'MD');"></td>
+                <td><b>${escapeHtml(s.name)}</b></td>
+                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><b>Madras:</b> <code>${escapeHtml(s.secretCode)}</code><br><b>Directeur:</b> <code class="text-success">${dirCode.startsWith('<span') ? dirCode : escapeHtml(dirCode)}</code></td>
+                <td><div>Madras: <code>${escapeHtml(s.secretCode)}</code></div><div>Dir: <code>${escapeHtml(dirCode)}</code></div></td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="promptLoginCode('${escapeJsAttr(s.id)}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
-                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-exchange-alt"></i> Statut</button>
+                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
                 </td>
             </tr>
         `;
     }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function openDirectRegistrationModal() { CommicoAlert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret."); }
-function downloadSectionData(sec) { window.print(); }
+function toggleSchoolPaymentStatus(id) {
+    const s = appData.schools.find(x => x.id === id);
+    if(!s) return;
+    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloquée / Impayé' : 'A jour';
+    saveData();
+    renderAdminCentralTable();
+    renderSchoolsList();
+}
+
+function downloadSectionData(sectionName) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    const dataToDownload = { school: s.name, year: s.activeYear, section: sectionName, content: yData };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToDownload, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `COMICO_${s.name}_${sectionName}_${s.activeYear}.json`);
+    dlAnchorElem.click();
+    CommicoAlert("Données téléchargées !");
+}
+
+function openDirectRegistrationModal() {
+    CommicoAlert("Accès à l'inscription : Sélectionnez votre Madras dans la liste et ouvrez son tableau de bord.");
+}
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
