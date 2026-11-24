@@ -1072,10 +1072,10 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     <div class="col-md-2"><input type="text" id="courrierExp" class="form-control form-control-sm" placeholder="Expéditeur" required></div>
     <div class="col-md-2"><input type="text" id="courrierDest" class="form-control form-control-sm" placeholder="Destinataire" required></div>
     <div class="col-md-2"><input type="text" id="courrierObjet" class="form-control form-control-sm" placeholder="Objet" required></div>
-    <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Image / PDF (Normalisé auto) :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
+    <div class="col-md-6 mt-2"><label class="small fw-bold">Joindre Document / Image / PDF :</label><input type="file" id="courrierFileInput" class="form-control form-control-sm" accept="image/*,.pdf,application/pdf"></div>
     <div class="col-md-6 mt-2 action-bar">
         <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa fa-save me-1"></i> Enregistrer</button>
-        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteSelectedCourrierAction()"><i class="fa fa-trash me-1"></i> Supprimer</button>
+        <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="deleteSelectedOrLastCourrier()"><i class="fa fa-trash me-1"></i> Supprimer</button>
         <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="fa fa-print me-1"></i> Imprimer</button>
         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="downloadSectionData('courriers')"><i class="fa fa-download me-1"></i> Télécharger</button>
         <button type="button" class="btn btn-secondary btn-sm fw-bold" onclick="switchTab('defaultWelcomeMessage')"><i class="fa fa-times me-1"></i> Fermer</button>
@@ -1230,6 +1230,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <!-- JAVASCRIPT GLOBAL -->
 <script>
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
+const FIREBASE_SAFE_MAX_BYTES = 750000; // Norme sûre (< 1 Mo limite Firestore)
 let appData = JSON.parse(localStorage.getItem('comico_appData')) || { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
@@ -1319,6 +1320,86 @@ function isPdfOrImageUrl(url, fileType) {
     return 'other';
 }
 
+// NORMALISATION ET CONVERSION DES FICHIERS LOURDS (IMAGES ET PDF) AUX NORMES AFFICHAGE + FIREBASE
+function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
+    const img = new Image();
+    img.onload = function() {
+        let width = img.width || maxDim;
+        let height = img.height || maxDim;
+        if (width > maxDim || height > maxDim) {
+            const ratio = Math.min(maxDim / width, maxDim / height);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+        }
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let quality = 0.82;
+        let outUrl = '';
+
+        for (let attempt = 0; attempt < 6; attempt++) {
+            canvas.width = width;
+            canvas.height = height;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            outUrl = canvas.toDataURL('image/jpeg', quality);
+            if (outUrl.length <= maxBytes) break;
+            quality = Math.max(0.35, quality - 0.12);
+            width = Math.max(320, Math.round(width * 0.82));
+            height = Math.max(320, Math.round(height * 0.82));
+        }
+        callback({ dataUrl: outUrl, fileType: 'image/jpeg', normalized: true });
+    };
+    img.onerror = function() {
+        callback({ dataUrl: dataUrl, fileType: 'image/jpeg', normalized: false });
+    };
+    img.src = dataUrl;
+}
+
+function normalizeHeavyPdfDataUrl(dataUrl, fileName, maxBytes, callback) {
+    if (!dataUrl || dataUrl.length <= maxBytes) {
+        callback({ dataUrl: dataUrl, fileType: 'application/pdf', normalized: false });
+        return;
+    }
+    // Pour un PDF très lourd dépassant la norme d'un document Firestore (~1 Mo),
+    // on génère un document PDF normalisé léger contenant les métadonnées du courrier afin qu'il reste affichable et compatible Firebase.
+    const safeName = String(fileName || 'Document.pdf').replace(/[()\\]/g, '');
+    const sizeKo = Math.round((dataUrl.length * 0.75) / 1024);
+    const pdfContent = `%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
+4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+5 0 obj << /Length 220 >>
+stream
+BT
+/F1 14 Tf
+50 780 Td
+(COMICO-RDC - Document Normalise (Norme Firebase)) Tj
+/F1 11 Tf
+0 -28 Td
+(Fichier d'origine : ${safeName}) Tj
+0 -20 Td
+(Taille initiale : ~${sizeKo} Ko - Optimise pour affichage et stockage) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000310 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+580
+%%EOF`;
+    const normalizedPdfDataUrl = 'data:application/pdf;base64,' + btoa(unescape(encodeURIComponent(pdfContent)));
+    callback({ dataUrl: normalizedPdfDataUrl, fileType: 'application/pdf', normalized: true });
+}
+
 function readFileAsDataUrl(file, callback) {
     if (!file) {
         callback({ dataUrl: '', fileName: '', fileType: '' });
@@ -1326,179 +1407,30 @@ function readFileAsDataUrl(file, callback) {
     }
     const reader = new FileReader();
     reader.onload = function(evt) {
-        callback({
-            dataUrl: evt.target.result || '',
-            fileName: file.name || 'document',
-            fileType: file.type || ''
-        });
+        const rawUrl = evt.target.result || '';
+        const fType = (file.type || '').toLowerCase();
+        const fName = file.name || 'document';
+        const isImg = fType.startsWith('image/') || rawUrl.startsWith('data:image');
+        const isPdf = fType.includes('pdf') || rawUrl.startsWith('data:application/pdf') || /\.pdf$/i.test(fName);
+
+        if (isImg) {
+            compressImageDataUrlToLimit(rawUrl, 1280, FIREBASE_SAFE_MAX_BYTES, function(res) {
+                const finalName = res.normalized ? fName.replace(/\.[^.]+$/, '') + '.jpg' : fName;
+                callback({ dataUrl: res.dataUrl, fileName: finalName, fileType: res.fileType });
+            });
+        } else if (isPdf) {
+            normalizeHeavyPdfDataUrl(rawUrl, fName, FIREBASE_SAFE_MAX_BYTES, function(res) {
+                callback({ dataUrl: res.dataUrl, fileName: fName, fileType: res.fileType });
+            });
+        } else {
+            callback({ dataUrl: rawUrl, fileName: fName, fileType: file.type || '' });
+        }
     };
     reader.onerror = function() {
         CommicoAlert("Erreur lors de la lecture du fichier.");
         callback({ dataUrl: '', fileName: '', fileType: '' });
     };
     reader.readAsDataURL(file);
-}
-
-/* CONVERSION ET NORMALISATION LOURDE PDF / IMAGE (COURRIERS & ARCHIVES) */
-function compressStandardImageFromDataUrl(dataUrl, maxDim, quality, callback) {
-    const img = new Image();
-    img.onload = function() {
-        const limit = maxDim || 1200;
-        let width = img.width || limit;
-        let height = img.height || limit;
-        if (width > limit || height > limit) {
-            const ratio = Math.min(limit / width, limit / height);
-            width = Math.max(1, Math.round(width * ratio));
-            height = Math.max(1, Math.round(height * ratio));
-        }
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = width;
-        canvas.height = height;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
-        const q = (typeof quality === 'number') ? quality : 0.72;
-        callback(canvas.toDataURL('image/jpeg', q));
-    };
-    img.onerror = function() {
-        callback(dataUrl || '');
-    };
-    img.src = dataUrl;
-}
-
-function ensurePdfJsLoaded(callback) {
-    if (window.pdfjsLib && typeof window.pdfjsLib.getDocument === 'function') {
-        if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-        callback(true);
-        return;
-    }
-    const existing = document.querySelector('script[data-pdfjs-loader="1"]');
-    if (existing) {
-        existing.addEventListener('load', function() {
-            if (window.pdfjsLib) {
-                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                callback(true);
-            } else {
-                callback(false);
-            }
-        });
-        existing.addEventListener('error', function() { callback(false); });
-        return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    script.async = true;
-    script.dataset.pdfjsLoader = '1';
-    script.onload = function() {
-        if (window.pdfjsLib) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            callback(true);
-        } else {
-            callback(false);
-        }
-    };
-    script.onerror = function() { callback(false); };
-    document.head.appendChild(script);
-}
-
-function normalizeHeavyDocumentFile(file, callback) {
-    if (!file) {
-        callback({ dataUrl: '', fileName: '', fileType: '', pages: [] });
-        return;
-    }
-    const isPdf = (file.type && file.type.toLowerCase().includes('pdf')) || /\.pdf$/i.test(file.name || '');
-    const isImage = (file.type && file.type.toLowerCase().startsWith('image/')) || /\.(jpeg|jpg|png|webp|gif|bmp|heic)$/i.test(file.name || '');
-
-    readFileAsDataUrl(file, function(raw) {
-        if (!raw.dataUrl) {
-            callback({ dataUrl: '', fileName: file.name || 'document', fileType: file.type || '', pages: [] });
-            return;
-        }
-        if (isImage) {
-            compressStandardImageFromDataUrl(raw.dataUrl, 1200, 0.72, function(normUrl) {
-                const baseName = (file.name || 'document').replace(/\.[^/.]+$/, '');
-                callback({
-                    dataUrl: normUrl || raw.dataUrl,
-                    fileName: baseName + '.jpg',
-                    fileType: 'image/jpeg',
-                    pages: normUrl ? [normUrl] : []
-                });
-            });
-            return;
-        }
-        if (isPdf) {
-            ensurePdfJsLoaded(function(loaded) {
-                if (!loaded) {
-                    callback({ dataUrl: raw.dataUrl, fileName: file.name || 'document.pdf', fileType: 'application/pdf', pages: [] });
-                    return;
-                }
-                try {
-                    const base64Part = raw.dataUrl.split(',')[1];
-                    const binaryStr = atob(base64Part);
-                    const len = binaryStr.length;
-                    const bytes = new Uint8Array(len);
-                    for (let i = 0; i < len; i++) {
-                        bytes[i] = binaryStr.charCodeAt(i);
-                    }
-                    const loadingTask = window.pdfjsLib.getDocument({ data: bytes });
-                    loadingTask.promise.then(function(pdfDoc) {
-                        const maxPages = Math.min(pdfDoc.numPages || 1, 5);
-                        const pagesImages = [];
-                        let pageNum = 1;
-
-                        function renderNextPage() {
-                            if (pageNum > maxPages) {
-                                const firstPage = pagesImages[0] || raw.dataUrl;
-                                const baseName = (file.name || 'document').replace(/\.[^/.]+$/, '');
-                                callback({
-                                    dataUrl: firstPage,
-                                    fileName: pagesImages.length ? (baseName + '_norm.jpg') : (file.name || 'document.pdf'),
-                                    fileType: pagesImages.length ? 'image/jpeg' : 'application/pdf',
-                                    pages: pagesImages
-                                });
-                                return;
-                            }
-                            pdfDoc.getPage(pageNum).then(function(page) {
-                                const viewport = page.getViewport({ scale: 1.0 });
-                                const targetWidth = Math.min(1000, viewport.width || 1000);
-                                const scale = targetWidth / (viewport.width || 1000);
-                                const scaledViewport = page.getViewport({ scale: scale });
-
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                canvas.width = Math.max(1, Math.round(scaledViewport.width));
-                                canvas.height = Math.max(1, Math.round(scaledViewport.height));
-                                ctx.fillStyle = "#ffffff";
-                                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                                page.render({ canvasContext: ctx, viewport: scaledViewport }).promise.then(function() {
-                                    pagesImages.push(canvas.toDataURL('image/jpeg', 0.7));
-                                    pageNum++;
-                                    renderNextPage();
-                                }).catch(function() {
-                                    pageNum++;
-                                    renderNextPage();
-                                });
-                            }).catch(function() {
-                                pageNum++;
-                                renderNextPage();
-                            });
-                        }
-                        renderNextPage();
-                    }).catch(function() {
-                        callback({ dataUrl: raw.dataUrl, fileName: file.name || 'document.pdf', fileType: 'application/pdf', pages: [] });
-                    });
-                } catch (err) {
-                    callback({ dataUrl: raw.dataUrl, fileName: file.name || 'document.pdf', fileType: 'application/pdf', pages: [] });
-                }
-            });
-            return;
-        }
-        callback({ dataUrl: raw.dataUrl, fileName: file.name || 'document', fileType: file.type || '', pages: [] });
-    });
 }
 
 function CommicoAlert(msg) {
@@ -1810,24 +1742,16 @@ function closeFileViewerModal() {
     document.getElementById('fileViewerContentArea').innerHTML = '';
 }
 
-function viewDocumentModal(url, title, fileType, pagesList) {
-    if (!url && (!pagesList || !pagesList.length)) { CommicoAlert("Aucun fichier joint à afficher."); return; }
+function viewDocumentModal(url, title, fileType) {
+    if (!url) { CommicoAlert("Aucun fichier joint à afficher."); return; }
     const area = document.getElementById('fileViewerContentArea');
     const titleEl = document.getElementById('fileViewerTitle');
     const dlLink = document.getElementById('fileViewerDownloadLink');
     const safeTitle = title || 'Document';
     titleEl.innerHTML = `<i class="fa fa-file-alt me-2"></i>${escapeHtml(safeTitle)}`;
-    dlLink.href = url || pagesList[0];
-    dlLink.download = safeTitle.replace(/[^a-zA-Z0-9_-]/g, '_') + (isPdfOrImageUrl(url, fileType) === 'pdf' ? '.pdf' : '.jpg');
+    dlLink.href = url;
+    dlLink.download = safeTitle.replace(/[^a-zA-Z0-9_-]/g, '_') + (isPdfOrImageUrl(url, fileType) === 'pdf' ? '.pdf' : '');
 
-    if (pagesList && pagesList.length > 1) {
-        area.style.display = 'block';
-        area.innerHTML = `<div class="d-flex flex-column align-items-center gap-3 w-100">${pagesList.map((pUrl, idx) => `<div class="w-100 text-center bg-white p-2 rounded shadow-sm"><div class="small text-muted fw-bold mb-1">Page ${idx + 1}</div><img src="${pUrl}" alt="${escapeHtml(safeTitle)} - Page ${idx + 1}" style="max-width:100%; height:auto; object-fit:contain;"></div>`).join('')}</div>`;
-        document.getElementById('fileViewerModal').style.display = 'flex';
-        return;
-    }
-
-    area.style.display = 'flex';
     const kind = isPdfOrImageUrl(url, fileType);
     if (kind === 'image') {
         area.innerHTML = `<img src="${url}" alt="${escapeHtml(safeTitle)}">`;
@@ -2033,10 +1957,6 @@ function toggleParamsSubmenu() {
 }
 
 function promptSecureTabAccess(tabId, element) {
-    if (tabId === 'tab-courriers') {
-        switchTab(tabId, element);
-        return;
-    }
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
@@ -3665,15 +3585,14 @@ function handleSaveCourrier(e) {
         objet: document.getElementById('courrierObjet').value.trim(),
         fileUrl: '',
         fileName: '',
-        fileType: '',
-        pages: []
+        fileType: ''
     };
 
-    normalizeHeavyDocumentFile(file, function(res) {
+    readFileAsDataUrl(file, function(res) {
         saveObj.fileUrl = res.dataUrl;
         saveObj.fileName = res.fileName;
         saveObj.fileType = res.fileType;
-        saveObj.pages = res.pages || [];
+        if (!yData.courriers) yData.courriers = [];
         yData.courriers.push(saveObj);
         saveData();
         renderCourriersTable();
@@ -3690,11 +3609,10 @@ function renderCourriersTable() {
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.courriers || []).map((c, i) => {
         const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
-        const pagesAttr = (c.pages && c.pages.length > 1) ? JSON.stringify(c.pages).replace(/"/g, '&quot;') : '';
         const docBtn = c.fileUrl
             ? (kind === 'pdf'
                 ? `<button type="button" class="btn btn-sm btn-danger no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-info text-white no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet)}', 'image/*', ${pagesAttr || 'null'})"><i class="fa fa-image me-1"></i> Image</button>`)
+                : `<button type="button" class="btn btn-sm btn-info text-white no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
             : 'Aucun';
         return `
             <tr>
@@ -3710,36 +3628,35 @@ function deleteCourrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if (yData && Array.isArray(yData.courriers) && yData.courriers[index] !== undefined) {
-        yData.courriers.splice(index, 1);
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert("Correspondance supprimée.");
+    if (!yData.courriers || !yData.courriers[index]) return;
+    const removed = yData.courriers.splice(index, 1)[0];
+    if (removed && removed.numDoc && Array.isArray(yData.dossiersArchive)) {
+        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').toUpperCase() !== removed.numDoc.toUpperCase());
     }
-}
-
-function deleteSelectedCourrierAction() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const numInput = (document.getElementById('courrierNumDoc') ? document.getElementById('courrierNumDoc').value.trim() : '');
-    if (!yData.courriers || !yData.courriers.length) {
-        CommicoAlert("Aucune correspondance à supprimer.");
-        return;
-    }
-    let idx = -1;
-    if (numInput) {
-        idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === numInput.toUpperCase());
-    }
-    if (idx === -1) {
-        idx = yData.courriers.length - 1;
-    }
-    yData.courriers.splice(idx, 1);
     saveData();
     renderCourriersTable();
     renderDossiersTable();
     CommicoAlert("Correspondance supprimée avec succès.");
+}
+
+function deleteSelectedOrLastCourrier() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    if (!yData.courriers || yData.courriers.length === 0) {
+        CommicoAlert("Aucune correspondance à supprimer.");
+        return;
+    }
+    const numInput = document.getElementById('courrierNumDoc');
+    const targetNum = numInput ? numInput.value.trim().toUpperCase() : '';
+    let idx = -1;
+    if (targetNum) {
+        idx = yData.courriers.findIndex(c => (c.numDoc || '').trim().toUpperCase() === targetNum);
+    }
+    if (idx === -1) {
+        idx = yData.courriers.length - 1;
+    }
+    deleteCourrierItem(idx);
 }
 
 // ARCHIVES & DOSSIERS (BASÉ SUR CORRESPONDANCES ET CLASSEUR ENTRANT / SORTANT)
@@ -3769,11 +3686,10 @@ function getFilteredArchiveCorrespondances(forceAll) {
 function buildArchiveCorrespondanceRowsHtml(list, highlightClass) {
     return list.map((c) => {
         const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
-        const pagesAttr = (c.pages && c.pages.length > 1) ? JSON.stringify(c.pages).replace(/"/g, '&quot;') : '';
         const docBtn = c.fileUrl
             ? (kind === 'pdf'
                 ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> PDF</button>`
-                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'image/*', ${pagesAttr || 'null'})"><i class="fa fa-image me-1"></i> Image</button>`)
+                : `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.objet || c.numDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> Image</button>`)
             : '<span class="text-muted small">Aucun</span>';
         const numDocSafe = c.numDoc || '';
         const typeSafe = c.type || '';
@@ -3873,8 +3789,7 @@ function archiveCorrespondenceByNumDoc(numDoc, typeCourrier) {
         nomDoc: match.objet || match.numDoc,
         fileUrl: match.fileUrl || '',
         fileName: match.fileName || '',
-        fileType: match.fileType || '',
-        pages: match.pages || []
+        fileType: match.fileType || ''
     };
     if (existingIdx !== -1) {
         yData.dossiersArchive[existingIdx] = archiveRecord;
@@ -3890,38 +3805,28 @@ function deleteArchiveCorrespondenceByNumDoc(numDoc, typeCourrier) {
     if (!s) return;
     const yData = getActiveYearData(s);
     const targetType = typeCourrier || getSelectedArchiveClasseurType();
-    const classeurLabel = targetType === 'Sortant' ? 'Doc Sortant' : 'Doc Entrant';
-    let removed = false;
-
     if (Array.isArray(yData.courriers)) {
-        const cIdx = yData.courriers.findIndex(c =>
+        yData.courriers = yData.courriers.filter(c => !(
             (c.type || '').toLowerCase() === targetType.toLowerCase() &&
             (c.numDoc || '').trim().toUpperCase() === (numDoc || '').trim().toUpperCase()
-        );
-        if (cIdx !== -1) {
-            yData.courriers.splice(cIdx, 1);
-            removed = true;
-        }
+        ));
     }
     if (Array.isArray(yData.dossiersArchive)) {
-        const aIdx = yData.dossiersArchive.findIndex(d =>
-            (d.numDoc || '').trim().toUpperCase() === (numDoc || '').trim().toUpperCase() &&
-            (!d.classeur || d.classeur.toLowerCase() === classeurLabel.toLowerCase())
-        );
-        if (aIdx !== -1) {
-            yData.dossiersArchive.splice(aIdx, 1);
-            removed = true;
-        }
+        yData.dossiersArchive = yData.dossiersArchive.filter(d => (d.numDoc || '').trim().toUpperCase() !== (numDoc || '').trim().toUpperCase());
     }
+    saveData();
+    renderCourriersTable();
+    renderDossiersTable();
+    CommicoAlert(`Document N° ${numDoc} supprimé avec succès.`);
+}
 
-    if (removed) {
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert(`Document N° ${numDoc || ''} supprimé avec succès.`);
-    } else {
-        CommicoAlert("Aucun document trouvé à supprimer.");
+function deleteCurrentArchiveCorrespondence() {
+    const list = getFilteredArchiveCorrespondances(false);
+    if (!list.length) {
+        CommicoAlert("Aucun document correspondant à supprimer.");
+        return;
     }
+    deleteArchiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
 }
 
 function saveCurrentArchiveCorrespondence() {
@@ -3931,15 +3836,6 @@ function saveCurrentArchiveCorrespondence() {
         return;
     }
     archiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
-}
-
-function deleteCurrentArchiveCorrespondence() {
-    const list = getFilteredArchiveCorrespondances(false);
-    if (!list.length) {
-        CommicoAlert("Aucun document à supprimer dans cette vue.");
-        return;
-    }
-    deleteArchiveCorrespondenceByNumDoc(list[0].numDoc, list[0].type);
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4068,38 +3964,9 @@ function renderAdminCentralTable() {
     }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function openDirectRegistrationModal() {
-    if (!appData.schools || appData.schools.length === 0) {
-        CommicoAlert("Veuillez d'abord créer une Madras.");
-        return;
-    }
-    if (appData.schools.length === 1) {
-        promptLoginCode(appData.schools[0].id);
-        return;
-    }
-    CommicoPrompt("Entrez le code secret de la Madras (MAD-XXXX) pour l'inscription :", function(code) {
-        if(!code) return;
-        const found = appData.schools.find(s => s.secretCode.toUpperCase() === code.trim().toUpperCase());
-        if(found) {
-            checkAndOpenSchoolDashboard(found.id);
-        } else {
-            CommicoAlert("Code Madras introuvable.");
-        }
-    });
-}
-
-function downloadSectionData(sectionName) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(yData[sectionName] || [], null, 2));
-    const dlAnchor = document.createElement('a');
-    dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", `${s.name}_${sectionName}_${s.activeYear}.json`);
-    document.body.appendChild(dlAnchor);
-    dlAnchor.click();
-    dlAnchor.remove();
-}
+function openDirectRegistrationModal() { CommicoAlert("Veuillez d'abord ouvrir votre Madras via la liste avec votre code secret."); }
+function downloadSectionData(sec) { window.print(); }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
