@@ -6,7 +6,7 @@
   <title>COMICO • RDC — Administration Islamique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     @media print {
@@ -259,7 +259,7 @@
         niveau: 'National',
         province: 'Kinshasa',
         siege: 'Avenue du Port, Gombe, Kinshasa',
-        president: 'Cheikh Abdallah Mangala Luaba',
+        president: 'Autorité Nationale Désignée (Chargé de l’Adm)',
         mandat: '2024 - 2029',
         statut: 'Actif',
         effectifBureau: 15,
@@ -371,8 +371,9 @@
         gps: '-4.3276, 15.3014',
         capacite: 4500,
         statutFoncier: 'Titre Foncier Enregistré',
-        imamPrincipal: 'Cheikh Abdallah Mangala',
+        imamPrincipal: 'Imam Khatib Principal Désigné',
         annexes: ['Madrasa', 'Salles d’ablution', 'Bibliothèque', 'Centre Médical'],
+        image: '',
         etat: 'Excellent',
         dateConstruction: '1984'
       },
@@ -387,6 +388,7 @@
         statutFoncier: 'Certificat d’Enregistrement',
         imamPrincipal: 'Cheikh Hassan Bahati',
         annexes: ['Madrasa', 'Salles d’ablution', 'Forage d’eau'],
+        image: '',
         etat: 'Bon',
         dateConstruction: '1996'
       },
@@ -401,6 +403,7 @@
         statutFoncier: 'Titre Foncier Enregistré',
         imamPrincipal: 'Cheikh Omar Mwamba',
         annexes: ['Madrasa', 'Salles d’ablution', 'Salle de Conférence'],
+        image: '',
         etat: 'Excellent',
         dateConstruction: '2002'
       },
@@ -415,6 +418,7 @@
         statutFoncier: 'En cours de régularisation',
         imamPrincipal: 'Cheikh Idriss Alimasi',
         annexes: ['Madrasa', 'Salles d’ablution'],
+        image: '',
         etat: 'Rénovation requise',
         dateConstruction: '1978'
       },
@@ -429,6 +433,7 @@
         statutFoncier: 'Patrimoine Historique Reconnu',
         imamPrincipal: 'Cheikh Salumu Ramazani',
         annexes: ['Madrasa', 'Salles d’ablution', 'Musée Historique'],
+        image: '',
         etat: 'Bon',
         dateConstruction: '1892'
       },
@@ -443,6 +448,7 @@
         statutFoncier: 'Certificat d’Enregistrement',
         imamPrincipal: 'Imam Bilal Mavungu',
         annexes: ['Madrasa', 'Salles d’ablution'],
+        image: '',
         etat: 'Bon',
         dateConstruction: '2008'
       }
@@ -459,9 +465,10 @@
         telephone: '+243 812 345 678',
         province: 'Kinshasa',
         mosqueeId: 'MSQ-KIN-001',
-        mosqueeNom: 'Grande Mosquée Centrale de Kinshasa',
+        mosqueeNom: 'Grande Mosquée Centrale de Kinshasa (Mosquée Kadhafi)',
         foyer: 'Marié - 4 enfants',
         profession: 'Ingénieur Génie Civil',
+        image: '',
         statut: 'Actif',
         dateAdhesion: '2018-03-15'
       },
@@ -478,6 +485,7 @@
         mosqueeNom: 'Mosquée Centrale Office de Goma',
         foyer: 'Mariée - 2 enfants',
         profession: 'Médecin Généraliste',
+        image: '',
         statut: 'Actif',
         dateAdhesion: '2020-01-10'
       },
@@ -494,6 +502,7 @@
         mosqueeNom: 'Mosquée Al-Nour de Lubumbashi',
         foyer: 'Marié - 5 enfants',
         profession: 'Commerçant / Import-Export',
+        image: '',
         statut: 'Actif',
         dateAdhesion: '2015-07-22'
       },
@@ -507,9 +516,10 @@
         telephone: '+243 821 908 706',
         province: 'Tshopo',
         mosqueeId: 'MSQ-TSH-003',
-        mosqueeNom: 'Grande Mosquée de la Tshopo',
+        mosqueeNom: 'Grande Mosquée de la Tshopo (Mangobo)',
         foyer: 'Célibataire',
         profession: 'Enseignante & Encadreuse Madrasa',
+        image: '',
         statut: 'Actif',
         dateAdhesion: '2022-05-04'
       },
@@ -526,6 +536,7 @@
         mosqueeNom: 'Mosquée Al-Falah de Matadi',
         foyer: 'Marié - 1 enfant',
         profession: 'Logisticien Portuaire',
+        image: '',
         statut: 'En transfert',
         dateAdhesion: '2023-11-12'
       }
@@ -534,7 +545,7 @@
     const INITIAL_LEADERS = [
       {
         id: 'IMAM-RDC-001',
-        nom: 'Cheikh Abdallah Mangala Luaba',
+        nom: 'Imam Khatib Principal Désigné',
         fonction: 'Imam Khatib Principal & Mufti',
         qualification: 'Licence en Charia - Université Islamique de Médine',
         province: 'Kinshasa',
@@ -695,7 +706,7 @@
         beneficiaire: 'M. Youssef Kabongo & Mme Amina Zaina',
         province: 'Kinshasa',
         mosquee: 'Grande Mosquée Centrale de Kinshasa',
-        imamSignataire: 'Cheikh Abdallah Mangala Luaba',
+        imamSignataire: 'Imam Khatib Principal Désigné',
         dateEmission: '2026-11-14',
         hashVerification: 'COMICO-SHA256-9F8A2C1D',
         statut: 'Authentifié'
@@ -728,7 +739,7 @@
       {
         id: 'AUD-99412',
         timestamp: '2026-11-24 18:42:11 WAT',
-        acteur: 'Cheikh Abdallah Mangala',
+        acteur: 'Chargé de l’Administration',
         role: 'Super Admin National',
         province: 'Kinshasa',
         module: 'Finance & Zakat',
@@ -830,7 +841,14 @@
       );
     }
 
-    function DashboardView({ financialStats, splitRules, certificatesCount, onNavigate }) {
+    function DashboardView({
+      financialStats,
+      splitRules,
+      certificatesCount,
+      onNavigate,
+      isAdminRegistrar,
+      onToggleAdminRegistrar
+    }) {
       const provinceDistribution = [
         { name: 'Kinshasa', mosques: 184, members: '420 000', share: 88 },
         { name: 'Nord-Kivu', mosques: 142, members: '310 000', share: 72 },
@@ -855,6 +873,24 @@
                 <p className="text-emerald-100/80 text-sm mt-1 max-w-2xl">
                   Supervision unifiée des organes territoriaux, du patrimoine cultuel, des responsables religieux, de la Zakat et des actes officiels certifiés.
                 </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/25 border border-white/15 text-xs">
+                    <Lock className="w-3.5 h-3.5 text-amber-300" />
+                    <span>
+                      Droit d’enregistrement réservé au Chargé de l’Adm :{' '}
+                      <strong className={isAdminRegistrar ? 'text-emerald-300' : 'text-amber-300'}>
+                        {isAdminRegistrar ? 'ACTIF (Chargé de l’Adm)' : 'VERROUILLÉ'}
+                      </strong>
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onToggleAdminRegistrar}
+                    className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition"
+                  >
+                    {isAdminRegistrar ? 'Verrouiller Droit Adm' : 'Activer Droit Chargé de l’Adm'}
+                  </button>
+                </div>
               </div>
               <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-4 min-w-[230px]">
                 <p className="text-xs uppercase tracking-wider text-amber-300 font-semibold">Calendrier Officiel</p>
@@ -1012,14 +1048,114 @@
       );
     }
 
-    function StructureView({ organs }) {
+    function StructureView({
+      organs,
+      isAdminRegistrar,
+      onSaveOrgan,
+      onUpdateOrgan,
+      onDeleteOrgan,
+      onPublishOrgans,
+      onNotify
+    }) {
       const [expandedIds, setExpandedIds] = useState(['ORG-NAT-01', 'ORG-PROV-KIN', 'ORG-PROV-NK']);
       const [selectedOrgan, setSelectedOrgan] = useState(organs[0] || null);
+      const [editingId, setEditingId] = useState(null);
+      const [formState, setFormState] = useState({
+        parentId: 'ORG-NAT-01',
+        code: '',
+        nom: '',
+        niveau: 'Provincial',
+        province: 'Kinshasa',
+        siege: '',
+        president: '',
+        mandat: '2025 - 2030',
+        effectifBureau: 9
+      });
+
+      const flattenOrgans = (nodes, list = []) => {
+        nodes.forEach((n) => {
+          list.push(n);
+          if (n.enfants && n.enfants.length > 0) flattenOrgans(n.enfants, list);
+        });
+        return list;
+      };
+
+      const allFlatOrgans = useMemo(() => flattenOrgans(organs), [organs]);
+
+      useEffect(() => {
+        if (selectedOrgan) {
+          const updated = allFlatOrgans.find((o) => o.id === selectedOrgan.id);
+          setSelectedOrgan(updated || allFlatOrgans[0] || null);
+        } else if (allFlatOrgans[0]) {
+          setSelectedOrgan(allFlatOrgans[0]);
+        }
+      }, [allFlatOrgans]);
 
       const toggleExpand = (id) => {
         setExpandedIds((prev) =>
           prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
+      };
+
+      const resetForm = () => {
+        setEditingId(null);
+        setFormState({
+          parentId: 'ORG-NAT-01',
+          code: '',
+          nom: '',
+          niveau: 'Provincial',
+          province: 'Kinshasa',
+          siege: '',
+          president: '',
+          mandat: '2025 - 2030',
+          effectifBureau: 9
+        });
+      };
+
+      const handleStartEdit = (organ) => {
+        if (!isAdminRegistrar) {
+          onNotify('Accès réservé au Chargé de l’Administration : activez le Droit d’enregistrement.');
+          return;
+        }
+        setEditingId(organ.id);
+        setFormState({
+          parentId: 'ORG-NAT-01',
+          code: organ.code,
+          nom: organ.nom,
+          niveau: organ.niveau,
+          province: organ.province,
+          siege: organ.siege,
+          president: organ.president,
+          mandat: organ.mandat,
+          effectifBureau: organ.effectifBureau
+        });
+      };
+
+      const handleSaveSubmit = (e) => {
+        e.preventDefault();
+        if (!isAdminRegistrar) {
+          onNotify('Droit d’enregistrement réservé au Chargé de l’Adm.');
+          return;
+        }
+        if (!formState.nom.trim() || !formState.president.trim()) return;
+        if (editingId) {
+          onUpdateOrgan(editingId, formState);
+          resetForm();
+        } else {
+          onSaveOrgan(formState);
+          resetForm();
+        }
+      };
+
+      const handleDownloadTree = () => {
+        const blob = new Blob([JSON.stringify(organs, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'organigramme-hie-comico-rdc.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        onNotify('Organigramme HIE téléchargé au format JSON.');
       };
 
       const renderOrganNode = (node, depth = 0) => {
@@ -1061,7 +1197,7 @@
                     <span className="font-bold text-slate-900 text-sm">{node.nom}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Responsable : <span className="font-medium text-slate-700">{node.president}</span> • Province : {node.province}
+                    Autorité / Responsable : <span className="font-medium text-slate-700">{node.president}</span> • Province : {node.province}
                   </p>
                 </div>
               </div>
@@ -1081,14 +1217,181 @@
 
       return (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">1. Structure Institutionnelle & Organes Territoriaux</h2>
-            <p className="text-sm text-slate-500">Arborescence hiérarchique : National → Provincial (26) → Urbain/Territorial → Mosquée</p>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">1. Structure Institutionnelle & Organes Territoriaux</h2>
+              <p className="text-sm text-slate-500">Arborescence hiérarchique : National → Provincial (26) → Urbain/Territorial → Mosquée</p>
+            </div>
+            <div className="flex flex-wrap gap-2 no-print">
+              <button
+                type="button"
+                onClick={handleSaveSubmit}
+                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold"
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                onClick={() => selectedOrgan && handleStartEdit(selectedOrgan)}
+                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAdminRegistrar) {
+                    onNotify('Droit d’enregistrement réservé au Chargé de l’Adm.');
+                    return;
+                  }
+                  if (selectedOrgan) onDeleteOrgan(selectedOrgan.id);
+                }}
+                className="px-3.5 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold"
+              >
+                Supprimer
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold"
+              >
+                Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadTree}
+                className="px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold"
+              >
+                Télécharger
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAdminRegistrar) {
+                    onNotify('Droit d’enregistrement réservé au Chargé de l’Adm.');
+                    return;
+                  }
+                  onPublishOrgans();
+                }}
+                className="px-3.5 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-semibold"
+              >
+                Publier
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm no-print">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                Enregistrement des Autorités de la Hiérarchie (HIE)
+              </h3>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-900 border border-emerald-200">
+                {isAdminRegistrar ? 'Habilitation Chargé de l’Adm Active' : 'Réservé au Chargé de l’Adm'}
+              </span>
+            </div>
+            <form onSubmit={handleSaveSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Entité Parente (Arborescence)</label>
+                <select
+                  value={formState.parentId}
+                  onChange={(e) => setFormState({ ...formState, parentId: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white"
+                >
+                  {allFlatOrgans.map((o) => (
+                    <option key={o.id} value={o.id}>{o.code} — {o.nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Niveau Hiérarchique</label>
+                <select
+                  value={formState.niveau}
+                  onChange={(e) => setFormState({ ...formState, niveau: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white"
+                >
+                  <option value="National">National</option>
+                  <option value="Provincial">Provincial (26)</option>
+                  <option value="Urbain / Territorial">Urbain / Territorial</option>
+                  <option value="Mosquée">Mosquée</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Province</label>
+                <select
+                  value={formState.province}
+                  onChange={(e) => setFormState({ ...formState, province: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white"
+                >
+                  {PROVINCES_RDC.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Code Organe</label>
+                <input
+                  type="text"
+                  placeholder="Ex: COMICO-KIN-GOM"
+                  value={formState.code}
+                  onChange={(e) => setFormState({ ...formState, code: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Dénomination de l’Entité / Organe *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ex: Sous-Entité de la Gombe"
+                  value={formState.nom}
+                  onChange={(e) => setFormState({ ...formState, nom: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Autorité / Responsable Désigné *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Nom de l'autorité (remplaçable)"
+                  value={formState.president}
+                  onChange={(e) => setFormState({ ...formState, president: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Siège / Localisation</label>
+                <input
+                  type="text"
+                  placeholder="Adresse ou siège"
+                  value={formState.siege}
+                  onChange={(e) => setFormState({ ...formState, siege: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg"
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold"
+                >
+                  {editingId ? 'Mettre à jour Autorité' : 'Enregistrer Autorité'}
+                </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold"
+                  >
+                    Annuler
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Organigramme Hiérarchique Interactif</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">ORGANIGRAMME HIE INTERACTIF</h3>
               {organs.map((root) => renderOrganNode(root))}
             </div>
 
@@ -1102,7 +1405,7 @@
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Représentant / Président :</span>
+                    <span className="text-slate-500">Autorité / Responsable :</span>
                     <span className="font-semibold text-slate-900 text-right">{selectedOrgan.president}</span>
                   </div>
                   <div className="flex justify-between">
@@ -1140,11 +1443,66 @@
               </div>
             )}
           </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Informations Enregistrées — Organigramme HIE
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Synthèse complète des entités et autorités enregistrées dans l’arborescence hiérarchique
+                </p>
+              </div>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900">
+                {allFlatOrgans.length} Entités Enregistrées
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 uppercase font-bold text-slate-600">
+                    <th className="py-2.5 px-3">Code</th>
+                    <th className="py-2.5 px-3">Niveau</th>
+                    <th className="py-2.5 px-3">Entité / Organe</th>
+                    <th className="py-2.5 px-3">Autorité / Responsable</th>
+                    <th className="py-2.5 px-3">Province</th>
+                    <th className="py-2.5 px-3">Siège</th>
+                    <th className="py-2.5 px-3">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {allFlatOrgans.map((org) => (
+                    <tr
+                      key={org.id}
+                      onClick={() => setSelectedOrgan(org)}
+                      className={`cursor-pointer hover:bg-emerald-50/50 ${
+                        selectedOrgan?.id === org.id ? 'bg-emerald-50/80' : ''
+                      }`}
+                    >
+                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-900">{org.code}</td>
+                      <td className="py-2.5 px-3 font-semibold text-amber-900">{org.niveau}</td>
+                      <td className="py-2.5 px-3 font-bold text-slate-900">{org.nom}</td>
+                      <td className="py-2.5 px-3 text-slate-800">{org.president}</td>
+                      <td className="py-2.5 px-3 text-slate-700">{org.province}</td>
+                      <td className="py-2.5 px-3 text-slate-600">{org.siege}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                          {org.statut}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       );
     }
 
-    function MosquesView({ mosques, onAddMosque }) {
+    function MosquesView({ mosques, onAddMosque, onDeleteMosque, onNotify }) {
       const [search, setSearch] = useState('');
       const [provinceFilter, setProvinceFilter] = useState('Toutes');
       const [showModal, setShowModal] = useState(false);
@@ -1155,7 +1513,12 @@
         adresse: '',
         capacite: 500,
         statutFoncier: 'Titre Foncier Enregistré',
-        imamPrincipal: ''
+        sallesAblution: true,
+        bibliotheque: false,
+        madrassa: true,
+        centreMedical: false,
+        imamPrincipal: '',
+        image: ''
       });
 
       const filteredMosques = mosques.filter((m) => {
@@ -1167,11 +1530,17 @@
         return matchSearch && matchProvince;
       });
 
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!newMosque.nom.trim() || !newMosque.ville.trim()) return;
-        onAddMosque(newMosque);
-        setShowModal(false);
+      const handleImageFile = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          setNewMosque((prev) => ({ ...prev, image: String(reader.result || '') }));
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const resetMosqueForm = () => {
         setNewMosque({
           nom: '',
           province: 'Kinshasa',
@@ -1179,8 +1548,37 @@
           adresse: '',
           capacite: 500,
           statutFoncier: 'Titre Foncier Enregistré',
-          imamPrincipal: ''
+          sallesAblution: true,
+          bibliotheque: false,
+          madrassa: true,
+          centreMedical: false,
+          imamPrincipal: '',
+          image: ''
         });
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!newMosque.nom.trim() || !newMosque.ville.trim()) return;
+        const annexesList = [];
+        if (newMosque.sallesAblution) annexesList.push('Salles d’ablution');
+        if (newMosque.bibliotheque) annexesList.push('Bibliothèque');
+        if (newMosque.madrassa) annexesList.push('Madrassa');
+        if (newMosque.centreMedical) annexesList.push('Centre Médical');
+        onAddMosque({ ...newMosque, annexes: annexesList });
+        setShowModal(false);
+        resetMosqueForm();
+      };
+
+      const handleDownloadMosques = () => {
+        const blob = new Blob([JSON.stringify(mosques, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'registre-mosquees-comico-rdc.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        onNotify('Registre des mosquées téléchargé.');
       };
 
       return (
@@ -1190,13 +1588,29 @@
               <h2 className="text-xl font-bold text-slate-900">2. Patrimoine Cultuel & Registre des Mosquées</h2>
               <p className="text-sm text-slate-500">Géolocalisation, capacité d’accueil, statut foncier et infrastructures annexes</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold shadow-sm transition"
-            >
-              <Plus className="w-4 h-4" /> Recenser une Mosquée
-            </button>
+            <div className="flex flex-wrap gap-2 no-print">
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold shadow-sm transition"
+              >
+                <Plus className="w-4 h-4" /> Recenser une Mosquée
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold"
+              >
+                Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadMosques}
+                className="px-3.5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-semibold"
+              >
+                Télécharger
+              </button>
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3">
@@ -1225,6 +1639,13 @@
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {filteredMosques.map((m) => (
               <div key={m.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:border-emerald-400 transition">
+                {m.image && (
+                  <img
+                    src={m.image}
+                    alt={m.nom}
+                    className="w-full h-40 object-cover rounded-lg mb-3 border border-slate-200"
+                  />
+                )}
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
@@ -1246,11 +1667,11 @@
                 <div className="mt-3 space-y-1.5 text-xs text-slate-600">
                   <p className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-emerald-700" />
-                    <span><strong>{m.province}</strong> — {m.adresse} (GPS: {m.gps})</span>
+                    <span><strong>{m.province}</strong> — {m.ville} — {m.adresse} (GPS: {m.gps})</span>
                   </p>
                   <p className="flex items-center gap-1.5">
                     <Award className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Imam Titulaire : <strong className="text-slate-800">{m.imamPrincipal}</strong></span>
+                    <span>Imam Principal Désigné : <strong className="text-slate-800">{m.imamPrincipal}</strong></span>
                   </p>
                 </div>
 
@@ -1262,20 +1683,36 @@
                       </span>
                     ))}
                   </div>
-                  <span className="text-xs font-bold text-slate-800">
-                    Capacité : {m.capacite.toLocaleString()} places
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-slate-800">
+                      Capacité : {m.capacite.toLocaleString()} places
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteMosque(m.id)}
+                      className="text-xs font-semibold text-rose-700 hover:underline no-print"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
           {showModal && (
-            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl">
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl my-8">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-                  <h3 className="text-lg font-bold text-slate-900">Enregistrer une Nouvelle Mosquée</h3>
-                  <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <h3 className="text-lg font-bold text-slate-900">Recenser une Mosquée</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      resetMosqueForm();
+                    }}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1351,6 +1788,43 @@
                     </div>
                   </div>
                   <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Infrastructures annexes</label>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newMosque.sallesAblution}
+                          onChange={(e) => setNewMosque({ ...newMosque, sallesAblution: e.target.checked })}
+                        />
+                        <span>Salles d’ablution</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newMosque.bibliotheque}
+                          onChange={(e) => setNewMosque({ ...newMosque, bibliotheque: e.target.checked })}
+                        />
+                        <span>Bibliothèque</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newMosque.madrassa}
+                          onChange={(e) => setNewMosque({ ...newMosque, madrassa: e.target.checked })}
+                        />
+                        <span>Madrassa</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newMosque.centreMedical}
+                          onChange={(e) => setNewMosque({ ...newMosque, centreMedical: e.target.checked })}
+                        />
+                        <span>Centre Médical</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Imam Principal Désigné</label>
                     <input
                       type="text"
@@ -1360,11 +1834,70 @@
                       className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg"
                     />
                   </div>
-                  <div className="flex justify-end gap-2 pt-3">
-                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ajouter Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFile}
+                      className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100"
+                    />
+                    {newMosque.image && (
+                      <img
+                        src={newMosque.image}
+                        alt="Aperçu mosquée"
+                        className="mt-2 h-24 w-full object-cover rounded-lg border border-slate-200"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false);
+                        resetMosqueForm();
+                      }}
+                      className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                    >
                       Annuler
                     </button>
-                    <button type="submit" className="px-4 py-2 text-sm font-semibold bg-emerald-800 text-white rounded-lg hover:bg-emerald-900">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newMosque.nom) {
+                          const blob = new Blob([JSON.stringify(newMosque, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'fiche-mosquee.json';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                      className="px-3.5 py-2 text-xs font-semibold bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+                    >
+                      Télécharger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-3.5 py-2 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+                    >
+                      Imprimer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (mosques[0]) onDeleteMosque(mosques[0].id);
+                      }}
+                      className="px-3.5 py-2 text-xs font-semibold bg-rose-700 text-white rounded-lg hover:bg-rose-800"
+                    >
+                      Supprimer
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-xs font-semibold bg-emerald-800 text-white rounded-lg hover:bg-emerald-900"
+                    >
                       Enregistrer au Patrimoine
                     </button>
                   </div>
@@ -1376,19 +1909,21 @@
       );
     }
 
-    function MembersView({ members, mosques, onCreateMember }) {
+    function MembersView({ members, mosques, onCreateMember, onDeleteMember }) {
       const [search, setSearch] = useState('');
       const [selectedId, setSelectedId] = useState(members[0]?.id || null);
       const [showNewMember, setShowNewMember] = useState(false);
       const [formMember, setFormMember] = useState({
+        idNational: '',
         nom: '',
         postnom: '',
         prenom: '',
         sexe: 'M',
         telephone: '+243 ',
         province: 'Kinshasa',
-        mosqueeNom: mosques[0]?.nom || 'Grande Mosquée Centrale de Kinshasa',
-        profession: ''
+        mosqueeNom: mosques[0]?.nom || 'Grande Mosquée Centrale de Kinshasa (Mosquée Kadhafi)',
+        profession: '',
+        image: ''
       });
 
       const selectedMemberCard = useMemo(
@@ -1403,6 +1938,16 @@
           m.province.toLowerCase().includes(search.toLowerCase())
       );
 
+      const handleMemberImage = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          setFormMember((prev) => ({ ...prev, image: String(reader.result || '') }));
+        };
+        reader.readAsDataURL(file);
+      };
+
       const handleSubmit = (e) => {
         e.preventDefault();
         if (!formMember.nom.trim() || !formMember.prenom.trim()) return;
@@ -1410,14 +1955,16 @@
         if (created) setSelectedId(created.id);
         setShowNewMember(false);
         setFormMember({
+          idNational: '',
           nom: '',
           postnom: '',
           prenom: '',
           sexe: 'M',
           telephone: '+243 ',
           province: 'Kinshasa',
-          mosqueeNom: mosques[0]?.nom || 'Grande Mosquée Centrale de Kinshasa',
-          profession: ''
+          mosqueeNom: mosques[0]?.nom || 'Grande Mosquée Centrale de Kinshasa (Mosquée Kadhafi)',
+          profession: '',
+          image: ''
         });
       };
 
@@ -1428,13 +1975,31 @@
               <h2 className="text-xl font-bold text-slate-900">3. Registre Centralisé des Membres & Fidèles</h2>
               <p className="text-sm text-slate-500">Identifiant unique national RDC, affiliation aux mosquées et carte numérique QR</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowNewMember(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Enrôler un Membre
-            </button>
+            <div className="flex flex-wrap gap-2 no-print">
+              <button
+                type="button"
+                onClick={() => setShowNewMember(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> Enrôler un Membre
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold"
+              >
+                Imprimer
+              </button>
+              {selectedMemberCard && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteMember(selectedMemberCard.id)}
+                  className="px-3.5 py-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-semibold"
+                >
+                  Supprimer
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1443,7 +2008,7 @@
                 <Search className="w-4 h-4 text-slate-400 absolute left-6 top-6" />
                 <input
                   type="text"
-                  placeholder="Rechercher par nom, ID RDC (ex: RDC-COM-2024...) ou province..."
+                  placeholder="Rechercher par nom, ID National (ex: RDC-COM-2024...) ou province..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-600"
@@ -1457,7 +2022,7 @@
                       <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
                         <th className="py-3 px-4">ID National</th>
                         <th className="py-3 px-4">Identité</th>
-                        <th className="py-3 px-4">Mosquée d’Affiliation</th>
+                        <th className="py-3 px-4">Mosquée de Base</th>
                         <th className="py-3 px-4">Statut</th>
                       </tr>
                     </thead>
@@ -1472,8 +2037,19 @@
                         >
                           <td className="py-3 px-4 font-mono text-xs font-bold text-emerald-900">{m.id}</td>
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-900">{m.prenom} {m.nom} {m.postnom}</div>
-                            <div className="text-xs text-slate-500">{m.profession} • {m.telephone}</div>
+                            <div className="flex items-center gap-2.5">
+                              {m.image && (
+                                <img
+                                  src={m.image}
+                                  alt={m.prenom}
+                                  className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                                />
+                              )}
+                              <div>
+                                <div className="font-semibold text-slate-900">{m.prenom} {m.nom} {m.postnom}</div>
+                                <div className="text-xs text-slate-500">{m.profession} • {m.telephone}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="text-xs font-medium text-slate-800">{m.mosqueeNom}</div>
@@ -1503,14 +2079,22 @@
                       </p>
                       <p className="text-xs font-bold">COMMUNAUTÉ ISLAMIQUE (COMICO)</p>
                     </div>
-                    <Landmark className="w-6 h-6 text-amber-400" />
+                    {selectedMemberCard.image ? (
+                      <img
+                        src={selectedMemberCard.image}
+                        alt={selectedMemberCard.prenom}
+                        className="w-10 h-10 rounded-full object-cover border border-amber-400"
+                      />
+                    ) : (
+                      <Landmark className="w-6 h-6 text-amber-400" />
+                    )}
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
                     <div className="space-y-1.5">
                       <p className="text-[11px] text-emerald-200 uppercase">Carte d’Affiliation Nationale</p>
                       <p className="text-lg font-bold tracking-tight">
-                        {selectedMemberCard.prenom} {selectedMemberCard.nom}
+                        {selectedMemberCard.prenom} {selectedMemberCard.nom} {selectedMemberCard.postnom}
                       </p>
                       <p className="text-xs font-mono text-amber-300 font-semibold">{selectedMemberCard.id}</p>
                       <p className="text-xs text-emerald-100 pt-1">
@@ -1529,17 +2113,17 @@
 
                 <div className="bg-white rounded-xl border border-slate-200 p-4 text-xs space-y-2">
                   <p className="font-bold text-slate-800">Détails complémentaires du dossier :</p>
-                  <p className="text-slate-600">Situation familiale : <strong className="text-slate-800">{selectedMemberCard.foyer}</strong></p>
-                  <p className="text-slate-600">Compétence / Métier : <strong className="text-slate-800">{selectedMemberCard.profession}</strong></p>
-                  <p className="text-slate-600">Contact : <strong className="text-slate-800">{selectedMemberCard.telephone}</strong></p>
+                  <p className="text-slate-600">ID NATIONAL : <strong className="text-slate-800 font-mono">{selectedMemberCard.id}</strong></p>
+                  <p className="text-slate-600">Profession / Compétence : <strong className="text-slate-800">{selectedMemberCard.profession}</strong></p>
+                  <p className="text-slate-600">Téléphone : <strong className="text-slate-800">{selectedMemberCard.telephone}</strong></p>
                 </div>
               </div>
             )}
           </div>
 
           {showNewMember && (
-            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl my-8">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
                   <h3 className="text-lg font-bold text-slate-900">Enrôlement d’un Nouveau Fidèle</h3>
                   <button type="button" onClick={() => setShowNewMember(false)} className="text-slate-400 hover:text-slate-600">
@@ -1547,19 +2131,29 @@
                   </button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">ID NATIONAL (optionnel, généré auto si vide)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: RDC-COM-2026-009876"
+                      value={formMember.idNational}
+                      onChange={(e) => setFormMember({ ...formMember, idNational: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border rounded-lg font-mono"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">Nom *</label>
                       <input required type="text" value={formMember.nom} onChange={(e) => setFormMember({ ...formMember, nom: e.target.value })} className="w-full px-3 py-2 text-sm border rounded-lg" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Post-nom</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Postnom</label>
                       <input type="text" value={formMember.postnom} onChange={(e) => setFormMember({ ...formMember, postnom: e.target.value })} className="w-full px-3 py-2 text-sm border rounded-lg" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Prénom (Musulman) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Prénom *</label>
                       <input required type="text" value={formMember.prenom} onChange={(e) => setFormMember({ ...formMember, prenom: e.target.value })} className="w-full px-3 py-2 text-sm border rounded-lg" />
                     </div>
                     <div>
@@ -1583,9 +2177,20 @@
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Profession / Compétence</label>
                     <input type="text" placeholder="Ex: Enseignant, Commerçant, Médecin..." value={formMember.profession} onChange={(e) => setFormMember({ ...formMember, profession: e.target.value })} className="w-full px-3 py-2 text-sm border rounded-lg" />
                   </div>
-                  <div className="flex justify-end gap-2 pt-3">
-                    <button type="button" onClick={() => setShowNewMember(false)} className="px-4 py-2 text-sm text-slate-600">Annuler</button>
-                    <button type="submit" className="px-4 py-2 text-sm font-semibold bg-emerald-800 text-white rounded-lg">Générer ID & Carte</button>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Image (Photo du membre)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMemberImage}
+                      className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800"
+                    />
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2 pt-3">
+                    <button type="button" onClick={() => setShowNewMember(false)} className="px-3 py-2 text-xs text-slate-600">Annuler</button>
+                    <button type="button" onClick={() => window.print()} className="px-3 py-2 text-xs font-semibold bg-slate-800 text-white rounded-lg">Imprimer</button>
+                    <button type="submit" className="px-3.5 py-2 text-xs font-semibold bg-amber-600 text-white rounded-lg">Générer ID & Carte</button>
+                    <button type="submit" className="px-3.5 py-2 text-xs font-semibold bg-emerald-800 text-white rounded-lg">Enregistrer et Stocker</button>
                   </div>
                 </form>
               </div>
@@ -1595,7 +2200,7 @@
       );
     }
 
-    function LeadersView({ leaders, mosques, onAddLeader }) {
+    function LeadersView({ leaders, mosques, onAddLeader, onDeleteLeader }) {
       const [showNominateModal, setShowNominateModal] = useState(false);
       const [newLeader, setNewLeader] = useState({
         nom: '',
@@ -1626,13 +2231,36 @@
               <h2 className="text-xl font-bold text-slate-900">4. Corps des Responsables Religieux (Imams, Du’at & Encadreurs)</h2>
               <p className="text-sm text-slate-500">Qualifications académiques, arrêtés de nomination, affectations et évaluations</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowNominateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Émettre un Acte de Nomination
-            </button>
+            <div className="flex flex-wrap gap-2 no-print">
+              <button
+                type="button"
+                onClick={() => setShowNominateModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-sm"
+              >
+                Signer Un Arrêté
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNominateModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> Enregistrer
+              </button>
+              <button
+                type="button"
+                onClick={() => leaders[0] && onDeleteLeader(leaders[0].id)}
+                className="px-3.5 py-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-semibold"
+              >
+                Supprimer
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold"
+              >
+                Imprimer
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1656,6 +2284,23 @@
                   <p>Affectation : <strong className="text-slate-800">{leader.affectation} ({leader.province})</strong></p>
                   <p>Prise de fonction : <span className="text-slate-800">{leader.dateNomination}</span></p>
                 </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex justify-end gap-2 no-print">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded"
+                  >
+                    Imprimer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteLeader(leader.id)}
+                    className="px-2.5 py-1 text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 rounded"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1664,7 +2309,7 @@
             <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-                  <h3 className="text-lg font-bold text-slate-900">Nomination & Affectation Religieuse</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Arrêté & Affectation Religieuse</h3>
                   <button type="button" onClick={() => setShowNominateModal(false)}><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-3">
@@ -1699,9 +2344,11 @@
                       </select>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2 pt-3">
-                    <button type="button" onClick={() => setShowNominateModal(false)} className="px-4 py-2 text-sm text-slate-600">Annuler</button>
-                    <button type="submit" className="px-4 py-2 text-sm font-semibold bg-emerald-800 text-white rounded-lg">Signer l’Arrêté</button>
+                  <div className="flex flex-wrap justify-end gap-2 pt-3">
+                    <button type="button" onClick={() => setShowNominateModal(false)} className="px-3 py-2 text-xs text-slate-600">Annuler</button>
+                    <button type="button" onClick={() => window.print()} className="px-3 py-2 text-xs font-semibold bg-slate-800 text-white rounded-lg">Imprimer</button>
+                    <button type="submit" className="px-3.5 py-2 text-xs font-semibold bg-emerald-800 text-white rounded-lg">Enregistrer</button>
+                    <button type="submit" className="px-3.5 py-2 text-xs font-semibold bg-amber-600 text-white rounded-lg">Signer Un Arrêté</button>
                   </div>
                 </form>
               </div>
@@ -1994,7 +2641,7 @@
         beneficiaire: '',
         province: 'Kinshasa',
         mosquee: 'Grande Mosquée Centrale de Kinshasa',
-        imamSignataire: leaders[0]?.nom || 'Cheikh Abdallah Mangala Luaba'
+        imamSignataire: leaders[0]?.nom || 'Imam Khatib Principal Désigné'
       });
 
       const selectedCert = useMemo(
@@ -2275,6 +2922,10 @@
     function AdminView({ splitRules, onUpdateSplit, onResetData }) {
       const [tempSplit, setTempSplit] = useState(splitRules);
 
+      useEffect(() => {
+        setTempSplit(splitRules);
+      }, [splitRules]);
+
       const handleSubmit = (e) => {
         e.preventDefault();
         const loc = Number(tempSplit.locale);
@@ -2347,7 +2998,7 @@
               <div className="space-y-2.5 text-xs">
                 <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-slate-900">Représentant National / Super Admin</p>
+                    <p className="font-bold text-slate-900">Chargé de l’Administration / Super Admin</p>
                     <p className="text-slate-500">Accès total 26 provinces, nominations, audit & paramètres</p>
                   </div>
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">2FA Actif</span>
@@ -2543,8 +3194,11 @@
       const [notification, setNotification] = useState(null);
       const [topNavOpen, setTopNavOpen] = useState(false);
       const [pagesDropdownOpen, setPagesDropdownOpen] = useState(false);
+      const [isAdminRegistrar, setIsAdminRegistrar] = useState(
+        saved?.isAdminRegistrar !== undefined ? saved.isAdminRegistrar : true
+      );
 
-      const [organs] = useState(saved?.organs || INITIAL_ORGANS);
+      const [organs, setOrgans] = useState(saved?.organs || INITIAL_ORGANS);
       const [mosques, setMosques] = useState(saved?.mosques || INITIAL_MOSQUES);
       const [members, setMembers] = useState(saved?.members || INITIAL_MEMBERS);
       const [leaders, setLeaders] = useState(saved?.leaders || INITIAL_LEADERS);
@@ -2564,6 +3218,7 @@
           localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({
+              isAdminRegistrar,
               organs,
               mosques,
               members,
@@ -2582,6 +3237,7 @@
           // Ignorer si le stockage local est indisponible
         }
       }, [
+        isAdminRegistrar,
         organs,
         mosques,
         members,
@@ -2608,7 +3264,7 @@
           {
             id: `AUD-${Math.floor(10000 + Math.random() * 90000)}`,
             timestamp: formattedDate,
-            acteur: 'Administrateur Connecté (Siège)',
+            acteur: 'Chargé de l’Administration',
             role: 'Super Admin National',
             province,
             module,
@@ -2653,24 +3309,110 @@
         };
       }, [transactions]);
 
+      const insertUnderParent = (nodes, parentId, newNode) =>
+        nodes.map((node) => {
+          if (node.id === parentId) {
+            return { ...node, enfants: [...(node.enfants || []), newNode] };
+          }
+          if (node.enfants && node.enfants.length > 0) {
+            return { ...node, enfants: insertUnderParent(node.enfants, parentId, newNode) };
+          }
+          return node;
+        });
+
+      const updateInTree = (nodes, targetId, patch) =>
+        nodes.map((node) => {
+          if (node.id === targetId) {
+            return { ...node, ...patch };
+          }
+          if (node.enfants && node.enfants.length > 0) {
+            return { ...node, enfants: updateInTree(node.enfants, targetId, patch) };
+          }
+          return node;
+        });
+
+      const removeFromTree = (nodes, targetId) =>
+        nodes
+          .filter((node) => node.id !== targetId)
+          .map((node) => ({
+            ...node,
+            enfants: node.enfants ? removeFromTree(node.enfants, targetId) : []
+          }));
+
+      const handleSaveOrgan = (input) => {
+        const created = {
+          id: `ORG-${Date.now()}`,
+          code: input.code?.trim() || `COMICO-${input.province.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 89)}`,
+          nom: input.nom.trim(),
+          niveau: input.niveau,
+          province: input.province,
+          siege: input.siege?.trim() || 'À préciser',
+          president: input.president.trim(),
+          mandat: input.mandat || '2025 - 2030',
+          statut: 'Actif',
+          effectifBureau: Number(input.effectifBureau) || 7,
+          enfants: []
+        };
+        setOrgans((prev) => insertUnderParent(prev, input.parentId, created));
+        recordAudit('Structure et organes', 'ENREGISTREMENT_AUTORITE_HIE', `Ajout ${created.code} — ${created.nom} (${created.president})`, created.province);
+        pushNotification(`Entité & autorité "${created.nom}" enregistrée dans l’organigramme HIE.`);
+      };
+
+      const handleUpdateOrgan = (targetId, input) => {
+        setOrgans((prev) =>
+          updateInTree(prev, targetId, {
+            code: input.code?.trim() || undefined,
+            nom: input.nom.trim(),
+            niveau: input.niveau,
+            province: input.province,
+            siege: input.siege?.trim() || 'À préciser',
+            president: input.president.trim(),
+            mandat: input.mandat || '2025 - 2030',
+            effectifBureau: Number(input.effectifBureau) || 7
+          })
+        );
+        recordAudit('Structure et organes', 'MODIFICATION_AUTORITE_HIE', `Mise à jour ${input.nom} (${input.president})`, input.province);
+        pushNotification(`Autorité / entité "${input.nom}" mise à jour.`);
+      };
+
+      const handleDeleteOrgan = (targetId) => {
+        setOrgans((prev) => removeFromTree(prev, targetId));
+        recordAudit('Structure et organes', 'SUPPRESSION_AUTORITE_HIE', `Suppression organe ID ${targetId}`);
+        pushNotification('Entité supprimée de l’organigramme HIE.');
+      };
+
+      const handlePublishOrgans = () => {
+        recordAudit('Structure et organes', 'PUBLICATION_ORGANIGRAMME_HIE', 'Publication officielle de l’organigramme HIE');
+        pushNotification('Organigramme HIE publié avec succès.');
+      };
+
       const handleAddMosque = (input) => {
         const created = {
           id: `MSQ-${input.province.slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 899)}`,
           ...input,
           capacite: Number(input.capacite) || 0,
           gps: '-4.3210, 15.3120',
-          annexes: ['Madrasa', 'Salles d’ablution'],
+          annexes: input.annexes?.length ? input.annexes : ['Salles d’ablution', 'Madrassa'],
           etat: 'Bon',
           dateConstruction: '2026'
         };
         setMosques((prev) => [created, ...prev]);
         recordAudit('Mosquées', 'ENREGISTREMENT_MOSQUEE', `Ajout de ${created.nom} (${created.province})`, created.province);
-        pushNotification(`La mosquée "${created.nom}" a été enregistrée avec succès.`);
+        pushNotification(`La mosquée "${created.nom}" a été enregistrée au patrimoine.`);
+      };
+
+      const handleDeleteMosque = (id) => {
+        setMosques((prev) => prev.filter((m) => m.id !== id));
+        recordAudit('Mosquées', 'SUPPRESSION_MOSQUEE', `Suppression mosquée ${id}`);
+        pushNotification('Mosquée retirée du registre.');
       };
 
       const handleCreateMember = (input) => {
+        const idNat =
+          input.idNational?.trim() ||
+          `RDC-COM-2026-${String(Math.floor(100000 + Math.random() * 899999))}`;
         const created = {
-          id: `RDC-COM-2026-${String(Math.floor(100000 + Math.random() * 899999))}`,
+          id: idNat,
           ...input,
           dateNaissance: '1990-01-01',
           mosqueeId: 'MSQ-KIN-001',
@@ -2680,8 +3422,14 @@
         };
         setMembers((prev) => [created, ...prev]);
         recordAudit('Membres', 'ENROLEMENT_FIDELE', `Enrôlement national de ${created.prenom} ${created.nom} (${created.id})`, created.province);
-        pushNotification(`Carte nationale générée pour ${created.prenom} ${created.nom} (${created.id}).`);
+        pushNotification(`Membre ${created.prenom} ${created.nom} enregistré (${created.id}).`);
         return created;
+      };
+
+      const handleDeleteMember = (id) => {
+        setMembers((prev) => prev.filter((m) => m.id !== id));
+        recordAudit('Membres', 'SUPPRESSION_FIDELE', `Suppression membre ${id}`);
+        pushNotification('Membre supprimé du registre.');
       };
 
       const handleAddLeader = (input) => {
@@ -2695,7 +3443,13 @@
         };
         setLeaders((prev) => [created, ...prev]);
         recordAudit('Responsables religieux', 'NOMINATION_IMAM', `Acte ${created.acteNomination} : ${created.nom} affecté à ${created.affectation}`, created.province);
-        pushNotification(`Acte de nomination ${created.acteNomination} établi pour ${created.nom}.`);
+        pushNotification(`Arrêté ${created.acteNomination} signé et enregistré pour ${created.nom}.`);
+      };
+
+      const handleDeleteLeader = (id) => {
+        setLeaders((prev) => prev.filter((l) => l.id !== id));
+        recordAudit('Responsables religieux', 'SUPPRESSION_IMAM', `Suppression responsable ${id}`);
+        pushNotification('Responsable religieux supprimé.');
       };
 
       const handleRecordTransaction = (input) => {
@@ -2782,6 +3536,8 @@
 
       const handleResetData = () => {
         localStorage.removeItem(STORAGE_KEY);
+        setIsAdminRegistrar(true);
+        setOrgans(INITIAL_ORGANS);
         setMosques(INITIAL_MOSQUES);
         setMembers(INITIAL_MEMBERS);
         setLeaders(INITIAL_LEADERS);
@@ -2898,10 +3654,10 @@
             <div className="p-4 border-t border-emerald-900 bg-emerald-950/80 text-xs">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-emerald-800 flex items-center justify-center font-bold text-amber-300 border border-amber-400/30">
-                  AM
+                  CA
                 </div>
                 <div className="truncate">
-                  <p className="font-bold text-white truncate">Cheikh A. Mangala</p>
+                  <p className="font-bold text-white truncate">Chargé de l’Administration</p>
                   <p className="text-[11px] text-emerald-400 truncate">Siège National • Kinshasa</p>
                 </div>
               </div>
@@ -3057,15 +3813,51 @@
                   splitRules={splitRules}
                   certificatesCount={certificates.length}
                   onNavigate={setActiveTab}
+                  isAdminRegistrar={isAdminRegistrar}
+                  onToggleAdminRegistrar={() => {
+                    setIsAdminRegistrar((prev) => !prev);
+                    pushNotification(
+                      !isAdminRegistrar
+                        ? 'Droit d’enregistrement activé pour le Chargé de l’Adm.'
+                        : 'Droit d’enregistrement verrouillé.'
+                    );
+                  }}
                 />
               )}
-              {activeTab === 'structure' && <StructureView organs={organs} />}
-              {activeTab === 'mosques' && <MosquesView mosques={mosques} onAddMosque={handleAddMosque} />}
+              {activeTab === 'structure' && (
+                <StructureView
+                  organs={organs}
+                  isAdminRegistrar={isAdminRegistrar}
+                  onSaveOrgan={handleSaveOrgan}
+                  onUpdateOrgan={handleUpdateOrgan}
+                  onDeleteOrgan={handleDeleteOrgan}
+                  onPublishOrgans={handlePublishOrgans}
+                  onNotify={pushNotification}
+                />
+              )}
+              {activeTab === 'mosques' && (
+                <MosquesView
+                  mosques={mosques}
+                  onAddMosque={handleAddMosque}
+                  onDeleteMosque={handleDeleteMosque}
+                  onNotify={pushNotification}
+                />
+              )}
               {activeTab === 'members' && (
-                <MembersView members={members} mosques={mosques} onCreateMember={handleCreateMember} />
+                <MembersView
+                  members={members}
+                  mosques={mosques}
+                  onCreateMember={handleCreateMember}
+                  onDeleteMember={handleDeleteMember}
+                />
               )}
               {activeTab === 'leaders' && (
-                <LeadersView leaders={leaders} mosques={mosques} onAddLeader={handleAddLeader} />
+                <LeadersView
+                  leaders={leaders}
+                  mosques={mosques}
+                  onAddLeader={handleAddLeader}
+                  onDeleteLeader={handleDeleteLeader}
+                />
               )}
               {activeTab === 'finance' && (
                 <FinanceView
