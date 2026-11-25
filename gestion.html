@@ -236,7 +236,7 @@
         statut: 'En fonction'
       },
 
-      // Données complémentaires conservées
+      // Données complémentaires conservées & enrichies
       transactions: [
         {
           id: 'TRX-2026-8841',
@@ -253,6 +253,19 @@
           statut: 'Validé'
         }
       ],
+      selectedTransactionId: 'TRX-2026-8841',
+      financeForm: {
+        id: '',
+        date: new Date().toISOString().split('T')[0],
+        type: 'Entrée',
+        categorie: 'Zakat Al-Mal',
+        source: '',
+        mode: 'M-Pesa Entreprise',
+        reference: '',
+        montantUSD: 1000,
+        statut: 'Validé'
+      },
+
       events: [
         {
           id: 'EVT-2026-01',
@@ -266,6 +279,19 @@
           statut: 'Confirmé'
         }
       ],
+      selectedEventId: 'EVT-2026-01',
+      eventForm: {
+        id: '',
+        titre: '',
+        dateGregorien: new Date().toISOString().split('T')[0],
+        dateHijri: '',
+        lieu: '',
+        province: 'Kinshasa',
+        type: 'Institutionnel',
+        participantsAttendus: 200,
+        statut: 'Confirmé'
+      },
+
       certificates: [
         {
           id: 'ACT-RDC-2026-0419',
@@ -279,6 +305,19 @@
           statut: 'Authentifié'
         }
       ],
+      selectedCertificateId: 'ACT-RDC-2026-0419',
+      certificateForm: {
+        id: '',
+        type: 'Acte de Mariage Religieux (Nikah)',
+        beneficiaire: '',
+        province: 'Kinshasa',
+        mosquee: 'Grande Mosquée Centrale de Kinshasa',
+        imamSignataire: '',
+        dateEmission: new Date().toISOString().split('T')[0],
+        hashVerification: '',
+        statut: 'Authentifié'
+      },
+
       auditLogs: [
         {
           id: 'AUD-99412',
@@ -292,15 +331,58 @@
           ip: '197.242.118.42'
         }
       ],
+      selectedAuditId: 'AUD-99412',
+      auditForm: {
+        id: '',
+        province: 'Kinshasa',
+        module: 'Administration',
+        action: 'VERIFICATION_REGISTRE',
+        details: ''
+      },
+
       madrasas: [
         { id: 'MAD-01', nom: 'Institut Coranique Al-Azhar RDC', province: 'Kinshasa', directeur: 'Direction Madrasa', eleves: 640, enseignants: 22, niveau: 'Primaire & Secondaire', tauxReussite: '92%' }
       ],
+      selectedMadrasaId: 'MAD-01',
+      madrasaForm: {
+        id: '',
+        nom: '',
+        province: 'Kinshasa',
+        directeur: '',
+        eleves: 150,
+        enseignants: 8,
+        niveau: 'Primaire & Secondaire',
+        tauxReussite: '85%'
+      },
+
       waqfs: [
         { id: 'WQF-01', designation: 'Immeuble Commercial Waqf Gombe', province: 'Kinshasa', type: 'Bien Immobilier Locatif', revenuMensuelUSD: 3800, affectationRevenu: 'Financement Orphelinats & Bourses', statut: 'Exploité' }
       ],
+      selectedWaqfId: 'WQF-01',
+      waqfForm: {
+        id: '',
+        designation: '',
+        province: 'Kinshasa',
+        type: 'Bien Immobilier Locatif',
+        revenuMensuelUSD: 1500,
+        affectationRevenu: 'Financement Orphelinats & Bourses',
+        statut: 'Exploité'
+      },
+
       hajjPilgrims: [
         { id: 'HAJ-2027-001', nom: 'Candidat Pèlerin RDC', passeport: 'OP0984122', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true }
-      ]
+      ],
+      selectedHajjId: 'HAJ-2027-001',
+      hajjForm: {
+        id: '',
+        nom: '',
+        passeport: '',
+        province: 'Kinshasa',
+        forfait: 'Forfait Standard RDC',
+        paiementUSD: 4950,
+        statutPaiement: 'Soldé',
+        vaccinMeningite: true
+      }
     };
 
     function loadState() {
@@ -363,6 +445,25 @@
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    function getHeaderBadgeText() {
+      switch (state.activeTab) {
+        case 'dashboard': return 'Pilotage National • 26 Provinces RDC';
+        case 'structure': return 'Gouvernance & Organigramme HIE';
+        case 'mosques': return 'Patrimoine Cultuel & Mosquées';
+        case 'members': return 'Registre Centralisé des Membres';
+        case 'leaders': return 'Corps des Responsables Religieux';
+        case 'finance': return 'Finance, Zakat & Clé de Répartition';
+        case 'events': return 'Calendrier Cultuel & Événements';
+        case 'certificates': return 'Actes & Attestations Religieuses';
+        case 'audit': return 'Traçabilité & Journal d’Audit';
+        case 'admin': return 'Administration & Paramètres RDC';
+        case 'madrasas': return 'Enseignement & Madrasas';
+        case 'waqf': return 'Action Sociale & Biens Waqf';
+        case 'hajj': return 'Gestion Hajj & Omra • RDC';
+        default: return 'Administration Islamique • RDC';
+      }
     }
 
     // Générateur de matrice QR visuelle déterministe à partir du texte
@@ -706,6 +807,309 @@
       renderApp();
     }
 
+    // --- Actions Rubriques Complémentaires (Finance, Événements, Attestations, Audit, Admin, Madrasas, Waqf, Hajj) ---
+    function handleSaveFinance(e) {
+      e.preventDefault();
+      const f = state.financeForm;
+      if (!f.source.trim()) return;
+      const montant = Number(f.montantUSD) || 0;
+      const partLocale = +(montant * (state.splitRules.locale / 100)).toFixed(2);
+      const partProvinciale = +(montant * (state.splitRules.provinciale / 100)).toFixed(2);
+      const partNationale = +(montant * (state.splitRules.nationale / 100)).toFixed(2);
+
+      if (f.id) {
+        state.transactions = state.transactions.map((t) =>
+          t.id === f.id ? { ...t, ...f, montantUSD: montant, partLocale, partProvinciale, partNationale } : t
+        );
+        state.selectedTransactionId = f.id;
+        notify('Opération financière modifiée et enregistrée.');
+      } else {
+        const id = `TRX-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        state.transactions.unshift({
+          ...f,
+          id,
+          reference: f.reference.trim() || `REF-${Date.now().toString().slice(-6)}`,
+          montantUSD: montant,
+          partLocale,
+          partProvinciale,
+          partNationale
+        });
+        state.selectedTransactionId = id;
+        notify('Opération financière enregistrée.');
+      }
+      state.financeForm = { id: '', date: new Date().toISOString().split('T')[0], type: 'Entrée', categorie: 'Zakat Al-Mal', source: '', mode: 'M-Pesa Entreprise', reference: '', montantUSD: 1000, statut: 'Validé' };
+      saveState();
+      renderApp();
+    }
+
+    function editFinance(id) {
+      const target = state.transactions.find((t) => t.id === id);
+      if (!target) return;
+      state.financeForm = { ...target };
+      state.selectedTransactionId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteFinance(id) {
+      state.transactions = state.transactions.filter((t) => t.id !== id);
+      if (state.selectedTransactionId === id) state.selectedTransactionId = state.transactions[0]?.id || '';
+      notify('Transaction supprimée.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveEvent(e) {
+      e.preventDefault();
+      const f = state.eventForm;
+      if (!f.titre.trim()) return;
+      if (f.id) {
+        state.events = state.events.map((ev) => (ev.id === f.id ? { ...ev, ...f, participantsAttendus: Number(f.participantsAttendus) || 0 } : ev));
+        state.selectedEventId = f.id;
+        notify('Événement modifié et enregistré.');
+      } else {
+        const id = `EVT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+        state.events.unshift({ ...f, id, participantsAttendus: Number(f.participantsAttendus) || 0 });
+        state.selectedEventId = id;
+        notify('Événement enregistré.');
+      }
+      state.eventForm = { id: '', titre: '', dateGregorien: new Date().toISOString().split('T')[0], dateHijri: '', lieu: '', province: 'Kinshasa', type: 'Institutionnel', participantsAttendus: 200, statut: 'Confirmé' };
+      saveState();
+      renderApp();
+    }
+
+    function editEvent(id) {
+      const target = state.events.find((ev) => ev.id === id);
+      if (!target) return;
+      state.eventForm = { ...target };
+      state.selectedEventId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteEvent(id) {
+      state.events = state.events.filter((ev) => ev.id !== id);
+      if (state.selectedEventId === id) state.selectedEventId = state.events[0]?.id || '';
+      notify('Événement supprimé.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveCertificate(e) {
+      e.preventDefault();
+      const f = state.certificateForm;
+      if (!f.beneficiaire.trim()) return;
+      const hash = f.hashVerification.trim() || `COMICO-SHA256-${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      if (f.id) {
+        state.certificates = state.certificates.map((c) => (c.id === f.id ? { ...c, ...f, hashVerification: hash } : c));
+        state.selectedCertificateId = f.id;
+        notify('Attestation religieuse modifiée et enregistrée.');
+      } else {
+        const id = `ACT-RDC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        state.certificates.unshift({ ...f, id, hashVerification: hash });
+        state.selectedCertificateId = id;
+        notify('Attestation religieuse enregistrée.');
+      }
+      state.certificateForm = { id: '', type: 'Acte de Mariage Religieux (Nikah)', beneficiaire: '', province: 'Kinshasa', mosquee: 'Grande Mosquée Centrale de Kinshasa', imamSignataire: '', dateEmission: new Date().toISOString().split('T')[0], hashVerification: '', statut: 'Authentifié' };
+      saveState();
+      renderApp();
+    }
+
+    function editCertificate(id) {
+      const target = state.certificates.find((c) => c.id === id);
+      if (!target) return;
+      state.certificateForm = { ...target };
+      state.selectedCertificateId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteCertificate(id) {
+      state.certificates = state.certificates.filter((c) => c.id !== id);
+      if (state.selectedCertificateId === id) state.selectedCertificateId = state.certificates[0]?.id || '';
+      notify('Attestation supprimée.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveAudit(e) {
+      e.preventDefault();
+      const f = state.auditForm;
+      if (!f.details.trim()) return;
+      const now = new Date();
+      const ts = `${now.toISOString().split('T')[0]} ${now.toTimeString().split(' ')[0]} WAT`;
+      if (f.id) {
+        state.auditLogs = state.auditLogs.map((a) => (a.id === f.id ? { ...a, ...f } : a));
+        state.selectedAuditId = f.id;
+        notify('Entrée d’audit modifiée et enregistrée.');
+      } else {
+        const id = `AUD-${Math.floor(10000 + Math.random() * 90000)}`;
+        state.auditLogs.unshift({
+          id,
+          timestamp: ts,
+          acteur: 'Chargé de l’Administration',
+          role: 'Chargé de l’Administration',
+          province: f.province,
+          module: f.module,
+          action: f.action,
+          details: f.details,
+          ip: '197.242.118.42'
+        });
+        state.selectedAuditId = id;
+        notify('Entrée d’audit enregistrée.');
+      }
+      state.auditForm = { id: '', province: 'Kinshasa', module: 'Administration', action: 'VERIFICATION_REGISTRE', details: '' };
+      saveState();
+      renderApp();
+    }
+
+    function editAudit(id) {
+      const target = state.auditLogs.find((a) => a.id === id);
+      if (!target) return;
+      state.auditForm = { id: target.id, province: target.province, module: target.module, action: target.action, details: target.details };
+      state.selectedAuditId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteAudit(id) {
+      state.auditLogs = state.auditLogs.filter((a) => a.id !== id);
+      if (state.selectedAuditId === id) state.selectedAuditId = state.auditLogs[0]?.id || '';
+      notify('Entrée d’audit supprimée.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveMadrasa(e) {
+      e.preventDefault();
+      const f = state.madrasaForm;
+      if (!f.nom.trim()) return;
+      if (f.id) {
+        state.madrasas = state.madrasas.map((m) => (m.id === f.id ? { ...m, ...f, eleves: Number(f.eleves) || 0, enseignants: Number(f.enseignants) || 0 } : m));
+        state.selectedMadrasaId = f.id;
+        notify('Madrasa modifiée et enregistrée.');
+      } else {
+        const id = `MAD-${Math.floor(10 + Math.random() * 89)}`;
+        state.madrasas.unshift({ ...f, id, eleves: Number(f.eleves) || 0, enseignants: Number(f.enseignants) || 0 });
+        state.selectedMadrasaId = id;
+        notify('Madrasa enregistrée.');
+      }
+      state.madrasaForm = { id: '', nom: '', province: 'Kinshasa', directeur: '', eleves: 150, enseignants: 8, niveau: 'Primaire & Secondaire', tauxReussite: '85%' };
+      saveState();
+      renderApp();
+    }
+
+    function editMadrasa(id) {
+      const target = state.madrasas.find((m) => m.id === id);
+      if (!target) return;
+      state.madrasaForm = { ...target };
+      state.selectedMadrasaId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteMadrasa(id) {
+      state.madrasas = state.madrasas.filter((m) => m.id !== id);
+      if (state.selectedMadrasaId === id) state.selectedMadrasaId = state.madrasas[0]?.id || '';
+      notify('Madrasa supprimée.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveWaqf(e) {
+      e.preventDefault();
+      const f = state.waqfForm;
+      if (!f.designation.trim()) return;
+      if (f.id) {
+        state.waqfs = state.waqfs.map((w) => (w.id === f.id ? { ...w, ...f, revenuMensuelUSD: Number(f.revenuMensuelUSD) || 0 } : w));
+        state.selectedWaqfId = f.id;
+        notify('Bien Waqf modifié et enregistré.');
+      } else {
+        const id = `WQF-${Math.floor(10 + Math.random() * 89)}`;
+        state.waqfs.unshift({ ...f, id, revenuMensuelUSD: Number(f.revenuMensuelUSD) || 0 });
+        state.selectedWaqfId = id;
+        notify('Bien Waqf enregistré.');
+      }
+      state.waqfForm = { id: '', designation: '', province: 'Kinshasa', type: 'Bien Immobilier Locatif', revenuMensuelUSD: 1500, affectationRevenu: 'Financement Orphelinats & Bourses', statut: 'Exploité' };
+      saveState();
+      renderApp();
+    }
+
+    function editWaqf(id) {
+      const target = state.waqfs.find((w) => w.id === id);
+      if (!target) return;
+      state.waqfForm = { ...target };
+      state.selectedWaqfId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteWaqf(id) {
+      state.waqfs = state.waqfs.filter((w) => w.id !== id);
+      if (state.selectedWaqfId === id) state.selectedWaqfId = state.waqfs[0]?.id || '';
+      notify('Bien Waqf supprimé.');
+      saveState();
+      renderApp();
+    }
+
+    function handleSaveHajj(e) {
+      e.preventDefault();
+      const f = state.hajjForm;
+      if (!f.nom.trim()) return;
+      if (f.id) {
+        state.hajjPilgrims = state.hajjPilgrims.map((h) => (h.id === f.id ? { ...h, ...f, paiementUSD: Number(f.paiementUSD) || 0 } : h));
+        state.selectedHajjId = f.id;
+        notify('Dossier Hajj / Omra modifié et enregistré.');
+      } else {
+        const id = `HAJ-${new Date().getFullYear() + 1}-${String(Math.floor(100 + Math.random() * 900))}`;
+        state.hajjPilgrims.unshift({ ...f, id, paiementUSD: Number(f.paiementUSD) || 0 });
+        state.selectedHajjId = id;
+        notify('Dossier Hajj / Omra enregistré.');
+      }
+      state.hajjForm = { id: '', nom: '', passeport: '', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true };
+      saveState();
+      renderApp();
+    }
+
+    function editHajj(id) {
+      const target = state.hajjPilgrims.find((h) => h.id === id);
+      if (!target) return;
+      state.hajjForm = { ...target };
+      state.selectedHajjId = id;
+      saveState();
+      renderApp();
+    }
+
+    function deleteHajj(id) {
+      state.hajjPilgrims = state.hajjPilgrims.filter((h) => h.id !== id);
+      if (state.selectedHajjId === id) state.selectedHajjId = state.hajjPilgrims[0]?.id || '';
+      notify('Dossier Hajj / Omra supprimé.');
+      saveState();
+      renderApp();
+    }
+
+    function renderActionButtons({ formId, onModify, onDelete, onDownload, downloadName, downloadData }) {
+      return `
+        <div class="flex flex-wrap gap-2 no-print">
+          <button type="submit" form="${formId}" class="px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold">
+            Enregistrer
+          </button>
+          <button type="button" onclick="${onModify}" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold">
+            Modifier
+          </button>
+          <button type="button" onclick="${onDelete}" class="px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold">
+            Supprimer
+          </button>
+          <button type="button" onclick="window.print()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold">
+            Imprimer
+          </button>
+          <button type="button" onclick="${onDownload || `downloadJson('${downloadName}', ${downloadData})`}" class="px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold">
+            Télécharger
+          </button>
+        </div>
+      `;
+    }
+
     // --- Rendu des vues ---
     function renderDashboard() {
       return `
@@ -795,7 +1199,6 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Formulaire Enregistrement / Modification des autorités de la HIE -->
             <form id="organ-form" onsubmit="handleSaveOrgan(event)" class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
               <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
                 ${f.id ? 'Modifier un Organe / Autorité HIE' : 'Enregistrement des Autorités de la HIE'}
@@ -861,7 +1264,6 @@
               </div>
             </form>
 
-            <!-- ORGANIGRAMME HIE INTERACTIF -->
             <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only">
               <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
                 ORGANIGRAMME HIE INTERACTIF
@@ -894,7 +1296,6 @@
             </div>
           </div>
 
-          <!-- Section juste en dessous de l'ORGANIGRAMME HIE INTERACTIF affichant les informations enregistrées -->
           <div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm print-data-only">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div>
@@ -1086,7 +1487,6 @@
                 </div>
               ` : ''}
 
-              <!-- Boutons demandés : Enregistrer au Patrimoine, Supprimer, Imprimer, Télécharger, Annuler -->
               <div class="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-100">
                 <button type="submit" class="px-4 py-2 text-xs font-semibold bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg">
                   Enregistrer au Patrimoine
@@ -1213,7 +1613,6 @@
                 </div>
               </div>
 
-              <!-- Boutons demandés : Générer ID & Carte, Supprimer, Imprimer, Enregistrer et Stocker -->
               <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 no-print">
                 <button type="button" onclick="generateMemberIdCard()" class="px-3 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg">
                   Générer ID & Carte
@@ -1230,7 +1629,6 @@
               </div>
             </form>
 
-            <!-- Carte Membre (8,5cm x 5,5cm) + Liste -->
             <div class="lg:col-span-6 space-y-4">
               ${selected ? `
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 print-data-only">
@@ -1271,7 +1669,6 @@
                       </div>
                     </div>
 
-                    <!-- Mot d'assistance centré en bas adressé aux autorités militaires et civiles -->
                     <div class="border-t border-amber-300/40 pt-1 text-center">
                       <p class="text-[6.8px] font-semibold text-amber-200 leading-tight">
                         Assistance demandée aux autorités tant militaires que civiles envers le porteur de cette carte officielle.
@@ -1353,7 +1750,6 @@
                 </div>
               ` : ''}
 
-              <!-- Boutons demandés : Signer Un Arrêté, Enregistrer, Supprimer, Imprimer -->
               <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 no-print">
                 <button type="button" onclick="signLeaderDecree()" class="px-3 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg">
                   Signer Un Arrêté
@@ -1400,15 +1796,427 @@
       `;
     }
 
-    function renderOtherSection(title, desc, items) {
+    // --- 5. Finance & Zakat ---
+    function renderFinance() {
+      const f = state.financeForm;
+      const selId = state.selectedTransactionId || state.transactions[0]?.id || '';
       return `
-        <div class="space-y-4 print-data-only">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">${escapeHtml(title)}</h2>
-            <p class="text-sm text-slate-500">${escapeHtml(desc)}</p>
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">5. Finance & Zakat</h2>
+              <p class="text-sm text-slate-500">Clé de répartition : Locale ${state.splitRules.locale}% • Provinciale ${state.splitRules.provinciale}% • Nationale ${state.splitRules.nationale}%</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'finance-form',
+              onModify: `if('${selId}') editFinance('${selId}')`,
+              onDelete: `if('${selId}') deleteFinance('${selId}')`,
+              downloadName: 'finance-zakat-comico.json',
+              downloadData: 'state.transactions'
+            })}
           </div>
-          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-2 text-xs">
-            ${items.map((it) => `<div class="p-3 rounded-lg bg-slate-50 border border-slate-200">${escapeHtml(it)}</div>`).join('')}
+
+          <form id="finance-form" onsubmit="handleSaveFinance(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Catégorie</label>
+              <select onchange="state.financeForm.categorie = this.value" class="w-full px-3 py-2 border rounded-lg">
+                ${['Zakat Al-Mal', 'Zakat Al-Fitr', 'Sadaqah & Dons', 'Cotisations'].map(c => `<option value="${c}" ${f.categorie === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Source / Mosquée *</label>
+              <input required type="text" value="${escapeHtml(f.source)}" oninput="state.financeForm.source = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Montant (USD)</label>
+              <input type="number" step="0.01" value="${escapeHtml(f.montantUSD)}" oninput="state.financeForm.montantUSD = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Mode / Référence</label>
+              <input type="text" placeholder="Ex: M-Pesa / Réf" value="${escapeHtml(f.reference)}" oninput="state.financeForm.reference = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Registre des Transactions Financières & Zakat (${state.transactions.length})</h3>
+            ${state.transactions.map(t => `
+              <div onclick="state.selectedTransactionId = '${t.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === t.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <div class="flex flex-wrap justify-between gap-2">
+                  <span class="font-bold text-slate-900">${escapeHtml(t.id)} — ${escapeHtml(t.categorie)} (${escapeHtml(t.date)})</span>
+                  <span class="font-bold text-emerald-900">$${Number(t.montantUSD).toLocaleString()} USD • ${escapeHtml(t.statut)}</span>
+                </div>
+                <p class="text-slate-600 mt-1">Source : <strong>${escapeHtml(t.source)}</strong> • Mode : ${escapeHtml(t.mode)} • Réf : <span class="font-mono">${escapeHtml(t.reference)}</span></p>
+                <p class="text-slate-700 mt-1">Répartition : Locale $${t.partLocale} • Provinciale $${t.partProvinciale} • Nationale $${t.partNationale}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 6. Événements et fêtes ---
+    function renderEvents() {
+      const f = state.eventForm;
+      const selId = state.selectedEventId || state.events[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">6. Événements et fêtes</h2>
+              <p class="text-sm text-slate-500">Calendrier communautaire, célébrations et assemblées</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'event-form',
+              onModify: `if('${selId}') editEvent('${selId}')`,
+              onDelete: `if('${selId}') deleteEvent('${selId}')`,
+              downloadName: 'evenements-fetes-comico.json',
+              downloadData: 'state.events'
+            })}
+          </div>
+
+          <form id="event-form" onsubmit="handleSaveEvent(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Titre / Fête *</label>
+              <input required type="text" value="${escapeHtml(f.titre)}" oninput="state.eventForm.titre = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Date Grégorienne</label>
+              <input type="date" value="${escapeHtml(f.dateGregorien)}" oninput="state.eventForm.dateGregorien = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Date Hégirienne</label>
+              <input type="text" placeholder="Ex: 1er Shawwal 1448 AH" value="${escapeHtml(f.dateHijri)}" oninput="state.eventForm.dateHijri = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Lieu & Province</label>
+              <input type="text" placeholder="Lieu" value="${escapeHtml(f.lieu)}" oninput="state.eventForm.lieu = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Calendrier des Événements et Fêtes (${state.events.length})</h3>
+            ${state.events.map(ev => `
+              <div onclick="state.selectedEventId = '${ev.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === ev.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(ev.titre)} <span class="text-emerald-800">(${escapeHtml(ev.type)})</span></p>
+                <p class="text-slate-600 mt-1">Date : <strong>${escapeHtml(ev.dateGregorien)}</strong> / ${escapeHtml(ev.dateHijri || '—')} • Lieu : <strong>${escapeHtml(ev.lieu)}</strong> (${escapeHtml(ev.province)}) • Participants : ${Number(ev.participantsAttendus).toLocaleString()}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 7. Attestations religieuses ---
+    function renderCertificates() {
+      const f = state.certificateForm;
+      const selId = state.selectedCertificateId || state.certificates[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">7. Attestations religieuses</h2>
+              <p class="text-sm text-slate-500">Actes de mariage (Nikah), certificats et attestations authentifiées</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'certificate-form',
+              onModify: `if('${selId}') editCertificate('${selId}')`,
+              onDelete: `if('${selId}') deleteCertificate('${selId}')`,
+              downloadName: 'attestations-religieuses-comico.json',
+              downloadData: 'state.certificates'
+            })}
+          </div>
+
+          <form id="certificate-form" onsubmit="handleSaveCertificate(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Type d'Attestation</label>
+              <select onchange="state.certificateForm.type = this.value" class="w-full px-3 py-2 border rounded-lg">
+                ${['Acte de Mariage Religieux (Nikah)', 'Certificat de Conversion / Shahada', 'Attestation d’Imamat'].map(t => `<option value="${t}" ${f.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Bénéficiaire(s) *</label>
+              <input required type="text" value="${escapeHtml(f.beneficiaire)}" oninput="state.certificateForm.beneficiaire = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Mosquée</label>
+              <input type="text" value="${escapeHtml(f.mosquee)}" oninput="state.certificateForm.mosquee = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Signataire habilité</label>
+              <input type="text" value="${escapeHtml(f.imamSignataire)}" oninput="state.certificateForm.imamSignataire = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Registre des Attestations Religieuses (${state.certificates.length})</h3>
+            ${state.certificates.map(c => `
+              <div onclick="state.selectedCertificateId = '${c.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === c.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(c.id)} — ${escapeHtml(c.type)}</p>
+                <p class="text-slate-600 mt-1">Bénéficiaire : <strong>${escapeHtml(c.beneficiaire)}</strong> • Mosquée : ${escapeHtml(c.mosquee)} (${escapeHtml(c.province)}) • Date : ${escapeHtml(c.dateEmission)}</p>
+                <p class="font-mono text-emerald-900 mt-1">Vérification : ${escapeHtml(c.hashVerification)} • ${escapeHtml(c.statut)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 8. Journal d'audit ---
+    function renderAudit() {
+      const f = state.auditForm;
+      const selId = state.selectedAuditId || state.auditLogs[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">8. Journal d'audit</h2>
+              <p class="text-sm text-slate-500">Traçabilité complète des opérations administratives</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'audit-form',
+              onModify: `if('${selId}') editAudit('${selId}')`,
+              onDelete: `if('${selId}') deleteAudit('${selId}')`,
+              downloadName: 'journal-audit-comico.json',
+              downloadData: 'state.auditLogs'
+            })}
+          </div>
+
+          <form id="audit-form" onsubmit="handleSaveAudit(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Module</label>
+              <input type="text" value="${escapeHtml(f.module)}" oninput="state.auditForm.module = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Action</label>
+              <input type="text" value="${escapeHtml(f.action)}" oninput="state.auditForm.action = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Province</label>
+              <select onchange="state.auditForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
+                ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Détails *</label>
+              <input required type="text" value="${escapeHtml(f.details)}" oninput="state.auditForm.details = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Entrées du Journal d'Audit (${state.auditLogs.length})</h3>
+            ${state.auditLogs.map(a => `
+              <div onclick="state.selectedAuditId = '${a.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(a.id)} • ${escapeHtml(a.timestamp)} • <span class="text-emerald-800">${escapeHtml(a.module)} / ${escapeHtml(a.action)}</span></p>
+                <p class="text-slate-600 mt-1">${escapeHtml(a.details)} — Acteur : ${escapeHtml(a.acteur)} (${escapeHtml(a.province)})</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 9. Administration ---
+    function renderAdmin() {
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">9. Administration</h2>
+              <p class="text-sm text-slate-500">Paramètres généraux, clé de répartition et couverture des 26 provinces de la RDC</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'admin-form',
+              onModify: `notify('Paramètres d’administration prêts à être modifiés.')`,
+              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; saveState(); renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
+              downloadName: 'administration-comico-rdc.json',
+              downloadData: '{ splitRules: state.splitRules, provinces: PROVINCES_RDC }'
+            })}
+          </div>
+
+          <form id="admin-form" onsubmit="event.preventDefault(); saveState(); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Part Locale (%)</label>
+              <input type="number" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Part Provinciale (%)</label>
+              <input type="number" value="${escapeHtml(state.splitRules.provinciale)}" oninput="state.splitRules.provinciale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Part Nationale (%)</label>
+              <input type="number" value="${escapeHtml(state.splitRules.nationale)}" oninput="state.splitRules.nationale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-3 text-xs">
+            <h3 class="font-bold text-sm text-slate-900">Configuration Active & 26 Provinces de la RDC</h3>
+            <p><strong>Clé de répartition enregistrée :</strong> Locale ${state.splitRules.locale}% • Provinciale ${state.splitRules.provinciale}% • Nationale ${state.splitRules.nationale}%</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-2">
+              ${PROVINCES_RDC.map(p => `<div class="p-2 rounded bg-slate-50 border border-slate-200 font-semibold text-slate-800">${escapeHtml(p)}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Pôle : Enseignement & Madrasas ---
+    function renderMadrasas() {
+      const f = state.madrasaForm;
+      const selId = state.selectedMadrasaId || state.madrasas[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Enseignement & Madrasas</h2>
+              <p class="text-sm text-slate-500">Établissements d'enseignement islamique et écoles coraniques</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'madrasa-form',
+              onModify: `if('${selId}') editMadrasa('${selId}')`,
+              onDelete: `if('${selId}') deleteMadrasa('${selId}')`,
+              downloadName: 'madrasas-comico.json',
+              downloadData: 'state.madrasas'
+            })}
+          </div>
+
+          <form id="madrasa-form" onsubmit="handleSaveMadrasa(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Nom de la Madrasa *</label>
+              <input required type="text" value="${escapeHtml(f.nom)}" oninput="state.madrasaForm.nom = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Province</label>
+              <select onchange="state.madrasaForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
+                ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Élèves & Enseignants</label>
+              <div class="flex gap-2">
+                <input type="number" placeholder="Élèves" value="${escapeHtml(f.eleves)}" oninput="state.madrasaForm.eleves = this.value" class="w-1/2 px-2 py-2 border rounded-lg" />
+                <input type="number" placeholder="Ens." value="${escapeHtml(f.enseignants)}" oninput="state.madrasaForm.enseignants = this.value" class="w-1/2 px-2 py-2 border rounded-lg" />
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Niveau & Réussite</label>
+              <input type="text" value="${escapeHtml(f.niveau)}" oninput="state.madrasaForm.niveau = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Établissements & Madrasas (${state.madrasas.length})</h3>
+            ${state.madrasas.map(m => `
+              <div onclick="state.selectedMadrasaId = '${m.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === m.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(m.id)} — ${escapeHtml(m.nom)} (${escapeHtml(m.province)})</p>
+                <p class="text-slate-600 mt-1">Direction : <strong>${escapeHtml(m.directeur || '—')}</strong> • Élèves : <strong>${Number(m.eleves).toLocaleString()}</strong> • Enseignants : <strong>${Number(m.enseignants).toLocaleString()}</strong> • Niveau : ${escapeHtml(m.niveau)} • Réussite : ${escapeHtml(m.tauxReussite)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Pôle : Action Sociale & Waqf ---
+    function renderWaqf() {
+      const f = state.waqfForm;
+      const selId = state.selectedWaqfId || state.waqfs[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Action Sociale & Waqf</h2>
+              <p class="text-sm text-slate-500">Gestion des biens habous (Waqf) et œuvres sociales</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'waqf-form',
+              onModify: `if('${selId}') editWaqf('${selId}')`,
+              onDelete: `if('${selId}') deleteWaqf('${selId}')`,
+              downloadName: 'waqf-action-sociale-comico.json',
+              downloadData: 'state.waqfs'
+            })}
+          </div>
+
+          <form id="waqf-form" onsubmit="handleSaveWaqf(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Désignation *</label>
+              <input required type="text" value="${escapeHtml(f.designation)}" oninput="state.waqfForm.designation = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Province</label>
+              <select onchange="state.waqfForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
+                ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Revenu Mensuel (USD)</label>
+              <input type="number" value="${escapeHtml(f.revenuMensuelUSD)}" oninput="state.waqfForm.revenuMensuelUSD = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Affectation du Revenu</label>
+              <input type="text" value="${escapeHtml(f.affectationRevenu)}" oninput="state.waqfForm.affectationRevenu = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Registre Waqf & Action Sociale (${state.waqfs.length})</h3>
+            ${state.waqfs.map(w => `
+              <div onclick="state.selectedWaqfId = '${w.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === w.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(w.id)} — ${escapeHtml(w.designation)} (${escapeHtml(w.province)})</p>
+                <p class="text-slate-600 mt-1">Type : ${escapeHtml(w.type)} • Revenu mensuel : <strong>$${Number(w.revenuMensuelUSD).toLocaleString()} USD</strong> • Affectation : <strong>${escapeHtml(w.affectationRevenu)}</strong> • Statut : ${escapeHtml(w.statut)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Pôle : Gestion Hajj & Omra RDC ---
+    function renderHajj() {
+      const f = state.hajjForm;
+      const selId = state.selectedHajjId || state.hajjPilgrims[0]?.id || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Gestion Hajj & Omra RDC</h2>
+              <p class="text-sm text-slate-500">Suivi des candidats pèlerins, forfaits, paiements et conformité sanitaire</p>
+            </div>
+            ${renderActionButtons({
+              formId: 'hajj-form',
+              onModify: `if('${selId}') editHajj('${selId}')`,
+              onDelete: `if('${selId}') deleteHajj('${selId}')`,
+              downloadName: 'hajj-omra-rdc-comico.json',
+              downloadData: 'state.hajjPilgrims'
+            })}
+          </div>
+
+          <form id="hajj-form" onsubmit="handleSaveHajj(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Nom du Candidat *</label>
+              <input required type="text" value="${escapeHtml(f.nom)}" oninput="state.hajjForm.nom = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">N° Passeport</label>
+              <input type="text" value="${escapeHtml(f.passeport)}" oninput="state.hajjForm.passeport = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Province & Forfait</label>
+              <input type="text" value="${escapeHtml(f.forfait)}" oninput="state.hajjForm.forfait = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Paiement (USD)</label>
+              <input type="number" value="${escapeHtml(f.paiementUSD)}" oninput="state.hajjForm.paiementUSD = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+          </form>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Dossiers Hajj & Omra RDC (${state.hajjPilgrims.length})</h3>
+            ${state.hajjPilgrims.map(h => `
+              <div onclick="state.selectedHajjId = '${h.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === h.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <p class="font-bold text-slate-900">${escapeHtml(h.id)} — ${escapeHtml(h.nom)} (${escapeHtml(h.province)})</p>
+                <p class="text-slate-600 mt-1">Passeport : <span class="font-mono">${escapeHtml(h.passeport)}</span> • Forfait : ${escapeHtml(h.forfait)} • Paiement : <strong>$${Number(h.paiementUSD).toLocaleString()} USD (${escapeHtml(h.statutPaiement)})</strong> • Vaccin Méningite : ${h.vaccinMeningite ? 'À jour' : 'À vérifier'}</p>
+              </div>
+            `).join('')}
           </div>
         </div>
       `;
@@ -1421,14 +2229,14 @@
         case 'mosques': return renderMosques();
         case 'members': return renderMembers();
         case 'leaders': return renderLeaders();
-        case 'finance': return renderOtherSection('5. Finance & Zakat', 'Suivi financier et Zakat', state.transactions.map(t => `${t.id} — ${t.categorie} : $${t.montantUSD} USD (${t.source})`));
-        case 'events': return renderOtherSection('6. Événements et fêtes', 'Calendrier communautaire', state.events.map(e => `${e.titre} — ${e.dateGregorien} / ${e.dateHijri} (${e.lieu})`));
-        case 'certificates': return renderOtherSection('7. Attestations religieuses', 'Actes officiels', state.certificates.map(c => `${c.id} — ${c.type} : ${c.beneficiaire}`));
-        case 'audit': return renderOtherSection("8. Journal d'audit", 'Traçabilité des opérations', state.auditLogs.map(a => `${a.timestamp} — [${a.module}] ${a.action} : ${a.details}`));
-        case 'admin': return renderOtherSection('9. Administration', 'Paramètres et 26 provinces RDC', [`Provinces RDC : ${PROVINCES_RDC.join(', ')}`]);
-        case 'madrasas': return renderOtherSection('Enseignement & Madrasas', 'Établissements et écoles coraniques', state.madrasas.map(m => `${m.nom} (${m.province}) — ${m.eleves} élèves`));
-        case 'waqf': return renderOtherSection('Action Sociale & Waqf', 'Biens habous et œuvres sociales', state.waqfs.map(w => `${w.designation} (${w.province}) — ${w.affectationRevenu}`));
-        case 'hajj': return renderOtherSection('Gestion Hajj & Omra RDC', 'Pèlerinage', state.hajjPilgrims.map(h => `${h.id} — ${h.nom} (${h.province})`));
+        case 'finance': return renderFinance();
+        case 'events': return renderEvents();
+        case 'certificates': return renderCertificates();
+        case 'audit': return renderAudit();
+        case 'admin': return renderAdmin();
+        case 'madrasas': return renderMadrasas();
+        case 'waqf': return renderWaqf();
+        case 'hajj': return renderHajj();
         default: return renderDashboard();
       }
     }
@@ -1446,19 +2254,19 @@
             { id: 'mosques', label: '2. Mosquées', badge: state.mosques.length },
             { id: 'members', label: '3. Membres', badge: state.members.length },
             { id: 'leaders', label: '4. Responsables religieux', badge: state.leaders.length },
-            { id: 'finance', label: '5. Finance & Zakat' },
-            { id: 'events', label: '6. Événements et fêtes' },
-            { id: 'certificates', label: '7. Attestations religieuses' },
-            { id: 'audit', label: "8. Journal d'audit" },
+            { id: 'finance', label: '5. Finance & Zakat', badge: state.transactions.length },
+            { id: 'events', label: '6. Événements et fêtes', badge: state.events.length },
+            { id: 'certificates', label: '7. Attestations religieuses', badge: state.certificates.length },
+            { id: 'audit', label: "8. Journal d'audit", badge: state.auditLogs.length },
             { id: 'admin', label: '9. Administration' }
           ]
         },
         {
           title: 'Pôles Opérationnels Complémentaires',
           items: [
-            { id: 'madrasas', label: 'Enseignement & Madrasas' },
-            { id: 'waqf', label: 'Action Sociale & Waqf' },
-            { id: 'hajj', label: 'Gestion Hajj & Omra RDC' }
+            { id: 'madrasas', label: 'Enseignement & Madrasas', badge: state.madrasas.length },
+            { id: 'waqf', label: 'Action Sociale & Waqf', badge: state.waqfs.length },
+            { id: 'hajj', label: 'Gestion Hajj & Omra RDC', badge: state.hajjPilgrims.length }
           ]
         }
       ];
@@ -1530,7 +2338,7 @@
                 <span class="text-xs text-slate-500 font-medium">Système d’Information Unifié • Communauté Islamique en RDC</span>
               </div>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                HTML • CSS • JS (Persistance Locale)
+                ${escapeHtml(getHeaderBadgeText())}
               </span>
             </header>
 
