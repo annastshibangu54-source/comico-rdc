@@ -6,9 +6,30 @@
   <title>COMICO • RDC — Administration Islamique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    .member-card-box {
+      width: 8.5cm;
+      height: 5.5cm;
+      max-width: 100%;
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
     @media print {
-      aside, header, nav, .no-print { display: none !important; }
-      body { background: #fff !important; }
+      aside, header, nav, form, .no-print { display: none !important; }
+      body { background: #fff !important; margin: 0; padding: 0; }
+      main { padding: 0 !important; max-width: 100% !important; }
+      .print-data-only {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #fff !important;
+      }
+      .member-card-box {
+        width: 8.5cm !important;
+        height: 5.5cm !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
   </style>
 </head>
@@ -34,6 +55,7 @@
       activeLevelFilter: 'National (Toutes provinces)',
       notification: null,
       splitRules: { locale: 50, provinciale: 30, nationale: 20 },
+      mosqueSearch: '',
 
       // Point 1 : Organigramme Hiérarchique sans noms imposés remplaçables
       organs: [
@@ -158,6 +180,7 @@
       members: [
         {
           idNational: 'RDC-COM-2026-000101',
+          codeSecret: 'SEC-8492-7310',
           nom: 'Kabongo',
           postnom: 'Tshisekedi',
           prenom: 'Youssef',
@@ -173,6 +196,7 @@
       selectedMemberId: 'RDC-COM-2026-000101',
       memberForm: {
         idNational: '',
+        codeSecret: '',
         nom: '',
         postnom: '',
         prenom: '',
@@ -192,7 +216,7 @@
           qualification: 'Études Islamiques',
           province: 'Kinshasa',
           affectation: 'Grande Mosquée Centrale de Kinshasa',
-          acteNomination: 'ARR-NAT/001/2026',
+          acteNomination: 'ARR-COMICO-RDC-2026-0001',
           dateNomination: '2026-01-15',
           arreteSigne: true,
           statut: 'En fonction'
@@ -339,6 +363,43 @@
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    // Générateur de matrice QR visuelle déterministe à partir du texte
+    function buildQrSvg(text, size = 54) {
+      const n = 15;
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      const cell = size / n;
+      let rects = `<rect width="${size}" height="${size}" fill="#ffffff"/>`;
+
+      const drawFinder = (gx, gy) => {
+        rects += `<rect x="${gx * cell}" y="${gy * cell}" width="${5 * cell}" height="${5 * cell}" fill="#064e3b"/>`;
+        rects += `<rect x="${(gx + 1) * cell}" y="${(gy + 1) * cell}" width="${3 * cell}" height="${3 * cell}" fill="#ffffff"/>`;
+        rects += `<rect x="${(gx + 2) * cell}" y="${(gy + 2) * cell}" width="${1 * cell}" height="${1 * cell}" fill="#064e3b"/>`;
+      };
+
+      drawFinder(0, 0);
+      drawFinder(n - 5, 0);
+      drawFinder(0, n - 5);
+
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          const inTopLeft = r < 5 && c < 5;
+          const inTopRight = r < 5 && c >= n - 5;
+          const inBottomLeft = r >= n - 5 && c < 5;
+          if (inTopLeft || inTopRight || inBottomLeft) continue;
+          const bit = ((hash >>> ((r * n + c) % 31)) ^ (r * 7 + c * 13 + text.length)) & 1;
+          if (bit === 1) {
+            rects += `<rect x="${c * cell}" y="${r * cell}" width="${cell}" height="${cell}" fill="#0f172a"/>`;
+          }
+        }
+      }
+
+      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="rounded border border-slate-300 bg-white shrink-0" aria-label="QR Code">${rects}</svg>`;
     }
 
     // --- Actions Point 1 : Organigramme Hiérarchique ---
@@ -492,23 +553,37 @@
       reader.readAsDataURL(file);
     }
 
+    function generateSystemCodeSecret() {
+      const p1 = String(Math.floor(1000 + Math.random() * 9000));
+      const p2 = String(Math.floor(1000 + Math.random() * 9000));
+      return `SEC-${p1}-${p2}`;
+    }
+
+    function generateSystemIdNational() {
+      return `RDC-COM-${new Date().getFullYear()}-${String(Math.floor(100000 + Math.random() * 899999))}`;
+    }
+
     function generateMemberIdCard() {
-      const generatedId = `RDC-COM-2026-${String(Math.floor(100000 + Math.random() * 899999))}`;
+      const generatedId = generateSystemIdNational();
+      const generatedSecret = generateSystemCodeSecret();
       state.memberForm.idNational = generatedId;
+      state.memberForm.codeSecret = generatedSecret;
       saveState();
       renderApp();
-      notify(`ID National & Carte générés : ${generatedId}`);
+      notify(`ID National (${generatedId}) et Code Secret (${generatedSecret}) générés.`);
     }
 
     function handleSaveMember(e) {
       e.preventDefault();
       const f = state.memberForm;
       if (!f.nom.trim() || !f.prenom.trim()) return;
-      const idNat = f.idNational.trim() || `RDC-COM-2026-${String(Math.floor(100000 + Math.random() * 899999))}`;
+      const idNat = f.idNational.trim() || generateSystemIdNational();
+      const codeSecret = f.codeSecret.trim() || generateSystemCodeSecret();
 
       const record = {
         ...f,
         idNational: idNat,
+        codeSecret,
         statut: 'Actif',
         dateAdhesion: new Date().toISOString().split('T')[0]
       };
@@ -521,9 +596,10 @@
       }
       state.selectedMemberId = idNat;
       addAudit('Membres', 'ENREGISTREMENT_STOCKAGE_MEMBRE', `Enregistrement et stockage du membre ${record.prenom} ${record.nom} (${idNat})`, record.provinceResidence);
-      notify('Membre enregistré et stocké avec ID & Carte.');
+      notify('Membre enregistré et stocké avec ID, Code Secret & Carte.');
       state.memberForm = {
         idNational: '',
+        codeSecret: '',
         nom: '',
         postnom: '',
         prenom: '',
@@ -548,14 +624,34 @@
       renderApp();
     }
 
+    function downloadMemberCardJson(member) {
+      if (!member) return;
+      downloadJson(`carte-membre-${member.idNational}.json`, {
+        carte: 'COMICO RDC',
+        dimensions: '8,5cm x 5,5cm',
+        idNational: member.idNational,
+        codeSecret: member.codeSecret,
+        nomComplet: `${member.prenom} ${member.nom} ${member.postnom}`.trim(),
+        telephone: member.telephone,
+        provinceResidence: member.provinceResidence,
+        mosqueeBase: member.mosqueeBase,
+        professionCompetence: member.professionCompetence,
+        assistanceAutorites: 'Prière aux autorités tant militaires que civiles d’accorder assistance et protection au porteur de cette carte officielle.'
+      });
+    }
+
     // --- Actions Point 4 : Responsables Religieux ---
+    function generateSystemArreteNumber() {
+      return `ARR-COMICO-RDC-${new Date().getFullYear()}-${String(Math.floor(1000 + Math.random() * 9000))}`;
+    }
+
     function signLeaderDecree() {
-      const acte = state.leaderForm.acteNomination.trim() || `ARR-COMICO/${new Date().getFullYear()}/${Math.floor(100 + Math.random() * 899)}`;
+      const acte = state.leaderForm.acteNomination.trim() || generateSystemArreteNumber();
       state.leaderForm.acteNomination = acte;
       state.leaderForm.arreteSigne = true;
       saveState();
       renderApp();
-      notify(`Arrêté ${acte} signé par l'autorité habilitée.`);
+      notify(`Arrêté N° ${acte} généré et signé par l'autorité habilitée.`);
     }
 
     function handleSaveLeader(e) {
@@ -563,7 +659,7 @@
       const f = state.leaderForm;
       if (!f.nom.trim()) return;
 
-      const acte = f.acteNomination.trim() || `ARR-COMICO/${new Date().getFullYear()}/${Math.floor(100 + Math.random() * 899)}`;
+      const acte = f.acteNomination.trim() || generateSystemArreteNumber();
       const id = f.id || `RESP-RDC-${Math.floor(100 + Math.random() * 899)}`;
       const entry = {
         ...f,
@@ -579,7 +675,7 @@
       } else {
         state.leaders.unshift(entry);
         addAudit('Responsables religieux', 'ENREGISTREMENT_ARRETE', `Enregistrement de ${entry.nom} sous arrêté ${acte}`, entry.province);
-        notify('Responsable religieux et arrêté enregistrés.');
+        notify(`Responsable religieux enregistré avec l'Arrêté N° ${acte}.`);
       }
 
       state.selectedLeaderId = id;
@@ -613,7 +709,7 @@
     // --- Rendu des vues ---
     function renderDashboard() {
       return `
-        <div class="space-y-6">
+        <div class="space-y-6 print-data-only">
           <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 rounded-2xl p-6 text-white shadow-lg border border-emerald-700/50">
             <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">
               Portail National de Gestion Administrative Islamique
@@ -633,7 +729,7 @@
                 L'enregistrement, la modification, la suppression et la publication des organes, mosquées, membres et arrêtés religieux relèvent exclusivement du chargé de l'Administration habilité.
               </p>
             </div>
-            <span class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold shrink-0">
+            <span class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold shrink-0 no-print">
               Accès Chargé Admin
             </span>
           </div>
@@ -766,7 +862,7 @@
             </form>
 
             <!-- ORGANIGRAMME HIE INTERACTIF -->
-            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only">
               <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
                 ORGANIGRAMME HIE INTERACTIF
               </h3>
@@ -799,13 +895,13 @@
           </div>
 
           <!-- Section juste en dessous de l'ORGANIGRAMME HIE INTERACTIF affichant les informations enregistrées -->
-          <div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm">
+          <div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm print-data-only">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div>
                 <h3 class="text-base font-bold text-slate-900">Informations Enregistrées de la Hiérarchie (HIE)</h3>
                 <p class="text-xs text-slate-500">Récapitulatif complet des autorités et entités enregistrées sur l'arborescence</p>
               </div>
-              <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900">
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 no-print">
                 ${state.organs.length} enregistrement(s)
               </span>
             </div>
@@ -820,7 +916,9 @@
                     <th class="py-2.5 px-3">Province</th>
                     <th class="py-2.5 px-3">Urbain / Territorial</th>
                     <th class="py-2.5 px-3">Mosquée</th>
-                    <th class="py-2.5 px-3">Publication</th>
+                    <th class="py-2.5 px-3">Mandat</th>
+                    <th class="py-2.5 px-3">Siège</th>
+                    <th class="py-2.5 px-3 no-print">Publication</th>
                     <th class="py-2.5 px-3 no-print">Actions</th>
                   </tr>
                 </thead>
@@ -833,7 +931,9 @@
                       <td class="py-2.5 px-3">${escapeHtml(org.province)}</td>
                       <td class="py-2.5 px-3">${escapeHtml(org.urbainTerritorial || '—')}</td>
                       <td class="py-2.5 px-3">${escapeHtml(org.mosquee || '—')}</td>
-                      <td class="py-2.5 px-3">
+                      <td class="py-2.5 px-3">${escapeHtml(org.mandat || '—')}</td>
+                      <td class="py-2.5 px-3">${escapeHtml(org.siege || '—')}</td>
+                      <td class="py-2.5 px-3 no-print">
                         <span class="px-2 py-0.5 rounded-full font-semibold ${org.publie ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                           ${org.publie ? 'Publié' : 'Enregistré'}
                         </span>
@@ -854,14 +954,22 @@
 
     function renderMosques() {
       const mf = state.mosqueForm;
+      const q = (state.mosqueSearch || '').trim().toLowerCase();
+      const filteredMosques = q
+        ? state.mosques.filter((m) =>
+            [m.id, m.nom, m.province, m.villeTerritoire, m.adressePhysique, m.imamPrincipal, m.statutFoncier]
+              .some((val) => String(val || '').toLowerCase().includes(q))
+          )
+        : state.mosques;
+
       return `
         <div class="space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
             <div>
               <h2 class="text-xl font-bold text-slate-900">2. Patrimoine Cultuel & Registre des Mosquées</h2>
               <p class="text-sm text-slate-500">Recensement et gestion du patrimoine des mosquées</p>
             </div>
-            <div class="flex flex-wrap gap-2 no-print">
+            <div class="flex flex-wrap gap-2">
               <button type="button" onclick="state.showMosqueForm = !state.showMosqueForm; saveState(); renderApp();" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold">
                 + Recenser une Mosquée
               </button>
@@ -872,6 +980,22 @@
                 Télécharger
               </button>
             </div>
+          </div>
+
+          <!-- Point 2 : Barre de recherche sur la section Mosquée -->
+          <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm no-print flex flex-col sm:flex-row sm:items-center gap-3">
+            <input
+              type="search"
+              placeholder="Rechercher une mosquée (nom, ID, province, ville/territoire, adresse, Imam principal)..."
+              value="${escapeHtml(state.mosqueSearch)}"
+              oninput="state.mosqueSearch = this.value; saveState(); renderApp();"
+              class="flex-1 px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            />
+            ${state.mosqueSearch ? `
+              <button type="button" onclick="state.mosqueSearch = ''; saveState(); renderApp();" class="px-3 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">
+                Effacer
+              </button>
+            ` : ''}
           </div>
 
           ${state.showMosqueForm ? `
@@ -956,7 +1080,11 @@
                 </div>
               </div>
 
-              ${mf.image ? `<img src="${mf.image}" alt="Aperçu Mosquée" class="h-32 w-48 object-cover rounded-lg border" />` : ''}
+              ${mf.image ? `
+                <div class="bg-slate-50 p-2 rounded-lg border inline-block">
+                  <img src="${mf.image}" alt="Aperçu Mosquée" class="max-h-48 w-auto object-contain rounded" />
+                </div>
+              ` : ''}
 
               <!-- Boutons demandés : Enregistrer au Patrimoine, Supprimer, Imprimer, Télécharger, Annuler -->
               <div class="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-100">
@@ -982,9 +1110,13 @@
           ` : ''}
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            ${state.mosques.map((m) => `
-              <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-                ${m.image ? `<img src="${m.image}" alt="${escapeHtml(m.nom)}" class="w-full h-40 object-cover rounded-lg border" />` : ''}
+            ${filteredMosques.map((m) => `
+              <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 print-data-only">
+                ${m.image ? `
+                  <div class="w-full bg-slate-50 rounded-lg border border-slate-200 p-2 flex items-center justify-center">
+                    <img src="${m.image}" alt="${escapeHtml(m.nom)}" class="max-h-56 w-auto max-w-full object-contain rounded" />
+                  </div>
+                ` : ''}
                 <div class="flex justify-between items-start gap-2">
                   <div>
                     <span class="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">${escapeHtml(m.id)}</span>
@@ -1012,22 +1144,29 @@
     function renderMembers() {
       const mf = state.memberForm;
       const selected = state.members.find((m) => m.idNational === state.selectedMemberId) || state.members[0] || null;
+      const qrPayload = selected
+        ? `${selected.idNational}|${selected.codeSecret}|${selected.prenom} ${selected.nom}|${selected.provinceResidence}`
+        : 'COMICO-RDC';
 
       return `
         <div class="space-y-6">
-          <div>
+          <div class="no-print">
             <h2 class="text-xl font-bold text-slate-900">3. Registre Centralisé des Membres & Fidèles</h2>
-            <p class="text-sm text-slate-500">Enrôlement, génération d'ID National & Carte et stockage centralisé</p>
+            <p class="text-sm text-slate-500">Enrôlement, génération d'ID National, Code Secret, QR & Carte (8,5cm x 5,5cm)</p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <form onsubmit="handleSaveMember(event)" class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <form onsubmit="handleSaveMember(event)" class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
               <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Fiche d'Enrôlement Membre</h3>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label class="block text-xs font-semibold text-slate-700 mb-1">ID NATIONAL</label>
-                  <input type="text" placeholder="Cliquer sur Générer ID & Carte" value="${escapeHtml(mf.idNational)}" oninput="state.memberForm.idNational = this.value" class="w-full px-3 py-2 text-sm font-mono border rounded-lg bg-slate-50" />
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">ID NATIONAL (Système)</label>
+                  <input type="text" readonly placeholder="Généré par le système" value="${escapeHtml(mf.idNational)}" class="w-full px-3 py-2 text-xs font-mono border rounded-lg bg-slate-100 text-slate-800" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Code Secret (Système)</label>
+                  <input type="text" readonly placeholder="Généré par le système" value="${escapeHtml(mf.codeSecret)}" class="w-full px-3 py-2 text-xs font-mono border rounded-lg bg-slate-100 text-emerald-900 font-bold" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1">Image (Photo)</label>
@@ -1091,37 +1230,66 @@
               </div>
             </form>
 
-            <!-- Carte Membre sélectionnée -->
-            <div class="lg:col-span-5 space-y-4">
+            <!-- Carte Membre (8,5cm x 5,5cm) + Liste -->
+            <div class="lg:col-span-6 space-y-4">
               ${selected ? `
-                <div class="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-900 text-white rounded-2xl p-5 shadow-xl border border-amber-400/40">
-                  <div class="flex items-center justify-between border-b border-white/15 pb-2.5">
-                    <div>
-                      <p class="text-[10px] uppercase tracking-widest text-amber-300 font-bold">République Démocratique du Congo</p>
-                      <p class="text-xs font-bold">CARTE DE MEMBRE • COMICO RDC</p>
-                    </div>
-                    ${selected.image ? `<img src="${selected.image}" alt="Photo" class="w-12 h-12 rounded-lg object-cover border border-amber-300" />` : ''}
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 print-data-only">
+                  <div class="flex items-center justify-between no-print">
+                    <span class="text-xs font-bold uppercase text-slate-500">Carte Officielle (8,5cm × 5,5cm)</span>
+                    <button type="button" onclick="downloadMemberCardJson(state.members.find(x => x.idNational === '${selected.idNational}'))" class="px-3 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold">
+                      Télécharger Carte
+                    </button>
                   </div>
-                  <div class="mt-3 space-y-1 text-xs">
-                    <p class="text-sm font-bold text-white">${escapeHtml(selected.prenom)} ${escapeHtml(selected.nom)} ${escapeHtml(selected.postnom)}</p>
-                    <p class="font-mono text-amber-300 font-bold">ID NATIONAL : ${escapeHtml(selected.idNational)}</p>
-                    <p>Téléphone : ${escapeHtml(selected.telephone)}</p>
-                    <p>Province de résidence : ${escapeHtml(selected.provinceResidence)}</p>
-                    <p>Mosquée de base : ${escapeHtml(selected.mosqueeBase)}</p>
-                    <p>Profession / Compétence : ${escapeHtml(selected.professionCompetence)}</p>
+
+                  <div class="mx-auto member-card-box bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-900 text-white rounded-xl p-2.5 shadow-lg border-2 border-amber-400 flex flex-col justify-between overflow-hidden">
+                    <div class="flex items-center justify-between border-b border-amber-300/40 pb-1">
+                      <div>
+                        <p class="text-[7px] uppercase tracking-wider text-amber-300 font-bold leading-tight">République Démocratique du Congo</p>
+                        <p class="text-[8.5px] font-extrabold tracking-wide text-white leading-tight">COMICO • CARTE DE MEMBRE</p>
+                      </div>
+                      <span class="text-[7px] font-mono bg-amber-400/20 text-amber-200 px-1.5 py-0.5 rounded border border-amber-300/40">
+                        CODE : ${escapeHtml(selected.codeSecret || 'SEC-0000-0000')}
+                      </span>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-2 items-center my-1 flex-1 min-h-0">
+                      <div class="col-span-3 flex flex-col items-center justify-center gap-1 h-full">
+                        ${selected.image
+                          ? `<img src="${selected.image}" alt="Photo" class="w-11 h-11 rounded object-contain bg-white border border-amber-300" />`
+                          : `<div class="w-11 h-11 rounded bg-emerald-800/80 border border-amber-300/60 flex items-center justify-center text-[7px] text-amber-200 font-bold">PHOTO</div>`
+                        }
+                        ${buildQrSvg(qrPayload, 38)}
+                      </div>
+
+                      <div class="col-span-9 text-[8px] leading-snug space-y-0.5 text-emerald-50">
+                        <p class="text-[9.5px] font-bold text-white truncate">${escapeHtml(selected.prenom)} ${escapeHtml(selected.nom)} ${escapeHtml(selected.postnom)}</p>
+                        <p class="font-mono text-[8px] text-amber-300 font-bold truncate">ID : ${escapeHtml(selected.idNational)}</p>
+                        <p class="truncate"><strong>Tél :</strong> ${escapeHtml(selected.telephone)}</p>
+                        <p class="truncate"><strong>Province :</strong> ${escapeHtml(selected.provinceResidence)}</p>
+                        <p class="truncate"><strong>Mosquée :</strong> ${escapeHtml(selected.mosqueeBase)}</p>
+                        <p class="truncate"><strong>Profession :</strong> ${escapeHtml(selected.professionCompetence || '—')}</p>
+                      </div>
+                    </div>
+
+                    <!-- Mot d'assistance centré en bas adressé aux autorités militaires et civiles -->
+                    <div class="border-t border-amber-300/40 pt-1 text-center">
+                      <p class="text-[6.8px] font-semibold text-amber-200 leading-tight">
+                        Assistance demandée aux autorités tant militaires que civiles envers le porteur de cette carte officielle.
+                      </p>
+                    </div>
                   </div>
                 </div>
               ` : ''}
 
-              <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 max-h-72 overflow-y-auto">
+              <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 max-h-72 overflow-y-auto no-print">
                 <h4 class="text-xs font-bold uppercase text-slate-500">Membres Stockés (${state.members.length})</h4>
                 ${state.members.map((m) => `
                   <div onclick="state.selectedMemberId = '${m.idNational}'; saveState(); renderApp();" class="p-2.5 rounded-lg border cursor-pointer flex items-center justify-between text-xs ${selected && selected.idNational === m.idNational ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
                     <div>
                       <p class="font-bold text-slate-900">${escapeHtml(m.prenom)} ${escapeHtml(m.nom)} ${escapeHtml(m.postnom)}</p>
-                      <p class="font-mono text-[11px] text-emerald-800">${escapeHtml(m.idNational)}</p>
+                      <p class="font-mono text-[11px] text-emerald-800">${escapeHtml(m.idNational)} • <span class="text-amber-800 font-bold">${escapeHtml(m.codeSecret || '')}</span></p>
                     </div>
-                    <button type="button" onclick="event.stopPropagation(); deleteMember('${m.idNational}')" class="px-2 py-1 bg-rose-100 text-rose-800 rounded text-[11px] font-semibold no-print">Supprimer</button>
+                    <button type="button" onclick="event.stopPropagation(); deleteMember('${m.idNational}')" class="px-2 py-1 bg-rose-100 text-rose-800 rounded text-[11px] font-semibold">Supprimer</button>
                   </div>
                 `).join('')}
               </div>
@@ -1137,9 +1305,9 @@
 
       return `
         <div class="space-y-6">
-          <div>
+          <div class="no-print">
             <h2 class="text-xl font-bold text-slate-900">4. Corps des Responsables Religieux (Imams, Du'at & Encadreurs)</h2>
-            <p class="text-sm text-slate-500">Signature d'arrêtés, enregistrement, suppression et impression</p>
+            <p class="text-sm text-slate-500">Numéro d'arrêté généré automatiquement par le système • Signature, enregistrement, suppression et impression</p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1174,8 +1342,8 @@
                   <input type="text" value="${escapeHtml(lf.affectation)}" oninput="state.leaderForm.affectation = this.value" class="w-full px-3 py-2 text-sm border rounded-lg" />
                 </div>
                 <div>
-                  <label class="block text-xs font-semibold text-slate-700 mb-1">Référence Arrêté</label>
-                  <input type="text" placeholder="Ex: ARR-COMICO/2026/012" value="${escapeHtml(lf.acteNomination)}" oninput="state.leaderForm.acteNomination = this.value" class="w-full px-3 py-2 text-sm font-mono border rounded-lg" />
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Numéro Arrêté (Généré par le système)</label>
+                  <input type="text" readonly placeholder="Généré automatiquement" value="${escapeHtml(lf.acteNomination)}" class="w-full px-3 py-2 text-sm font-mono border rounded-lg bg-slate-100 text-emerald-950 font-bold" />
                 </div>
               </div>
 
@@ -1204,9 +1372,9 @@
 
             <div class="lg:col-span-6 space-y-4">
               ${selected ? `
-                <div class="bg-[#fcfbf7] border-2 border-emerald-900/30 rounded-xl p-5 shadow-sm text-xs space-y-2">
+                <div class="bg-[#fcfbf7] border-2 border-emerald-900/30 rounded-xl p-5 shadow-sm text-xs space-y-2 print-data-only">
                   <p class="font-extrabold text-sm text-emerald-950 uppercase">Arrêté de Désignation / Affectation</p>
-                  <p><strong>N° Arrêté :</strong> <span class="font-mono">${escapeHtml(selected.acteNomination)}</span></p>
+                  <p><strong>N° Arrêté :</strong> <span class="font-mono font-bold">${escapeHtml(selected.acteNomination)}</span></p>
                   <p><strong>Responsable :</strong> ${escapeHtml(selected.nom)}</p>
                   <p><strong>Fonction :</strong> ${escapeHtml(selected.fonction)}</p>
                   <p><strong>Affectation :</strong> ${escapeHtml(selected.affectation)} (${escapeHtml(selected.province)})</p>
@@ -1214,15 +1382,15 @@
                 </div>
               ` : ''}
 
-              <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
+              <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 no-print">
                 <h4 class="text-xs font-bold uppercase text-slate-500">Liste des Responsables Religieux (${state.leaders.length})</h4>
                 ${state.leaders.map((l) => `
                   <div onclick="state.selectedLeaderId = '${l.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer flex items-center justify-between text-xs ${selected && selected.id === l.id ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
                     <div>
                       <p class="font-bold text-slate-900">${escapeHtml(l.nom)} <span class="text-emerald-700">(${escapeHtml(l.fonction)})</span></p>
-                      <p class="text-slate-500">Arrêté : ${escapeHtml(l.acteNomination)} • ${escapeHtml(l.affectation)}</p>
+                      <p class="text-slate-500">Arrêté : <span class="font-mono font-semibold">${escapeHtml(l.acteNomination)}</span> • ${escapeHtml(l.affectation)}</p>
                     </div>
-                    <button type="button" onclick="event.stopPropagation(); deleteLeader('${l.id}')" class="px-2 py-1 bg-rose-100 text-rose-800 rounded text-[11px] font-semibold no-print">Supprimer</button>
+                    <button type="button" onclick="event.stopPropagation(); deleteLeader('${l.id}')" class="px-2 py-1 bg-rose-100 text-rose-800 rounded text-[11px] font-semibold">Supprimer</button>
                   </div>
                 `).join('')}
               </div>
@@ -1234,7 +1402,7 @@
 
     function renderOtherSection(title, desc, items) {
       return `
-        <div class="space-y-4">
+        <div class="space-y-4 print-data-only">
           <div>
             <h2 class="text-xl font-bold text-slate-900">${escapeHtml(title)}</h2>
             <p class="text-sm text-slate-500">${escapeHtml(desc)}</p>
