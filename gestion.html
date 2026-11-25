@@ -207,7 +207,7 @@
         image: ''
       },
 
-      // Point 4 : Responsables religieux
+      // Point 4 : Responsables religieux (+ photo)
       leaders: [
         {
           id: 'IMAM-RDC-001',
@@ -219,7 +219,8 @@
           acteNomination: 'ARR-COMICO-RDC-2026-0001',
           dateNomination: '2026-01-15',
           arreteSigne: true,
-          statut: 'En fonction'
+          statut: 'En fonction',
+          photo: ''
         }
       ],
       selectedLeaderId: 'IMAM-RDC-001',
@@ -233,7 +234,8 @@
         acteNomination: '',
         dateNomination: new Date().toISOString().split('T')[0],
         arreteSigne: false,
-        statut: 'En fonction'
+        statut: 'En fonction',
+        photo: ''
       },
 
       // Données complémentaires conservées & enrichies
@@ -244,13 +246,15 @@
           type: 'Entrée',
           categorie: 'Zakat Al-Mal',
           source: 'Mosquée Al-Nour Lubumbashi (Haut-Katanga)',
+          responsableMosquee: '',
           mode: 'M-Pesa Entreprise',
           reference: 'MP261124.1422.A982',
           montantUSD: 4500,
           partLocale: 2250,
           partProvinciale: 1350,
           partNationale: 900,
-          statut: 'Validé'
+          statut: 'Validé',
+          image: ''
         }
       ],
       selectedTransactionId: 'TRX-2026-8841',
@@ -260,10 +264,12 @@
         type: 'Entrée',
         categorie: 'Zakat Al-Mal',
         source: '',
+        responsableMosquee: '',
         mode: 'M-Pesa Entreprise',
         reference: '',
         montantUSD: 1000,
-        statut: 'Validé'
+        statut: 'Validé',
+        image: ''
       },
 
       events: [
@@ -276,7 +282,8 @@
           province: 'Kinshasa',
           type: 'Institutionnel',
           participantsAttendus: 450,
-          statut: 'Confirmé'
+          statut: 'Confirmé',
+          image: ''
         }
       ],
       selectedEventId: 'EVT-2026-01',
@@ -289,7 +296,8 @@
         province: 'Kinshasa',
         type: 'Institutionnel',
         participantsAttendus: 200,
-        statut: 'Confirmé'
+        statut: 'Confirmé',
+        image: ''
       },
 
       certificates: [
@@ -302,7 +310,11 @@
           imamSignataire: 'Autorité Habilité COMICO',
           dateEmission: '2026-11-14',
           hashVerification: 'COMICO-SHA256-9F8A2C1D',
-          statut: 'Authentifié'
+          statut: 'Authentifié',
+          noteHierarchie: '',
+          imageEpoux: '',
+          imageEpouse: '',
+          imageUnique: ''
         }
       ],
       selectedCertificateId: 'ACT-RDC-2026-0419',
@@ -315,7 +327,11 @@
         imamSignataire: '',
         dateEmission: new Date().toISOString().split('T')[0],
         hashVerification: '',
-        statut: 'Authentifié'
+        statut: 'Authentifié',
+        noteHierarchie: '',
+        imageEpoux: '',
+        imageEpouse: '',
+        imageUnique: ''
       },
 
       auditLogs: [
@@ -328,7 +344,10 @@
           module: 'Système',
           action: 'INITIALISATION',
           details: 'Initialisation du registre administratif COMICO • RDC',
-          ip: '197.242.118.42'
+          ip: '197.242.118.42',
+          audio: '',
+          video: '',
+          image: ''
         }
       ],
       selectedAuditId: 'AUD-99412',
@@ -337,7 +356,10 @@
         province: 'Kinshasa',
         module: 'Administration',
         action: 'VERIFICATION_REGISTRE',
-        details: ''
+        details: '',
+        audio: '',
+        video: '',
+        image: ''
       },
 
       madrasas: [
@@ -370,7 +392,7 @@
       },
 
       hajjPilgrims: [
-        { id: 'HAJ-2027-001', nom: 'Candidat Pèlerin RDC', passeport: 'OP0984122', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true }
+        { id: 'HAJ-2027-001', nom: 'Candidat Pèlerin RDC', passeport: 'OP0984122', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true, photo: '' }
       ],
       selectedHajjId: 'HAJ-2027-001',
       hajjForm: {
@@ -381,7 +403,8 @@
         forfait: 'Forfait Standard RDC',
         paiementUSD: 4950,
         statutPaiement: 'Soldé',
-        vaccinMeningite: true
+        vaccinMeningite: true,
+        photo: ''
       }
     };
 
@@ -425,7 +448,10 @@
         module,
         action,
         details,
-        ip: '197.242.118.42'
+        ip: '197.242.118.42',
+        audio: '',
+        video: '',
+        image: ''
       });
     }
 
@@ -445,6 +471,14 @@
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    function readFileAsDataUrl(input, callback) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => callback(reader.result);
+      reader.readAsDataURL(file);
     }
 
     function getHeaderBadgeText() {
@@ -582,15 +616,11 @@
 
     // --- Actions Point 2 : Mosquées ---
     function handleMosqueImageUpload(input) {
-      const file = input.files && input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        state.mosqueForm.image = reader.result;
+      readFileAsDataUrl(input, (res) => {
+        state.mosqueForm.image = res;
         saveState();
         renderApp();
-      };
-      reader.readAsDataURL(file);
+      });
     }
 
     function handleSaveMosque(e) {
@@ -643,15 +673,11 @@
 
     // --- Actions Point 3 : Membres ---
     function handleMemberImageUpload(input) {
-      const file = input.files && input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        state.memberForm.image = reader.result;
+      readFileAsDataUrl(input, (res) => {
+        state.memberForm.image = res;
         saveState();
         renderApp();
-      };
-      reader.readAsDataURL(file);
+      });
     }
 
     function generateSystemCodeSecret() {
@@ -790,7 +816,8 @@
         acteNomination: '',
         dateNomination: new Date().toISOString().split('T')[0],
         arreteSigne: false,
-        statut: 'En fonction'
+        statut: 'En fonction',
+        photo: ''
       };
       saveState();
       renderApp();
@@ -807,7 +834,7 @@
       renderApp();
     }
 
-    // --- Actions Rubriques Complémentaires (Finance, Événements, Attestations, Audit, Admin, Madrasas, Waqf, Hajj) ---
+    // --- Actions Rubriques Complémentaires (Points 7 à 14) ---
     function handleSaveFinance(e) {
       e.preventDefault();
       const f = state.financeForm;
@@ -837,7 +864,7 @@
         state.selectedTransactionId = id;
         notify('Opération financière enregistrée.');
       }
-      state.financeForm = { id: '', date: new Date().toISOString().split('T')[0], type: 'Entrée', categorie: 'Zakat Al-Mal', source: '', mode: 'M-Pesa Entreprise', reference: '', montantUSD: 1000, statut: 'Validé' };
+      state.financeForm = { id: '', date: new Date().toISOString().split('T')[0], type: 'Entrée', categorie: 'Zakat Al-Mal', source: '', responsableMosquee: '', mode: 'M-Pesa Entreprise', reference: '', montantUSD: 1000, statut: 'Validé', image: '' };
       saveState();
       renderApp();
     }
@@ -873,7 +900,7 @@
         state.selectedEventId = id;
         notify('Événement enregistré.');
       }
-      state.eventForm = { id: '', titre: '', dateGregorien: new Date().toISOString().split('T')[0], dateHijri: '', lieu: '', province: 'Kinshasa', type: 'Institutionnel', participantsAttendus: 200, statut: 'Confirmé' };
+      state.eventForm = { id: '', titre: '', dateGregorien: new Date().toISOString().split('T')[0], dateHijri: '', lieu: '', province: 'Kinshasa', type: 'Institutionnel', participantsAttendus: 200, statut: 'Confirmé', image: '' };
       saveState();
       renderApp();
     }
@@ -895,22 +922,42 @@
       renderApp();
     }
 
+    function buildCertificateNote(cert) {
+      if (cert.noteHierarchie && cert.noteHierarchie.trim()) {
+        return cert.noteHierarchie.trim();
+      }
+      const signataire = cert.imamSignataire || 'la Hiérarchie Habilité du COMICO';
+      const mosquee = cert.mosquee || 'la Mosquée désignée';
+      const province = cert.province || 'RDC';
+      const dateStr = cert.dateEmission || '';
+      const benef = cert.beneficiaire || 'le/la bénéficiaire';
+
+      if (cert.type === 'Acte de Mariage Religieux (Nikah)') {
+        return `Note officielle de la Hiérarchie : Sous réserve des dispositions canoniques et réglementaires en vigueur au sein du COMICO • RDC, l’union religieuse (Nikah) de ${benef} célébrée à ${mosquee} (${province}) en date du ${dateStr} est certifiée conforme et soumise à la signature et au sceau de ${signataire}.`;
+      }
+      if (cert.type === 'Certificat de Conversion / Shahada') {
+        return `Note officielle de la Hiérarchie : Il est attesté que ${benef} a prononcé librement et en pleine conscience la Shahada à ${mosquee} (${province}) le ${dateStr}. Document établi pour valoir ce que de droit, soumis à la signature de ${signataire}.`;
+      }
+      return `Note officielle de la Hiérarchie : La présente attestation d’Imamat concerne ${benef} au sein de ${mosquee} (${province}) à compter du ${dateStr}, établie pour signature et authentification par ${signataire}.`;
+    }
+
     function handleSaveCertificate(e) {
       e.preventDefault();
       const f = state.certificateForm;
       if (!f.beneficiaire.trim()) return;
       const hash = f.hashVerification.trim() || `COMICO-SHA256-${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const noteHierarchie = buildCertificateNote(f);
       if (f.id) {
-        state.certificates = state.certificates.map((c) => (c.id === f.id ? { ...c, ...f, hashVerification: hash } : c));
+        state.certificates = state.certificates.map((c) => (c.id === f.id ? { ...c, ...f, hashVerification: hash, noteHierarchie } : c));
         state.selectedCertificateId = f.id;
         notify('Attestation religieuse modifiée et enregistrée.');
       } else {
         const id = `ACT-RDC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        state.certificates.unshift({ ...f, id, hashVerification: hash });
+        state.certificates.unshift({ ...f, id, hashVerification: hash, noteHierarchie });
         state.selectedCertificateId = id;
         notify('Attestation religieuse enregistrée.');
       }
-      state.certificateForm = { id: '', type: 'Acte de Mariage Religieux (Nikah)', beneficiaire: '', province: 'Kinshasa', mosquee: 'Grande Mosquée Centrale de Kinshasa', imamSignataire: '', dateEmission: new Date().toISOString().split('T')[0], hashVerification: '', statut: 'Authentifié' };
+      state.certificateForm = { id: '', type: 'Acte de Mariage Religieux (Nikah)', beneficiaire: '', province: 'Kinshasa', mosquee: 'Grande Mosquée Centrale de Kinshasa', imamSignataire: '', dateEmission: new Date().toISOString().split('T')[0], hashVerification: '', statut: 'Authentifié', noteHierarchie: '', imageEpoux: '', imageEpouse: '', imageUnique: '' };
       saveState();
       renderApp();
     }
@@ -953,12 +1000,15 @@
           module: f.module,
           action: f.action,
           details: f.details,
-          ip: '197.242.118.42'
+          ip: '197.242.118.42',
+          audio: f.audio || '',
+          video: f.video || '',
+          image: f.image || ''
         });
         state.selectedAuditId = id;
         notify('Entrée d’audit enregistrée.');
       }
-      state.auditForm = { id: '', province: 'Kinshasa', module: 'Administration', action: 'VERIFICATION_REGISTRE', details: '' };
+      state.auditForm = { id: '', province: 'Kinshasa', module: 'Administration', action: 'VERIFICATION_REGISTRE', details: '', audio: '', video: '', image: '' };
       saveState();
       renderApp();
     }
@@ -966,7 +1016,16 @@
     function editAudit(id) {
       const target = state.auditLogs.find((a) => a.id === id);
       if (!target) return;
-      state.auditForm = { id: target.id, province: target.province, module: target.module, action: target.action, details: target.details };
+      state.auditForm = {
+        id: target.id,
+        province: target.province,
+        module: target.module,
+        action: target.action,
+        details: target.details,
+        audio: target.audio || '',
+        video: target.video || '',
+        image: target.image || ''
+      };
       state.selectedAuditId = id;
       saveState();
       renderApp();
@@ -1066,7 +1125,7 @@
         state.selectedHajjId = id;
         notify('Dossier Hajj / Omra enregistré.');
       }
-      state.hajjForm = { id: '', nom: '', passeport: '', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true };
+      state.hajjForm = { id: '', nom: '', passeport: '', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true, photo: '' };
       saveState();
       renderApp();
     }
@@ -1112,6 +1171,13 @@
 
     // --- Rendu des vues ---
     function renderDashboard() {
+      const natOrgan = state.organs.find((o) => o.niveau === 'National') || state.organs[0];
+      const repLeader = state.leaders.find((l) => l.photo) || state.leaders[0];
+      const repName = (natOrgan && natOrgan.autorite && natOrgan.autorite !== 'Autorité Nationale à désigner')
+        ? natOrgan.autorite
+        : (repLeader ? repLeader.nom : 'Représentant Légal à désigner');
+      const repPhoto = (repLeader && repLeader.photo) ? repLeader.photo : '';
+
       return `
         <div class="space-y-6 print-data-only">
           <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 rounded-2xl p-6 text-white shadow-lg border border-emerald-700/50">
@@ -1158,6 +1224,30 @@
               <span class="text-xs font-semibold uppercase text-slate-500">Responsables Religieux</span>
               <p class="text-2xl font-bold text-slate-900 mt-2">${state.leaders.length}</p>
               <p class="text-xs text-slate-500 mt-1">Imams, Du'at & Encadreurs</p>
+            </div>
+          </div>
+
+          <!-- Point 14 : Gestion Hajj & Omra RDC + Représentant légal juste au dessous -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Gestion Hajj & Omra RDC</span>
+                <p class="text-xs text-slate-500 mt-0.5">${state.hajjPilgrims.length} candidat(s) pèlerin(s) enregistré(s)</p>
+              </div>
+              <button type="button" onclick="state.activeTab = 'hajj'; saveState(); renderApp();" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold no-print">
+                Ouvrir Gestion Hajj & Omra RDC
+              </button>
+            </div>
+
+            <div class="flex items-center gap-4 pt-1">
+              ${repPhoto
+                ? `<img src="${repPhoto}" alt="Photo Représentant Légal" class="w-16 h-16 rounded-xl object-cover border border-emerald-300 shrink-0" />`
+                : `<div class="w-16 h-16 rounded-xl bg-emerald-900 text-amber-300 flex items-center justify-center text-[10px] font-bold border border-emerald-700 shrink-0">PHOTO</div>`
+              }
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Représentant Légal Enregistré</p>
+                <p class="text-base font-extrabold text-slate-900 mt-0.5">${escapeHtml(repName)}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1696,6 +1786,7 @@
       `;
     }
 
+    // --- Point 10 : Corps des Responsables Religieux (+ photo) ---
     function renderLeaders() {
       const lf = state.leaderForm;
       const selected = state.leaders.find((l) => l.id === state.selectedLeaderId) || state.leaders[0] || null;
@@ -1711,10 +1802,22 @@
             <form onsubmit="handleSaveLeader(event)" class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
               <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Gestion d'un Responsable Religieux & Arrêté</h3>
 
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom complet du Responsable (Imam / Da'i / Encadreur) *</label>
-                <input required type="text" value="${escapeHtml(lf.nom)}" oninput="state.leaderForm.nom = this.value" class="w-full px-3 py-2 text-sm border rounded-lg" />
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Nom complet du Responsable (Imam / Da'i / Encadreur) *</label>
+                  <input required type="text" value="${escapeHtml(lf.nom)}" oninput="state.leaderForm.nom = this.value" class="w-full px-3 py-2 text-sm border rounded-lg" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Photo du Responsable</label>
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.leaderForm.photo = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 text-xs border rounded-lg bg-slate-50" />
+                </div>
               </div>
+
+              ${lf.photo ? `
+                <div class="bg-slate-50 p-2 rounded-lg border inline-block">
+                  <img src="${lf.photo}" alt="Aperçu Responsable" class="h-24 w-24 object-cover rounded" />
+                </div>
+              ` : ''}
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1768,23 +1871,35 @@
 
             <div class="lg:col-span-6 space-y-4">
               ${selected ? `
-                <div class="bg-[#fcfbf7] border-2 border-emerald-900/30 rounded-xl p-5 shadow-sm text-xs space-y-2 print-data-only">
-                  <p class="font-extrabold text-sm text-emerald-950 uppercase">Arrêté de Désignation / Affectation</p>
-                  <p><strong>N° Arrêté :</strong> <span class="font-mono font-bold">${escapeHtml(selected.acteNomination)}</span></p>
-                  <p><strong>Responsable :</strong> ${escapeHtml(selected.nom)}</p>
-                  <p><strong>Fonction :</strong> ${escapeHtml(selected.fonction)}</p>
-                  <p><strong>Affectation :</strong> ${escapeHtml(selected.affectation)} (${escapeHtml(selected.province)})</p>
-                  <p><strong>Date :</strong> ${escapeHtml(selected.dateNomination)} • <strong>Statut :</strong> ${selected.arreteSigne ? 'Signé & Enregistré' : 'En attente de signature'}</p>
+                <div class="bg-[#fcfbf7] border-2 border-emerald-900/30 rounded-xl p-5 shadow-sm text-xs space-y-2 print-data-only flex items-start gap-4">
+                  ${selected.photo
+                    ? `<img src="${selected.photo}" alt="${escapeHtml(selected.nom)}" class="w-20 h-20 rounded-lg object-cover border border-emerald-800/30 shrink-0" />`
+                    : `<div class="w-20 h-20 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">PHOTO</div>`
+                  }
+                  <div class="space-y-1.5 flex-1">
+                    <p class="font-extrabold text-sm text-emerald-950 uppercase">Arrêté de Désignation / Affectation</p>
+                    <p><strong>N° Arrêté :</strong> <span class="font-mono font-bold">${escapeHtml(selected.acteNomination)}</span></p>
+                    <p><strong>Responsable :</strong> ${escapeHtml(selected.nom)}</p>
+                    <p><strong>Fonction :</strong> ${escapeHtml(selected.fonction)}</p>
+                    <p><strong>Affectation :</strong> ${escapeHtml(selected.affectation)} (${escapeHtml(selected.province)})</p>
+                    <p><strong>Date :</strong> ${escapeHtml(selected.dateNomination)} • <strong>Statut :</strong> ${selected.arreteSigne ? 'Signé & Enregistré' : 'En attente de signature'}</p>
+                  </div>
                 </div>
               ` : ''}
 
               <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 no-print">
                 <h4 class="text-xs font-bold uppercase text-slate-500">Liste des Responsables Religieux (${state.leaders.length})</h4>
                 ${state.leaders.map((l) => `
-                  <div onclick="state.selectedLeaderId = '${l.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer flex items-center justify-between text-xs ${selected && selected.id === l.id ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
-                    <div>
-                      <p class="font-bold text-slate-900">${escapeHtml(l.nom)} <span class="text-emerald-700">(${escapeHtml(l.fonction)})</span></p>
-                      <p class="text-slate-500">Arrêté : <span class="font-mono font-semibold">${escapeHtml(l.acteNomination)}</span> • ${escapeHtml(l.affectation)}</p>
+                  <div onclick="state.selectedLeaderId = '${l.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer flex items-center justify-between gap-3 text-xs ${selected && selected.id === l.id ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
+                    <div class="flex items-center gap-3">
+                      ${l.photo
+                        ? `<img src="${l.photo}" alt="${escapeHtml(l.nom)}" class="w-10 h-10 rounded-full object-cover border border-slate-300 shrink-0" />`
+                        : `<div class="w-10 h-10 rounded-full bg-emerald-900 text-amber-300 flex items-center justify-center text-[9px] font-bold shrink-0">PHOTO</div>`
+                      }
+                      <div>
+                        <p class="font-bold text-slate-900">${escapeHtml(l.nom)} <span class="text-emerald-700">(${escapeHtml(l.fonction)})</span></p>
+                        <p class="text-slate-500">Arrêté : <span class="font-mono font-semibold">${escapeHtml(l.acteNomination)}</span> • ${escapeHtml(l.affectation)}</p>
+                      </div>
                     </div>
                     <button type="button" onclick="event.stopPropagation(); deleteLeader('${l.id}')" class="px-2 py-1 bg-rose-100 text-rose-800 rounded text-[11px] font-semibold">Supprimer</button>
                   </div>
@@ -1796,7 +1911,7 @@
       `;
     }
 
-    // --- 5. Finance & Zakat ---
+    // --- Point 11 : 5. Finance & Zakat (+ responsable de la mosquée, image, référence M-Pesa / Compte Bancaire) ---
     function renderFinance() {
       const f = state.financeForm;
       const selId = state.selectedTransactionId || state.transactions[0]?.id || '';
@@ -1816,7 +1931,7 @@
             })}
           </div>
 
-          <form id="finance-form" onsubmit="handleSaveFinance(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+          <form id="finance-form" onsubmit="handleSaveFinance(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Catégorie</label>
               <select onchange="state.financeForm.categorie = this.value" class="w-full px-3 py-2 border rounded-lg">
@@ -1828,14 +1943,28 @@
               <input required type="text" value="${escapeHtml(f.source)}" oninput="state.financeForm.source = this.value" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
+              <label class="block font-semibold text-slate-700 mb-1">Responsable de la Mosquée</label>
+              <input type="text" placeholder="Nom du responsable" value="${escapeHtml(f.responsableMosquee || '')}" oninput="state.financeForm.responsableMosquee = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
               <label class="block font-semibold text-slate-700 mb-1">Montant (USD)</label>
               <input type="number" step="0.01" value="${escapeHtml(f.montantUSD)}" oninput="state.financeForm.montantUSD = this.value" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
-              <label class="block font-semibold text-slate-700 mb-1">Mode / Référence</label>
-              <input type="text" placeholder="Ex: M-Pesa / Réf" value="${escapeHtml(f.reference)}" oninput="state.financeForm.reference = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              <label class="block font-semibold text-slate-700 mb-1">N° Référence (M-Pesa / Compte Bancaire)</label>
+              <input type="text" placeholder="Réf. M-Pesa ou Compte Bancaire" value="${escapeHtml(f.reference)}" oninput="state.financeForm.reference = this.value" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Image (Reçu / Justificatif)</label>
+              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.financeForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
+
+          ${f.image ? `
+            <div class="bg-white p-3 rounded-xl border border-slate-200 inline-block">
+              <img src="${f.image}" alt="Aperçu Finance" class="max-h-40 w-auto object-contain rounded" />
+            </div>
+          ` : ''}
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Registre des Transactions Financières & Zakat (${state.transactions.length})</h3>
@@ -1845,8 +1974,9 @@
                   <span class="font-bold text-slate-900">${escapeHtml(t.id)} — ${escapeHtml(t.categorie)} (${escapeHtml(t.date)})</span>
                   <span class="font-bold text-emerald-900">$${Number(t.montantUSD).toLocaleString()} USD • ${escapeHtml(t.statut)}</span>
                 </div>
-                <p class="text-slate-600 mt-1">Source : <strong>${escapeHtml(t.source)}</strong> • Mode : ${escapeHtml(t.mode)} • Réf : <span class="font-mono">${escapeHtml(t.reference)}</span></p>
+                <p class="text-slate-600 mt-1">Source : <strong>${escapeHtml(t.source)}</strong>${t.responsableMosquee ? ` • Responsable de la mosquée : <strong>${escapeHtml(t.responsableMosquee)}</strong>` : ''} • Mode : ${escapeHtml(t.mode)} • Réf (M-Pesa / Compte Bancaire) : <span class="font-mono">${escapeHtml(t.reference)}</span></p>
                 <p class="text-slate-700 mt-1">Répartition : Locale $${t.partLocale} • Provinciale $${t.partProvinciale} • Nationale $${t.partNationale}</p>
+                ${t.image ? `<div class="mt-2"><img src="${t.image}" alt="Justificatif" class="max-h-36 w-auto object-contain rounded border" /></div>` : ''}
               </div>
             `).join('')}
           </div>
@@ -1854,7 +1984,7 @@
       `;
     }
 
-    // --- 6. Événements et fêtes ---
+    // --- Point 12 : 6. Événements et fêtes (+ images) ---
     function renderEvents() {
       const f = state.eventForm;
       const selId = state.selectedEventId || state.events[0]?.id || '';
@@ -1874,7 +2004,7 @@
             })}
           </div>
 
-          <form id="event-form" onsubmit="handleSaveEvent(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+          <form id="event-form" onsubmit="handleSaveEvent(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Titre / Fête *</label>
               <input required type="text" value="${escapeHtml(f.titre)}" oninput="state.eventForm.titre = this.value" class="w-full px-3 py-2 border rounded-lg" />
@@ -1891,7 +2021,17 @@
               <label class="block font-semibold text-slate-700 mb-1">Lieu & Province</label>
               <input type="text" placeholder="Lieu" value="${escapeHtml(f.lieu)}" oninput="state.eventForm.lieu = this.value" class="w-full px-3 py-2 border rounded-lg" />
             </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Image</label>
+              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.eventForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+            </div>
           </form>
+
+          ${f.image ? `
+            <div class="bg-white p-3 rounded-xl border border-slate-200 inline-block">
+              <img src="${f.image}" alt="Aperçu Événement" class="max-h-40 w-auto object-contain rounded" />
+            </div>
+          ` : ''}
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Calendrier des Événements et Fêtes (${state.events.length})</h3>
@@ -1899,6 +2039,7 @@
               <div onclick="state.selectedEventId = '${ev.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === ev.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(ev.titre)} <span class="text-emerald-800">(${escapeHtml(ev.type)})</span></p>
                 <p class="text-slate-600 mt-1">Date : <strong>${escapeHtml(ev.dateGregorien)}</strong> / ${escapeHtml(ev.dateHijri || '—')} • Lieu : <strong>${escapeHtml(ev.lieu)}</strong> (${escapeHtml(ev.province)}) • Participants : ${Number(ev.participantsAttendus).toLocaleString()}</p>
+                ${ev.image ? `<div class="mt-2"><img src="${ev.image}" alt="${escapeHtml(ev.titre)}" class="max-h-44 w-auto object-contain rounded border" /></div>` : ''}
               </div>
             `).join('')}
           </div>
@@ -1906,10 +2047,12 @@
       `;
     }
 
-    // --- 7. Attestations religieuses ---
+    // --- Point 7 : 7. Attestations religieuses (note pro pour Hiérarchie + 2 images mariage / 1 image autres) ---
     function renderCertificates() {
       const f = state.certificateForm;
       const selId = state.selectedCertificateId || state.certificates[0]?.id || '';
+      const isMarriage = f.type === 'Acte de Mariage Religieux (Nikah)';
+
       return `
         <div class="space-y-6">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -1926,42 +2069,95 @@
             })}
           </div>
 
-          <form id="certificate-form" onsubmit="handleSaveCertificate(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Type d'Attestation</label>
-              <select onchange="state.certificateForm.type = this.value" class="w-full px-3 py-2 border rounded-lg">
-                ${['Acte de Mariage Religieux (Nikah)', 'Certificat de Conversion / Shahada', 'Attestation d’Imamat'].map(t => `<option value="${t}" ${f.type === t ? 'selected' : ''}>${t}</option>`).join('')}
-              </select>
+          <form id="certificate-form" onsubmit="handleSaveCertificate(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Type d'Attestation</label>
+                <select onchange="state.certificateForm.type = this.value; state.certificateForm.noteHierarchie = ''; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg">
+                  ${['Acte de Mariage Religieux (Nikah)', 'Certificat de Conversion / Shahada', 'Attestation d’Imamat'].map(t => `<option value="${t}" ${f.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Bénéficiaire(s) *</label>
+                <input required type="text" value="${escapeHtml(f.beneficiaire)}" oninput="state.certificateForm.beneficiaire = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Mosquée</label>
+                <input type="text" value="${escapeHtml(f.mosquee)}" oninput="state.certificateForm.mosquee = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Signataire habilité (Hiérarchie)</label>
+                <input type="text" value="${escapeHtml(f.imamSignataire)}" oninput="state.certificateForm.imamSignataire = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
             </div>
+
             <div>
-              <label class="block font-semibold text-slate-700 mb-1">Bénéficiaire(s) *</label>
-              <input required type="text" value="${escapeHtml(f.beneficiaire)}" oninput="state.certificateForm.beneficiaire = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              <label class="block font-semibold text-slate-700 mb-1">Note professionnelle pour signature de la Hiérarchie (${escapeHtml(f.type)})</label>
+              <textarea rows="3" placeholder="${escapeHtml(buildCertificateNote(f))}" oninput="state.certificateForm.noteHierarchie = this.value" class="w-full px-3 py-2 border rounded-lg">${escapeHtml(f.noteHierarchie || buildCertificateNote(f))}</textarea>
             </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Mosquée</label>
-              <input type="text" value="${escapeHtml(f.mosquee)}" oninput="state.certificateForm.mosquee = this.value" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Signataire habilité</label>
-              <input type="text" value="${escapeHtml(f.imamSignataire)}" oninput="state.certificateForm.imamSignataire = this.value" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
+
+            ${isMarriage ? `
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Image — Époux</label>
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpoux = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  ${f.imageEpoux ? `<img src="${f.imageEpoux}" alt="Époux" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Image — Épouse</label>
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpouse = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  ${f.imageEpouse ? `<img src="${f.imageEpouse}" alt="Épouse" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
+                </div>
+              </div>
+            ` : `
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Image — ${escapeHtml(f.type)}</label>
+                <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageUnique = res; saveState(); renderApp(); })" class="w-full max-w-md px-2 py-1.5 border rounded-lg bg-slate-50" />
+                ${f.imageUnique ? `<img src="${f.imageUnique}" alt="Attestation" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
+              </div>
+            `}
           </form>
 
-          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-3 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Registre des Attestations Religieuses (${state.certificates.length})</h3>
-            ${state.certificates.map(c => `
-              <div onclick="state.selectedCertificateId = '${c.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === c.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
-                <p class="font-bold text-slate-900">${escapeHtml(c.id)} — ${escapeHtml(c.type)}</p>
-                <p class="text-slate-600 mt-1">Bénéficiaire : <strong>${escapeHtml(c.beneficiaire)}</strong> • Mosquée : ${escapeHtml(c.mosquee)} (${escapeHtml(c.province)}) • Date : ${escapeHtml(c.dateEmission)}</p>
-                <p class="font-mono text-emerald-900 mt-1">Vérification : ${escapeHtml(c.hashVerification)} • ${escapeHtml(c.statut)}</p>
-              </div>
-            `).join('')}
+            ${state.certificates.map(c => {
+              const isMar = c.type === 'Acte de Mariage Religieux (Nikah)';
+              const noteText = buildCertificateNote(c);
+              return `
+                <div onclick="state.selectedCertificateId = '${c.id}'; saveState(); renderApp();" class="p-4 rounded-lg border cursor-pointer space-y-2 ${selId === c.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                  <p class="font-bold text-slate-900">${escapeHtml(c.id)} — ${escapeHtml(c.type)}</p>
+                  <p class="text-slate-600">Bénéficiaire : <strong>${escapeHtml(c.beneficiaire)}</strong> • Mosquée : ${escapeHtml(c.mosquee)} (${escapeHtml(c.province)}) • Date : ${escapeHtml(c.dateEmission)}</p>
+                  <p class="p-2.5 rounded bg-white border border-slate-200 text-slate-800 italic">${escapeHtml(noteText)}</p>
+                  <div class="flex flex-wrap justify-between items-center gap-2 text-slate-700">
+                    <span class="font-mono text-emerald-900">Vérification : ${escapeHtml(c.hashVerification)} • ${escapeHtml(c.statut)}</span>
+                    <span>Signature Hiérarchie : <strong>${escapeHtml(c.imamSignataire || 'À signer')}</strong></span>
+                  </div>
+                  ${isMar ? `
+                    <div class="flex flex-wrap gap-4 pt-2">
+                      <div>
+                        <p class="text-[10px] font-bold text-slate-500 mb-1">Époux</p>
+                        ${c.imageEpoux ? `<img src="${c.imageEpoux}" alt="Époux" class="h-24 w-24 object-cover rounded border bg-white" />` : `<div class="h-24 w-24 rounded border bg-white flex items-center justify-center text-[10px] text-slate-400">Image Époux</div>`}
+                      </div>
+                      <div>
+                        <p class="text-[10px] font-bold text-slate-500 mb-1">Épouse</p>
+                        ${c.imageEpouse ? `<img src="${c.imageEpouse}" alt="Épouse" class="h-24 w-24 object-cover rounded border bg-white" />` : `<div class="h-24 w-24 rounded border bg-white flex items-center justify-center text-[10px] text-slate-400">Image Épouse</div>`}
+                      </div>
+                    </div>
+                  ` : `
+                    <div class="pt-2">
+                      <p class="text-[10px] font-bold text-slate-500 mb-1">Image</p>
+                      ${c.imageUnique ? `<img src="${c.imageUnique}" alt="Attestation" class="h-24 w-24 object-cover rounded border bg-white" />` : `<div class="h-24 w-24 rounded border bg-white flex items-center justify-center text-[10px] text-slate-400">Image</div>`}
+                    </div>
+                  `}
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       `;
     }
 
-    // --- 8. Journal d'audit ---
+    // --- Point 8 : 8. Journal d'audit (+ rubriques Audio, Vidéo, Image) ---
     function renderAudit() {
       const f = state.auditForm;
       const selId = state.selectedAuditId || state.auditLogs[0]?.id || '';
@@ -1981,33 +2177,67 @@
             })}
           </div>
 
-          <form id="audit-form" onsubmit="handleSaveAudit(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Module</label>
-              <input type="text" value="${escapeHtml(f.module)}" oninput="state.auditForm.module = this.value" class="w-full px-3 py-2 border rounded-lg" />
+          <form id="audit-form" onsubmit="handleSaveAudit(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Module</label>
+                <input type="text" value="${escapeHtml(f.module)}" oninput="state.auditForm.module = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Action</label>
+                <input type="text" value="${escapeHtml(f.action)}" oninput="state.auditForm.action = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Province</label>
+                <select onchange="state.auditForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
+                  ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Détails *</label>
+                <input required type="text" value="${escapeHtml(f.details)}" oninput="state.auditForm.details = this.value" class="w-full px-3 py-2 border rounded-lg" />
+              </div>
             </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Action</label>
-              <input type="text" value="${escapeHtml(f.action)}" oninput="state.auditForm.action = this.value" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Province</label>
-              <select onchange="state.auditForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
-                ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Détails *</label>
-              <input required type="text" value="${escapeHtml(f.details)}" oninput="state.auditForm.details = this.value" class="w-full px-3 py-2 border rounded-lg" />
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Audio</label>
+                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                ${f.audio ? `<audio controls src="${f.audio}" class="mt-2 w-full h-8"></audio>` : ''}
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Vidéo</label>
+                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                ${f.video ? `<video controls src="${f.video}" class="mt-2 max-h-32 rounded border"></video>` : ''}
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Image</label>
+                <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                ${f.image ? `<img src="${f.image}" alt="Audit Image" class="mt-2 max-h-32 w-auto object-contain rounded border" />` : ''}
+              </div>
             </div>
           </form>
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Entrées du Journal d'Audit (${state.auditLogs.length})</h3>
             ${state.auditLogs.map(a => `
-              <div onclick="state.selectedAuditId = '${a.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedAuditId = '${a.id}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer space-y-2 ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(a.id)} • ${escapeHtml(a.timestamp)} • <span class="text-emerald-800">${escapeHtml(a.module)} / ${escapeHtml(a.action)}</span></p>
-                <p class="text-slate-600 mt-1">${escapeHtml(a.details)} — Acteur : ${escapeHtml(a.acteur)} (${escapeHtml(a.province)})</p>
+                <p class="text-slate-600">${escapeHtml(a.details)} — Acteur : ${escapeHtml(a.acteur)} (${escapeHtml(a.province)})</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 block">Audio</span>
+                    ${a.audio ? `<audio controls src="${a.audio}" class="w-full h-8 mt-1"></audio>` : `<span class="text-[11px] text-slate-400">Aucun audio</span>`}
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 block">Vidéo</span>
+                    ${a.video ? `<video controls src="${a.video}" class="max-h-32 rounded border mt-1"></video>` : `<span class="text-[11px] text-slate-400">Aucune vidéo</span>`}
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 block">Image</span>
+                    ${a.image ? `<img src="${a.image}" alt="Image audit" class="max-h-32 w-auto object-contain rounded border mt-1" />` : `<span class="text-[11px] text-slate-400">Aucune image</span>`}
+                  </div>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -2015,8 +2245,9 @@
       `;
     }
 
-    // --- 9. Administration ---
+    // --- Point 9 : 9. Administration ---
     function renderAdmin() {
+      const totalSplit = Number(state.splitRules.locale || 0) + Number(state.splitRules.provinciale || 0) + Number(state.splitRules.nationale || 0);
       return `
         <div class="space-y-6">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -2033,24 +2264,24 @@
             })}
           </div>
 
-          <form id="admin-form" onsubmit="event.preventDefault(); saveState(); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <form id="admin-form" onsubmit="event.preventDefault(); saveState(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Locale (%)</label>
-              <input type="number" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Provinciale (%)</label>
-              <input type="number" value="${escapeHtml(state.splitRules.provinciale)}" oninput="state.splitRules.provinciale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" value="${escapeHtml(state.splitRules.provinciale)}" oninput="state.splitRules.provinciale = Number(this.value) || 0; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Nationale (%)</label>
-              <input type="number" value="${escapeHtml(state.splitRules.nationale)}" oninput="state.splitRules.nationale = Number(this.value) || 0" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" value="${escapeHtml(state.splitRules.nationale)}" oninput="state.splitRules.nationale = Number(this.value) || 0; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg" />
             </div>
           </form>
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-3 text-xs">
             <h3 class="font-bold text-sm text-slate-900">Configuration Active & 26 Provinces de la RDC</h3>
-            <p><strong>Clé de répartition enregistrée :</strong> Locale ${state.splitRules.locale}% • Provinciale ${state.splitRules.provinciale}% • Nationale ${state.splitRules.nationale}%</p>
+            <p><strong>Clé de répartition enregistrée :</strong> Locale ${state.splitRules.locale}% • Provinciale ${state.splitRules.provinciale}% • Nationale ${state.splitRules.nationale}% (Total : ${totalSplit}%)</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-2">
               ${PROVINCES_RDC.map(p => `<div class="p-2 rounded bg-slate-50 border border-slate-200 font-semibold text-slate-800">${escapeHtml(p)}</div>`).join('')}
             </div>
@@ -2170,7 +2401,7 @@
       `;
     }
 
-    // --- Pôle : Gestion Hajj & Omra RDC ---
+    // --- Point 14 : Pôle : Gestion Hajj & Omra RDC (+ image du candidat) ---
     function renderHajj() {
       const f = state.hajjForm;
       const selId = state.selectedHajjId || state.hajjPilgrims[0]?.id || '';
@@ -2190,7 +2421,7 @@
             })}
           </div>
 
-          <form id="hajj-form" onsubmit="handleSaveHajj(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+          <form id="hajj-form" onsubmit="handleSaveHajj(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Nom du Candidat *</label>
               <input required type="text" value="${escapeHtml(f.nom)}" oninput="state.hajjForm.nom = this.value" class="w-full px-3 py-2 border rounded-lg" />
@@ -2207,14 +2438,30 @@
               <label class="block font-semibold text-slate-700 mb-1">Paiement (USD)</label>
               <input type="number" value="${escapeHtml(f.paiementUSD)}" oninput="state.hajjForm.paiementUSD = this.value" class="w-full px-3 py-2 border rounded-lg" />
             </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Image du Candidat</label>
+              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.hajjForm.photo = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+            </div>
           </form>
+
+          ${f.photo ? `
+            <div class="bg-white p-3 rounded-xl border border-slate-200 inline-block">
+              <img src="${f.photo}" alt="Aperçu Candidat" class="h-28 w-28 object-cover rounded" />
+            </div>
+          ` : ''}
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Dossiers Hajj & Omra RDC (${state.hajjPilgrims.length})</h3>
             ${state.hajjPilgrims.map(h => `
-              <div onclick="state.selectedHajjId = '${h.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === h.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
-                <p class="font-bold text-slate-900">${escapeHtml(h.id)} — ${escapeHtml(h.nom)} (${escapeHtml(h.province)})</p>
-                <p class="text-slate-600 mt-1">Passeport : <span class="font-mono">${escapeHtml(h.passeport)}</span> • Forfait : ${escapeHtml(h.forfait)} • Paiement : <strong>$${Number(h.paiementUSD).toLocaleString()} USD (${escapeHtml(h.statutPaiement)})</strong> • Vaccin Méningite : ${h.vaccinMeningite ? 'À jour' : 'À vérifier'}</p>
+              <div onclick="state.selectedHajjId = '${h.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer flex items-center gap-3 ${selId === h.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                ${h.photo
+                  ? `<img src="${h.photo}" alt="${escapeHtml(h.nom)}" class="w-14 h-14 rounded-lg object-cover border border-slate-300 shrink-0" />`
+                  : `<div class="w-14 h-14 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold shrink-0">PHOTO</div>`
+                }
+                <div>
+                  <p class="font-bold text-slate-900">${escapeHtml(h.id)} — ${escapeHtml(h.nom)} (${escapeHtml(h.province)})</p>
+                  <p class="text-slate-600 mt-1">Passeport : <span class="font-mono">${escapeHtml(h.passeport)}</span> • Forfait : ${escapeHtml(h.forfait)} • Paiement : <strong>$${Number(h.paiementUSD).toLocaleString()} USD (${escapeHtml(h.statutPaiement)})</strong> • Vaccin Méningite : ${h.vaccinMeningite ? 'À jour' : 'À vérifier'}</p>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -2264,7 +2511,7 @@
         {
           title: 'Pôles Opérationnels Complémentaires',
           items: [
-            { id: 'madrasas', label: 'Enseignement & Madrasas', badge: state.madrasas.length },
+            { id: 'madrasas', label: 'Enseignement & Madrasas', badge: state.madrasas.length, href: 'edu-comico.html' },
             { id: 'waqf', label: 'Action Sociale & Waqf', badge: state.waqfs.length },
             { id: 'hajj', label: 'Gestion Hajj & Omra RDC', badge: state.hajjPilgrims.length }
           ]
@@ -2294,8 +2541,11 @@
                   <div class="space-y-1">
                     ${sec.items.map((item) => {
                       const active = state.activeTab === item.id;
+                      const clickHandler = item.href
+                        ? `window.location.href = '${item.href}';`
+                        : `state.activeTab = '${item.id}'; state.mobileMenuOpen = false; saveState(); renderApp();`;
                       return `
-                        <button type="button" onclick="state.activeTab = '${item.id}'; state.mobileMenuOpen = false; saveState(); renderApp();" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${active ? 'bg-emerald-800 text-white border border-emerald-700' : 'text-emerald-100/80 hover:bg-emerald-900/60 hover:text-white'}">
+                        <button type="button" onclick="${clickHandler}" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${active ? 'bg-emerald-800 text-white border border-emerald-700' : 'text-emerald-100/80 hover:bg-emerald-900/60 hover:text-white'}">
                           <span class="truncate">${escapeHtml(item.label)}</span>
                           ${item.badge !== undefined ? `<span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-900 text-amber-300 font-bold">${item.badge}</span>` : ''}
                         </button>
