@@ -5,9 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COMICO • RDC — Administration Islamique</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script id="react-cdn" src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script id="reactdom-cdn" src="https://unpkg.com/react-dom@18/umd/react.development.js" crossorigin></script>
+  <script id="babel-cdn" src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    (function ensureCdnFallbacks() {
+      function injectFallback(id, fallbackUrl) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('error', function () {
+          if (el.dataset.fallbackApplied) return;
+          el.dataset.fallbackApplied = '1';
+          var s = document.createElement('script');
+          s.src = fallbackUrl;
+          s.crossOrigin = 'anonymous';
+          document.head.appendChild(s);
+        });
+      }
+      injectFallback('react-cdn', 'https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js');
+      injectFallback('reactdom-cdn', 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js');
+      injectFallback('babel-cdn', 'https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js');
+    })();
+  </script>
   <style>
     @media print {
       aside, header, .no-print { display: none !important; }
@@ -16,10 +35,82 @@
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans">
-  <div id="root"></div>
+  <div id="root">
+    <div id="boot-fallback" class="min-h-screen flex items-center justify-center p-6 text-center">
+      <div class="max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+        <p class="text-sm font-bold text-emerald-950">Chargement de COMICO • RDC...</p>
+        <p class="text-xs text-slate-500">
+          Si la page reste blanche après quelques secondes, ouvrez la console (<strong>F12</strong>) ou vérifiez l’accès aux scripts CDN / le stockage local.
+        </p>
+        <button
+          type="button"
+          onclick="localStorage.removeItem('comico_rdc_pro_state_v1'); location.reload();"
+          class="px-3.5 py-2 rounded-lg bg-emerald-800 text-white text-xs font-semibold"
+        >
+          Réinitialiser le cache local et recharger
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('error', function (event) {
+      var rootEl = document.getElementById('root');
+      if (!rootEl) return;
+      if (rootEl.dataset.appMounted === '1') return;
+      rootEl.innerHTML =
+        '<div class="min-h-screen flex items-center justify-center p-6">' +
+          '<div class="max-w-lg w-full bg-white border border-rose-200 rounded-2xl p-6 shadow space-y-3">' +
+            '<h2 class="text-base font-bold text-rose-800">Erreur au démarrage de l’application</h2>' +
+            '<pre class="text-xs bg-slate-900 text-rose-200 p-3 rounded-lg overflow-x-auto">' +
+              String(event.message || 'Erreur inconnue') +
+            '</pre>' +
+            '<button onclick="localStorage.removeItem(\'comico_rdc_pro_state_v1\'); location.reload();" ' +
+              'class="px-4 py-2 rounded-lg bg-emerald-800 text-white text-xs font-semibold">' +
+              'Nettoyer le stockage local et recharger' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+    });
+  </script>
 
   <script type="text/babel">
     const { useState, useMemo, useEffect } = React;
+
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { error };
+      }
+      render() {
+        if (this.state.error) {
+          return (
+            <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100">
+              <div className="max-w-lg w-full bg-white border border-rose-200 rounded-2xl p-6 shadow space-y-3">
+                <h2 className="text-base font-bold text-rose-800">Erreur d’affichage React</h2>
+                <pre className="text-xs bg-slate-900 text-rose-200 p-3 rounded-lg overflow-x-auto">
+                  {String(this.state.error && this.state.error.message ? this.state.error.message : this.state.error)}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('comico_rdc_pro_state_v1');
+                    window.location.reload();
+                  }}
+                  className="px-4 py-2 rounded-lg bg-emerald-800 text-white text-xs font-semibold"
+                >
+                  Réinitialiser les données et recharger
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
 
     // Icônes SVG intégrées (remplacement autonome de lucide-react)
     function IconBase({ children, className = "w-4 h-4" }) {
@@ -796,8 +887,9 @@
       const cells = useMemo(() => {
         const grid = [];
         let hash = 0;
-        for (let i = 0; i < value.length; i++) {
-          hash = (hash << 5) - hash + value.charCodeAt(i);
+        const str = String(value || 'COMICO-RDC');
+        for (let i = 0; i < str.length; i++) {
+          hash = (hash << 5) - hash + str.charCodeAt(i);
           hash |= 0;
         }
         for (let r = 0; r < 9; r++) {
@@ -1677,7 +1769,7 @@
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-1.5">
-                    {m.annexes.map((annexe) => (
+                    {(m.annexes || []).map((annexe) => (
                       <span key={annexe} className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
                         {annexe}
                       </span>
@@ -1685,7 +1777,7 @@
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-slate-800">
-                      Capacité : {m.capacite.toLocaleString()} places
+                      Capacité : {Number(m.capacite || 0).toLocaleString()} places
                     </span>
                     <button
                       type="button"
@@ -3158,7 +3250,7 @@
                       <td className="py-3 px-4 font-mono text-xs text-slate-600">{p.passeport}</td>
                       <td className="py-3 px-4 text-xs text-slate-700">{p.province}</td>
                       <td className="py-3 px-4">
-                        <span className="text-xs font-bold text-emerald-800">${p.paiementUSD.toLocaleString()}</span>
+                        <span className="text-xs font-bold text-emerald-800">${Number(p.paiementUSD || 0).toLocaleString()}</span>
                         <span className="block text-[11px] text-slate-500">{p.statutPaiement}</span>
                       </td>
                       <td className="py-3 px-4">
@@ -3179,7 +3271,21 @@
     function loadSavedState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        return {
+          ...parsed,
+          organs: Array.isArray(parsed.organs) && parsed.organs.length ? parsed.organs : null,
+          mosques: Array.isArray(parsed.mosques) && parsed.mosques.length ? parsed.mosques : null,
+          members: Array.isArray(parsed.members) && parsed.members.length ? parsed.members : null,
+          leaders: Array.isArray(parsed.leaders) && parsed.leaders.length ? parsed.leaders : null,
+          transactions: Array.isArray(parsed.transactions) && parsed.transactions.length ? parsed.transactions : null,
+          events: Array.isArray(parsed.events) && parsed.events.length ? parsed.events : null,
+          certificates: Array.isArray(parsed.certificates) && parsed.certificates.length ? parsed.certificates : null,
+          auditLogs: Array.isArray(parsed.auditLogs) && parsed.auditLogs.length ? parsed.auditLogs : null,
+          hajjPilgrims: Array.isArray(parsed.hajjPilgrims) && parsed.hajjPilgrims.length ? parsed.hajjPilgrims : null
+        };
       } catch {
         return null;
       }
@@ -3206,12 +3312,17 @@
       const [events, setEvents] = useState(saved?.events || INITIAL_EVENTS);
       const [certificates, setCertificates] = useState(saved?.certificates || INITIAL_CERTIFICATES);
       const [auditLogs, setAuditLogs] = useState(saved?.auditLogs || INITIAL_AUDIT_LOGS);
-      const [madrasas] = useState(saved?.madrasas || INITIAL_MADRASAS);
-      const [waqfs] = useState(saved?.waqfs || INITIAL_WAQF);
+      const [madrasas] = useState(INITIAL_MADRASAS);
+      const [waqfs] = useState(INITIAL_WAQF);
       const [hajjPilgrims, setHajjPilgrims] = useState(saved?.hajjPilgrims || INITIAL_HAJJ);
       const [splitRules, setSplitRules] = useState(
         saved?.splitRules || { locale: 50, provinciale: 30, nationale: 20 }
       );
+
+      useEffect(() => {
+        const rootEl = document.getElementById('root');
+        if (rootEl) rootEl.dataset.appMounted = '1';
+      }, []);
 
       useEffect(() => {
         try {
@@ -3227,8 +3338,6 @@
               events,
               certificates,
               auditLogs,
-              madrasas,
-              waqfs,
               hajjPilgrims,
               splitRules
             })
@@ -3246,8 +3355,6 @@
         events,
         certificates,
         auditLogs,
-        madrasas,
-        waqfs,
         hajjPilgrims,
         splitRules
       ]);
@@ -3671,6 +3778,7 @@
                   <img
                     src="img/logo1.jpg"
                     alt="Logo COMICO-RDC"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     className="h-10 w-auto object-contain rounded"
                   />
                   <span className="text-lg font-extrabold tracking-tight text-slate-900">
@@ -3895,7 +4003,11 @@
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
   </script>
 </body>
 </html>
