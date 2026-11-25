@@ -412,7 +412,12 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return structuredClone(INITIAL_STATE);
-        return { ...structuredClone(INITIAL_STATE), ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw);
+        return {
+          ...structuredClone(INITIAL_STATE),
+          ...parsed,
+          splitRules: { ...INITIAL_STATE.splitRules, ...(parsed.splitRules || {}) }
+        };
       } catch {
         return structuredClone(INITIAL_STATE);
       }
@@ -422,8 +427,12 @@
 
     function saveState() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch {}
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, notification: null }));
+        return true;
+      } catch (err) {
+        state.notification = 'Attention : mémoire locale saturée (fichier trop volumineux). Supprimez d’anciens médias ou utilisez des images plus légères.';
+        return false;
+      }
     }
 
     function notify(msg) {
@@ -473,11 +482,41 @@
       URL.revokeObjectURL(url);
     }
 
+    function compressImageDataUrl(dataUrl, maxDim = 900, quality = 0.78, callback) {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        callback(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => callback(dataUrl);
+      img.src = dataUrl;
+    }
+
     function readFileAsDataUrl(input, callback) {
       const file = input.files && input.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => callback(reader.result);
+      reader.onload = () => {
+        if (file.type && file.type.startsWith('image/')) {
+          compressImageDataUrl(reader.result, 900, 0.78, callback);
+        } else {
+          callback(reader.result);
+        }
+      };
       reader.readAsDataURL(file);
     }
 
@@ -493,7 +532,6 @@
         case 'certificates': return 'Actes & Attestations Religieuses';
         case 'audit': return 'Traçabilité & Journal d’Audit';
         case 'admin': return 'Administration & Paramètres RDC';
-        case 'madrasas': return 'Enseignement & Madrasas';
         case 'waqf': return 'Action Sociale & Biens Waqf';
         case 'hajj': return 'Gestion Hajj & Omra • RDC';
         default: return 'Administration Islamique • RDC';
@@ -834,7 +872,7 @@
       renderApp();
     }
 
-    // --- Actions Rubriques Complémentaires (Points 7 à 14) ---
+    // --- Actions Rubriques Complémentaires ---
     function handleSaveFinance(e) {
       e.preventDefault();
       const f = state.financeForm;
@@ -1039,42 +1077,6 @@
       renderApp();
     }
 
-    function handleSaveMadrasa(e) {
-      e.preventDefault();
-      const f = state.madrasaForm;
-      if (!f.nom.trim()) return;
-      if (f.id) {
-        state.madrasas = state.madrasas.map((m) => (m.id === f.id ? { ...m, ...f, eleves: Number(f.eleves) || 0, enseignants: Number(f.enseignants) || 0 } : m));
-        state.selectedMadrasaId = f.id;
-        notify('Madrasa modifiée et enregistrée.');
-      } else {
-        const id = `MAD-${Math.floor(10 + Math.random() * 89)}`;
-        state.madrasas.unshift({ ...f, id, eleves: Number(f.eleves) || 0, enseignants: Number(f.enseignants) || 0 });
-        state.selectedMadrasaId = id;
-        notify('Madrasa enregistrée.');
-      }
-      state.madrasaForm = { id: '', nom: '', province: 'Kinshasa', directeur: '', eleves: 150, enseignants: 8, niveau: 'Primaire & Secondaire', tauxReussite: '85%' };
-      saveState();
-      renderApp();
-    }
-
-    function editMadrasa(id) {
-      const target = state.madrasas.find((m) => m.id === id);
-      if (!target) return;
-      state.madrasaForm = { ...target };
-      state.selectedMadrasaId = id;
-      saveState();
-      renderApp();
-    }
-
-    function deleteMadrasa(id) {
-      state.madrasas = state.madrasas.filter((m) => m.id !== id);
-      if (state.selectedMadrasaId === id) state.selectedMadrasaId = state.madrasas[0]?.id || '';
-      notify('Madrasa supprimée.');
-      saveState();
-      renderApp();
-    }
-
     function handleSaveWaqf(e) {
       e.preventDefault();
       const f = state.waqfForm;
@@ -1265,7 +1267,6 @@
               <h2 class="text-xl font-bold text-slate-900">1. Structure et Organes</h2>
               <p class="text-sm text-slate-500">Enregistrement des autorités de la HIE • ORGANIGRAMME HIE INTERACTIF (National → Provincial (26) → Urbain/Territorial → Mosquée)</p>
             </div>
-            <!-- Boutons demandés : Enregistrer, Supprimer, Imprimer, Modifier, Télécharger, Publier -->
             <div class="flex flex-wrap gap-2 no-print">
               <button type="submit" form="organ-form" class="px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold">
                 Enregistrer
@@ -1473,7 +1474,6 @@
             </div>
           </div>
 
-          <!-- Point 2 : Barre de recherche sur la section Mosquée -->
           <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm no-print flex flex-col sm:flex-row sm:items-center gap-3">
             <input
               type="search"
@@ -1786,7 +1786,6 @@
       `;
     }
 
-    // --- Point 10 : Corps des Responsables Religieux (+ photo) ---
     function renderLeaders() {
       const lf = state.leaderForm;
       const selected = state.leaders.find((l) => l.id === state.selectedLeaderId) || state.leaders[0] || null;
@@ -1911,7 +1910,6 @@
       `;
     }
 
-    // --- Point 11 : 5. Finance & Zakat (+ responsable de la mosquée, image, référence M-Pesa / Compte Bancaire) ---
     function renderFinance() {
       const f = state.financeForm;
       const selId = state.selectedTransactionId || state.transactions[0]?.id || '';
@@ -1984,7 +1982,6 @@
       `;
     }
 
-    // --- Point 12 : 6. Événements et fêtes (+ images) ---
     function renderEvents() {
       const f = state.eventForm;
       const selId = state.selectedEventId || state.events[0]?.id || '';
@@ -2047,7 +2044,6 @@
       `;
     }
 
-    // --- Point 7 : 7. Attestations religieuses (note pro pour Hiérarchie + 2 images mariage / 1 image autres) ---
     function renderCertificates() {
       const f = state.certificateForm;
       const selId = state.selectedCertificateId || state.certificates[0]?.id || '';
@@ -2157,7 +2153,6 @@
       `;
     }
 
-    // --- Point 8 : 8. Journal d'audit (+ rubriques Audio, Vidéo, Image) ---
     function renderAudit() {
       const f = state.auditForm;
       const selId = state.selectedAuditId || state.auditLogs[0]?.id || '';
@@ -2245,7 +2240,6 @@
       `;
     }
 
-    // --- Point 9 : 9. Administration ---
     function renderAdmin() {
       const totalSplit = Number(state.splitRules.locale || 0) + Number(state.splitRules.provinciale || 0) + Number(state.splitRules.nationale || 0);
       return `
@@ -2290,64 +2284,6 @@
       `;
     }
 
-    // --- Pôle : Enseignement & Madrasas ---
-    function renderMadrasas() {
-      const f = state.madrasaForm;
-      const selId = state.selectedMadrasaId || state.madrasas[0]?.id || '';
-      return `
-        <div class="space-y-6">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900">Enseignement & Madrasas</h2>
-              <p class="text-sm text-slate-500">Établissements d'enseignement islamique et écoles coraniques</p>
-            </div>
-            ${renderActionButtons({
-              formId: 'madrasa-form',
-              onModify: `if('${selId}') editMadrasa('${selId}')`,
-              onDelete: `if('${selId}') deleteMadrasa('${selId}')`,
-              downloadName: 'madrasas-comico.json',
-              downloadData: 'state.madrasas'
-            })}
-          </div>
-
-          <form id="madrasa-form" onsubmit="handleSaveMadrasa(event)" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Nom de la Madrasa *</label>
-              <input required type="text" value="${escapeHtml(f.nom)}" oninput="state.madrasaForm.nom = this.value" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Province</label>
-              <select onchange="state.madrasaForm.province = this.value" class="w-full px-3 py-2 border rounded-lg">
-                ${PROVINCES_RDC.map(p => `<option value="${p}" ${f.province === p ? 'selected' : ''}>${p}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Élèves & Enseignants</label>
-              <div class="flex gap-2">
-                <input type="number" placeholder="Élèves" value="${escapeHtml(f.eleves)}" oninput="state.madrasaForm.eleves = this.value" class="w-1/2 px-2 py-2 border rounded-lg" />
-                <input type="number" placeholder="Ens." value="${escapeHtml(f.enseignants)}" oninput="state.madrasaForm.enseignants = this.value" class="w-1/2 px-2 py-2 border rounded-lg" />
-              </div>
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Niveau & Réussite</label>
-              <input type="text" value="${escapeHtml(f.niveau)}" oninput="state.madrasaForm.niveau = this.value" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-          </form>
-
-          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
-            <h3 class="font-bold text-sm text-slate-900 mb-2">Établissements & Madrasas (${state.madrasas.length})</h3>
-            ${state.madrasas.map(m => `
-              <div onclick="state.selectedMadrasaId = '${m.id}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === m.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
-                <p class="font-bold text-slate-900">${escapeHtml(m.id)} — ${escapeHtml(m.nom)} (${escapeHtml(m.province)})</p>
-                <p class="text-slate-600 mt-1">Direction : <strong>${escapeHtml(m.directeur || '—')}</strong> • Élèves : <strong>${Number(m.eleves).toLocaleString()}</strong> • Enseignants : <strong>${Number(m.enseignants).toLocaleString()}</strong> • Niveau : ${escapeHtml(m.niveau)} • Réussite : ${escapeHtml(m.tauxReussite)}</p>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // --- Pôle : Action Sociale & Waqf ---
     function renderWaqf() {
       const f = state.waqfForm;
       const selId = state.selectedWaqfId || state.waqfs[0]?.id || '';
@@ -2401,7 +2337,6 @@
       `;
     }
 
-    // --- Point 14 : Pôle : Gestion Hajj & Omra RDC (+ image du candidat) ---
     function renderHajj() {
       const f = state.hajjForm;
       const selId = state.selectedHajjId || state.hajjPilgrims[0]?.id || '';
@@ -2481,7 +2416,6 @@
         case 'certificates': return renderCertificates();
         case 'audit': return renderAudit();
         case 'admin': return renderAdmin();
-        case 'madrasas': return renderMadrasas();
         case 'waqf': return renderWaqf();
         case 'hajj': return renderHajj();
         default: return renderDashboard();
@@ -2511,7 +2445,7 @@
         {
           title: 'Pôles Opérationnels Complémentaires',
           items: [
-            { id: 'madrasas', label: 'Enseignement & Madrasas', badge: state.madrasas.length, href: 'edu-comico.html' },
+            { id: 'madrasas', label: 'Enseignement & Madrasas', href: 'edu_comico.html' },
             { id: 'waqf', label: 'Action Sociale & Waqf', badge: state.waqfs.length },
             { id: 'hajj', label: 'Gestion Hajj & Omra RDC', badge: state.hajjPilgrims.length }
           ]
