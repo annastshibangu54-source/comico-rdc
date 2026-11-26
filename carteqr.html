@@ -482,7 +482,8 @@
             return "";
         }
 
-        function chercherProprietaireDansToutLocalStorage(nomRechercheUpper) {
+        // Recherche dans tout localStorage par code secret propriétaire en priorité, puis par nom
+        function chercherParCodeOuNomDansLocalStorage(codeRecherche, nomRechercheUpper) {
             const matches = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const cle = localStorage.key(i);
@@ -495,10 +496,13 @@
                             node.forEach(parcourir);
                             return;
                         }
+                        const codeNode = extraireCodeProprietaire(node);
                         const nomNode = extraireNomProprietaire(node).toUpperCase();
                         const ecoleNode = extraireNomEcoleMadras(node).toUpperCase();
-                        if ((nomNode && nomNode === nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper)) {
-                            matches.push({ key: cle, data: node });
+                        const matchCode = codeRecherche && codeNode && codeNode === codeRecherche;
+                        const matchNom = nomRechercheUpper && ((nomNode && nomNode === nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper));
+                        if (matchCode || matchNom) {
+                            matches.push({ key: cle, data: node, matchCode: Boolean(matchCode) });
                         }
                         Object.values(node).forEach(val => {
                             if (val && typeof val === "object") {
@@ -511,6 +515,8 @@
                     // Ignorer les entrées non JSON
                 }
             }
+            // Prioriser les correspondances exactes par code secret
+            matches.sort((a, b) => (b.matchCode ? 1 : 0) - (a.matchCode ? 1 : 0));
             return matches;
         }
 
@@ -556,14 +562,20 @@
 
             chargerDonneesLocales();
 
-            const trouvaillesGlobales = chercherProprietaireDansToutLocalStorage(saisieNom);
-            let ecoleTrouvee = appData.schools.find(s =>
-                extraireNomProprietaire(s).toUpperCase() === saisieNom ||
-                extraireNomEcoleMadras(s).toUpperCase() === saisieNom
-            );
+            // 1. Reconnaître d'abord la Madras / le propriétaire grâce au code secret
+            const trouvaillesParCode = chercherParCodeOuNomDansLocalStorage(saisieSecret, "");
+            const trouvaillesGlobales = chercherParCodeOuNomDansLocalStorage(saisieSecret, saisieNom);
 
-            if (!ecoleTrouvee && trouvaillesGlobales.length > 0) {
-                const sourceExterne = trouvaillesGlobales[0].data;
+            let ecoleTrouvee = appData.schools.find(s => extraireCodeProprietaire(s) === saisieSecret)
+                || appData.schools.find(s =>
+                    extraireNomProprietaire(s).toUpperCase() === saisieNom ||
+                    extraireNomEcoleMadras(s).toUpperCase() === saisieNom
+                );
+
+            const sourceCode = trouvaillesParCode.length > 0 ? trouvaillesParCode[0].data : null;
+
+            if (!ecoleTrouvee && (sourceCode || trouvaillesGlobales.length > 0)) {
+                const sourceExterne = sourceCode || trouvaillesGlobales[0].data;
                 const codeExterne = extraireCodeProprietaire(sourceExterne);
                 if (codeExterne && codeExterne !== saisieSecret) {
                     alert("Code secret propriétaire Madras incorrect !");
@@ -581,7 +593,6 @@
                 appData.schools.push(ecoleTrouvee);
                 sauvegarderDonneesLocales();
             } else if (!ecoleTrouvee) {
-                // Premier accès : création sécurisée du compte propriétaire avec le code saisi
                 ecoleTrouvee = {
                     id: "MADRAS-" + Date.now(),
                     ownerName: saisieNomRaw,
@@ -594,7 +605,6 @@
                 appData.schools.push(ecoleTrouvee);
                 sauvegarderDonneesLocales();
             } else {
-                // Vérification stricte du code secret pour un propriétaire / Madras existant
                 const codesConnus = [
                     extraireCodeProprietaire(ecoleTrouvee),
                     ...trouvaillesGlobales.map(m => extraireCodeProprietaire(m.data))
@@ -609,14 +619,22 @@
                     ecoleTrouvee.secretCode = saisieSecret;
                 }
                 if (!ecoleTrouvee.ownerName) {
-                    ecoleTrouvee.ownerName = saisieNomRaw;
+                    ecoleTrouvee.ownerName = (sourceCode && extraireNomProprietaire(sourceCode)) || saisieNomRaw;
                 }
-                if (!ecoleTrouvee.name) {
-                    ecoleTrouvee.name = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+                const nomMadrasReconnu = (sourceCode && extraireNomEcoleMadras(sourceCode))
+                    || extraireNomEcoleMadras(ecoleTrouvee)
+                    || trouvaillesGlobales.map(m => extraireNomEcoleMadras(m.data)).find(Boolean)
+                    || "";
+                if (nomMadrasReconnu) {
+                    ecoleTrouvee.name = nomMadrasReconnu;
+                    ecoleTrouvee.schoolName = nomMadrasReconnu;
                 }
-                const logoExterne = trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
-                if (!ecoleTrouvee.logoUrl && logoExterne) {
-                    ecoleTrouvee.logoUrl = logoExterne;
+                const logoReconnu = (sourceCode && extraireLogoMadras(sourceCode))
+                    || extraireLogoMadras(ecoleTrouvee)
+                    || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean)
+                    || "";
+                if (logoReconnu) {
+                    ecoleTrouvee.logoUrl = logoReconnu;
                 }
                 sauvegarderDonneesLocales();
             }
