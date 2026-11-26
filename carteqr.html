@@ -30,7 +30,7 @@
             justify-content: space-between;
             -webkit-print-color-adjust: exact !important;
         }
-        /* Logo d'école transparent en fond au centre */
+        /* Logo de Madras transparent en fond au centre */
         .id-card::before {
             content: "";
             position: absolute;
@@ -102,6 +102,10 @@
             <div class="mb-3">
                 <label class="form-label fw-bold">Code secret propriétaire Madras</label>
                 <input type="password" id="authSecretCode" class="form-control" placeholder="Entrez le code secret propriétaire Madras">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Logo de Madras (Optionnel)</label>
+                <input type="file" id="authMadrasLogoFile" class="form-control form-control-sm" accept="image/*" onchange="chargerLogoMadras(event)">
             </div>
             <button type="button" onclick="ouvrirEspace()" class="btn btn-primary w-100 py-2 fw-bold">
                 <i class="fa fa-key me-2"></i>Ouvrir l'Espace COMICO-RDC
@@ -178,7 +182,7 @@
                         <div>
                             <div class="d-flex justify-content-between align-items-center pb-1 border-bottom" style="font-size: 13px;">
                                 <div class="d-flex align-items-center">
-                                    <span style="background: linear-gradient(to bottom, #007fff 33%, #ffd700 33%, #ffd700 66%, #ce1126 66%); width: 0.45cm; height: 0.3cm; display: inline-block; margin-right: 3px; border: 0.5px solid #fff;"></span>
+                                    <i class="fas fa-star-and-crescent me-1" style="color: #ffeb3b; font-size: 13px;"></i>
                                     <span class="fw-bold">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</span>
                                 </div>
                                 <img id="viewSchoolLogoHeader" src="img/team-1.jpg" style="width: 0.42cm; height: 0.42cm; object-fit: cover; border-radius: 50%; border: 1px solid #fff;" alt="Logo">
@@ -368,6 +372,25 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         }
 
+        window.chargerLogoMadras = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 200;
+                    canvas.height = 200;
+                    ctx.drawImage(img, 0, 0, 200, 200);
+                    base64SchoolLogo = canvas.toDataURL('image/png', 0.85);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
         window.onload = function() {
             chargerDonneesLocales();
         };
@@ -389,7 +412,7 @@
                     name: saisieNom,
                     secretCode: saisieSecret,
                     activeYear: "2025-2026",
-                    logoUrl: "",
+                    logoUrl: base64SchoolLogo || "",
                     savedCards: []
                 };
                 appData.schools.push(ecoleTrouvee);
@@ -397,17 +420,20 @@
             } else {
                 if (!ecoleTrouvee.secretCode) {
                     ecoleTrouvee.secretCode = saisieSecret;
-                    sauvegarderDonneesLocales();
                 } else if (ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
                     alert("Code secret propriétaire Madras incorrect !");
                     return;
                 }
+                if (base64SchoolLogo) {
+                    ecoleTrouvee.logoUrl = base64SchoolLogo;
+                }
+                sauvegarderDonneesLocales();
             }
 
             currentSchoolId = ecoleTrouvee.id;
             currentSchoolName = ecoleTrouvee.name;
             currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
-            base64SchoolLogo = ecoleTrouvee.logoUrl || "";
+            base64SchoolLogo = ecoleTrouvee.logoUrl || ecoleTrouvee.logo || "";
 
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('cardGeneratorSection').style.display = 'block';
@@ -417,6 +443,9 @@
             if(base64SchoolLogo) {
                 document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
                 document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
+            } else {
+                document.getElementById('viewSchoolLogoHeader').src = "img/team-1.jpg";
+                document.getElementById('cardPreview').style.setProperty('--bg-school-logo', "url('img/team-1.jpg')");
             }
 
             window.mettreAJour();
@@ -463,6 +492,11 @@
             document.getElementById('viewPere').innerText = pere;
             document.getElementById('viewMere').innerText = mere;
             document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
+
+            if(base64SchoolLogo) {
+                document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
+                document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
+            }
 
             const qrText = "COMICO-RDC:" + typeCarte.toUpperCase() + ":" + currentSchoolName + ":" + mat + ":" + nom + " " + postnom + " " + prenom;
             document.getElementById('qrcodePreview').innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(qrText) + '">';
