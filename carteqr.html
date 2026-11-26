@@ -396,7 +396,8 @@
         };
 
         window.ouvrirEspace = function() {
-            const saisieNom = document.getElementById('authSchoolName').value.trim().toUpperCase();
+            const saisieNomRaw = document.getElementById('authSchoolName').value.trim();
+            const saisieNom = saisieNomRaw.toUpperCase();
             const saisieSecret = document.getElementById('authSecretCode').value.trim();
 
             if(!saisieNom) { alert("Veuillez saisir le nom propriétaire de Madras !"); return; }
@@ -404,7 +405,11 @@
 
             chargerDonneesLocales();
 
-            let ecoleTrouvee = appData.schools.find(s => s.name && s.name.trim().toUpperCase() === saisieNom);
+            let ecoleTrouvee = appData.schools.find(s => {
+                if (!s || typeof s !== "object") return false;
+                const nomCandidat = String(s.name || s.ownerName || s.proprietaire || s.schoolName || "").trim().toUpperCase();
+                return nomCandidat === saisieNom;
+            });
 
             if (!ecoleTrouvee) {
                 ecoleTrouvee = {
@@ -419,19 +424,24 @@
                 sauvegarderDonneesLocales();
             } else {
                 const codeEnregistre = String(
-                    ecoleTrouvee.secretCode ||
-                    ecoleTrouvee.codeSecret ||
-                    ecoleTrouvee.secret ||
-                    ecoleTrouvee.password ||
-                    ecoleTrouvee.code ||
+                    ecoleTrouvee.secretCode ??
+                    ecoleTrouvee.codeSecret ??
+                    ecoleTrouvee.secret ??
+                    ecoleTrouvee.password ??
+                    ecoleTrouvee.code ??
+                    ecoleTrouvee.pin ??
                     ""
                 ).trim();
 
                 if (!codeEnregistre) {
                     ecoleTrouvee.secretCode = saisieSecret;
-                } else if (codeEnregistre.toUpperCase() !== saisieSecret.toUpperCase()) {
+                } else if (codeEnregistre.toLowerCase() !== saisieSecret.toLowerCase()) {
                     alert("Code secret propriétaire Madras incorrect !");
                     return;
+                }
+
+                if (!ecoleTrouvee.name) {
+                    ecoleTrouvee.name = saisieNom;
                 }
                 if (base64SchoolLogo) {
                     ecoleTrouvee.logoUrl = base64SchoolLogo;
@@ -440,7 +450,7 @@
             }
 
             currentSchoolId = ecoleTrouvee.id;
-            currentSchoolName = ecoleTrouvee.name;
+            currentSchoolName = ecoleTrouvee.name || saisieNom;
             currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
             base64SchoolLogo = ecoleTrouvee.logoUrl || ecoleTrouvee.logo || "";
 
