@@ -371,13 +371,29 @@
         function extraireNomProprietaire(obj) {
             if (!obj || typeof obj !== "object") return "";
             const candidats = [
-                obj.name,
                 obj.ownerName,
                 obj.proprietaire,
                 obj.nomProprietaire,
-                obj.madrasName,
+                obj.owner,
+                obj.name
+            ];
+            for (const val of candidats) {
+                if (val !== undefined && val !== null && String(val).trim() !== "") {
+                    return String(val).trim();
+                }
+            }
+            return "";
+        }
+
+        function extraireNomEcoleMadras(obj) {
+            if (!obj || typeof obj !== "object") return "";
+            const candidats = [
                 obj.schoolName,
-                obj.ecole
+                obj.madrasName,
+                obj.ecole,
+                obj.nomEcole,
+                obj.madras,
+                obj.name
             ];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
@@ -416,8 +432,7 @@
                 obj.logo,
                 obj.madrasLogo,
                 obj.schoolLogo,
-                obj.image,
-                obj.photo
+                obj.image
             ];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
@@ -441,7 +456,8 @@
                             return;
                         }
                         const nomNode = extraireNomProprietaire(node).toUpperCase();
-                        if (nomNode && nomNode === nomRechercheUpper) {
+                        const ecoleNode = extraireNomEcoleMadras(node).toUpperCase();
+                        if ((nomNode && nomNode === nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper)) {
                             matches.push({ key: cle, data: node });
                         }
                         Object.values(node).forEach(val => {
@@ -473,13 +489,17 @@
             chargerDonneesLocales();
 
             const trouvaillesGlobales = chercherProprietaireDansToutLocalStorage(saisieNom);
-            let ecoleTrouvee = appData.schools.find(s => extraireNomProprietaire(s).toUpperCase() === saisieNom);
+            let ecoleTrouvee = appData.schools.find(s =>
+                extraireNomProprietaire(s).toUpperCase() === saisieNom ||
+                extraireNomEcoleMadras(s).toUpperCase() === saisieNom
+            );
 
             if (!ecoleTrouvee && trouvaillesGlobales.length > 0) {
                 const sourceExterne = trouvaillesGlobales[0].data;
                 ecoleTrouvee = {
                     id: sourceExterne.id || ('MADRAS-' + Date.now()),
-                    name: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
+                    ownerName: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
+                    name: extraireNomEcoleMadras(sourceExterne) || "COMICO-RDC",
                     secretCode: extraireCodeProprietaire(sourceExterne) || saisieSecret,
                     activeYear: sourceExterne.activeYear || "2025-2026",
                     logoUrl: extraireLogoMadras(sourceExterne),
@@ -492,7 +512,8 @@
             if (!ecoleTrouvee) {
                 ecoleTrouvee = {
                     id: 'MADRAS-' + Date.now(),
-                    name: saisieNomRaw,
+                    ownerName: saisieNomRaw,
+                    name: "COMICO-RDC",
                     secretCode: saisieSecret,
                     activeYear: "2025-2026",
                     logoUrl: "",
@@ -516,6 +537,12 @@
                 if (!ecoleTrouvee.secretCode) {
                     ecoleTrouvee.secretCode = codesConnus[0] || saisieSecret;
                 }
+                if (!ecoleTrouvee.ownerName) {
+                    ecoleTrouvee.ownerName = saisieNomRaw;
+                }
+                if (!ecoleTrouvee.name) {
+                    ecoleTrouvee.name = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+                }
                 if (!ecoleTrouvee.logoUrl) {
                     const logoTrouve = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
                     if (logoTrouve) ecoleTrouvee.logoUrl = logoTrouve;
@@ -524,7 +551,8 @@
             }
 
             currentSchoolId = ecoleTrouvee.id;
-            currentSchoolName = ecoleTrouvee.name || saisieNomRaw;
+            const nomEcoleAffiche = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+            currentSchoolName = nomEcoleAffiche;
             currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
             base64SchoolLogo = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
 
@@ -532,7 +560,7 @@
             document.getElementById('cardGeneratorSection').style.display = 'block';
             document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ") - COMICO-RDC";
             document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
-            
+
             if(base64SchoolLogo) {
                 document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
                 document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
