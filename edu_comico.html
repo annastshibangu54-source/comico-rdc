@@ -1261,7 +1261,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   <div id="calWorkspace" style="display: none;">
       <div class="alert alert-info py-2 small">
           <b>Repères officiels actuels :</b> <br>
-          • Calendrier Chrétien / Solaire : <b>26 Novembre 2026</b><br>
+          • Calendrier Chrétien / Solaire : <b>27 Novembre 2026</b><br>
           • Calendrier Lunaire / Islamique (Hégirien) : <b>1448 H</b>
       </div>
       <form id="formCalendrierScolaire" onsubmit="handleSaveCalendrierScolaire(event)" class="row g-2 mb-4 no-print bg-light p-3 rounded">
@@ -1273,7 +1273,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
             </select>
         </div>
         <div class="col-md-3"><label class="form-label small fw-bold">Intitulé de l'événement :</label><input type="text" id="calTitre" class="form-control form-control-sm" placeholder="Ex: Mois de Ramadan / Examen Trimestriel" required></div>
-        <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Début :</label><input type="text" id="calDebut" class="form-control form-control-sm" placeholder="Ex: 01 Jumada I 1448 / 26 Nov 2026" required></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Début :</label><input type="text" id="calDebut" class="form-control form-control-sm" placeholder="Ex: 01 Jumada I 1448 / 27 Nov 2026" required></div>
         <div class="col-md-2"><label class="form-label small fw-bold">Date / Mois Fin :</label><input type="text" id="calFin" class="form-control form-control-sm" placeholder="Ex: 29 Jumada I 1448 / 20 Déc 2026" required></div>
         <div class="col-md-2 action-bar">
             <label class="form-label small fw-bold d-block">&nbsp;</label>
@@ -1359,6 +1359,9 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     appId: "1:59405008311:web:0eda5469402a2586e6fc32"
   };
 
+  const FIRESTORE_DOC_BYTE_LIMIT = 850000;
+  const NETWORK_TIMEOUT_MS = 12000;
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
@@ -1367,11 +1370,67 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   const PLATFORM_DOC_REF = doc(db, "comico_platform", "main_state");
   const SCHOOLS_COLLECTION = collection(db, "comico_schools");
 
+  function withTimeout(promise, ms, label) {
+    let timerId = null;
+    const timeoutPromise = new Promise((_, reject) => {
+      timerId = setTimeout(() => {
+        reject(new Error(`Délai dépassé (${ms} ms) pour ${label || 'opération Firebase'}`));
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      if (timerId !== null) clearTimeout(timerId);
+    });
+  }
+
+  function byteSizeOf(str) {
+    if (typeof Blob !== "undefined") {
+      return new Blob([str || ""]).size;
+    }
+    return (str || "").length;
+  }
+
+  function buildLightweightPayload(payload) {
+    if (!payload || typeof payload !== "object") {
+      return { schools: [], adminRequests: [], jobApplications: [] };
+    }
+    const cleanSchools = (Array.isArray(payload.schools) ? payload.schools : []).map((s) => {
+      if (!s || typeof s !== "object") return s;
+      const { yearsData, communications, armoiries, logoUrl, ...rest } = s;
+      const safeLogo = (typeof logoUrl === "string" && logoUrl.startsWith("data:") && logoUrl.length > 60000)
+        ? "img/logo1.jpg"
+        : logoUrl;
+      const safeArmoiries = (typeof armoiries === "string" && armoiries.startsWith("data:") && armoiries.length > 60000)
+        ? ""
+        : armoiries;
+      const safeComms = Array.isArray(communications)
+        ? communications.slice(-20).map((c) => {
+            if (!c || typeof c !== "object") return c;
+            const { images, attachments, ...cRest } = c;
+            const safeAtts = Array.isArray(attachments)
+              ? attachments.filter((a) => a && a.url && !(String(a.url).startsWith("data:") && String(a.url).length > 50000))
+              : [];
+            return { ...cRest, attachments: safeAtts };
+          })
+        : [];
+      return {
+        ...rest,
+        logoUrl: safeLogo,
+        armoiries: safeArmoiries,
+        communications: safeComms
+      };
+    });
+    return {
+      schools: cleanSchools,
+      adminRequests: Array.isArray(payload.adminRequests) ? payload.adminRequests.slice(-50) : [],
+      jobApplications: Array.isArray(payload.jobApplications) ? payload.jobApplications.slice(-100) : []
+    };
+  }
+
   let authReadyPromise = null;
   function ensureAuthenticated() {
     if (auth.currentUser) return Promise.resolve(auth.currentUser);
     if (!authReadyPromise) {
-      authReadyPromise = new Promise((resolve) => {
+      authReadyPromise = withTimeout(new Promise((resolve) => {
         const unsub = onAuthStateChanged(auth, async (user) => {
           if (user) {
             unsub();
@@ -1382,12 +1441,16 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
               unsub();
               resolve(cred.user);
             } catch (e) {
-              console.warn("Auth anonyme non activée ou hors ligne :", e.message);
+              console.warn("Auth anonyme non activée ou hors ligne :", e && e.message ? e.message : e);
               unsub();
               resolve(null);
             }
           }
         });
+      }), NETWORK_TIMEOUT_MS, "authentification").catch((e) => {
+        console.warn("Timeout Auth :", e && e.message ? e.message : e);
+        authReadyPromise = null;
+        return null;
       });
     }
     return authReadyPromise;
@@ -1396,14 +1459,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   window.firebaseUploadFile = async function(file, folderPath) {
     if (!file) return null;
     try {
-      await ensureAuthenticated();
+      const user = await ensureAuthenticated();
+      if (!user) return null;
       const cleanName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const storageRef = ref(storage, `comico/${folderPath || 'uploads'}/${cleanName}`);
-      const snap = await uploadBytes(storageRef, file);
+      const snap = await withTimeout(uploadBytes(storageRef, file), NETWORK_TIMEOUT_MS, "upload Storage");
       const url = await getDownloadURL(snap.ref);
       return { url, name: file.name, type: file.type || 'application/octet-stream', viaStorage: true };
     } catch (err) {
-      console.warn("Firebase Storage indisponible ou règles non publiées, repli dataUrl :", err.message);
+      console.warn("Firebase Storage indisponible ou règles non publiées, repli dataUrl :", err && err.message ? err.message : err);
       return null;
     }
   };
@@ -1413,35 +1477,66 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       window.setSyncBadge("syncing", "Synchronisation...");
     }
     try {
-      await ensureAuthenticated();
-      await setDoc(PLATFORM_DOC_REF, {
-        payload: JSON.stringify(payload),
-        schoolsCount: Array.isArray(payload.schools) ? payload.schools.length : 0,
-        updatedAt: new Date().toISOString()
-      });
+      const user = await ensureAuthenticated();
+      if (!user) {
+        if (typeof window.setSyncBadge === "function") {
+          window.setSyncBadge("offline", "Hors ligne / Local");
+        }
+        return false;
+      }
 
-      // Découpage en collection / sous-collections pour l'évolutivité professionnelle
-      if (Array.isArray(payload.schools)) {
+      let serialized = JSON.stringify(payload || {});
+      let docToWrite = payload;
+      if (byteSizeOf(serialized) > FIRESTORE_DOC_BYTE_LIMIT) {
+        docToWrite = buildLightweightPayload(payload);
+        serialized = JSON.stringify(docToWrite);
+      }
+      if (byteSizeOf(serialized) > FIRESTORE_DOC_BYTE_LIMIT) {
+        console.warn("Payload Firestore toujours volumineux, écriture des métadonnées et années uniquement.");
+        docToWrite = {
+          schools: (docToWrite.schools || []).map(({ chatMessages, jobApplications, ...meta }) => meta),
+          adminRequests: [],
+          jobApplications: []
+        };
+        serialized = JSON.stringify(docToWrite);
+      }
+
+      await withTimeout(setDoc(PLATFORM_DOC_REF, {
+        payload: serialized,
+        schoolsCount: Array.isArray(payload && payload.schools) ? payload.schools.length : 0,
+        updatedAt: new Date().toISOString()
+      }), NETWORK_TIMEOUT_MS, "enregistrement Firestore");
+
+      if (payload && Array.isArray(payload.schools)) {
         for (const school of payload.schools) {
           if (!school || !school.id) continue;
           const schoolDocRef = doc(SCHOOLS_COLLECTION, school.id);
           const { yearsData, ...schoolMeta } = school;
-          await setDoc(schoolDocRef, {
-            ...schoolMeta,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
+          const metaJson = JSON.stringify(schoolMeta);
+          const safeMeta = byteSizeOf(metaJson) > FIRESTORE_DOC_BYTE_LIMIT
+            ? { id: school.id, name: school.name || "", province: school.province || "", commune: school.commune || "", secretCode: school.secretCode || "", activeYear: school.activeYear || "2025-2026", paiementStatut: school.paiementStatut || "A jour", updatedAt: new Date().toISOString() }
+            : { ...schoolMeta, updatedAt: new Date().toISOString() };
+
+          await withTimeout(setDoc(schoolDocRef, safeMeta, { merge: true }), NETWORK_TIMEOUT_MS, "mise à jour Madras");
 
           if (yearsData && typeof yearsData === "object") {
             const batch = writeBatch(db);
+            let batchCount = 0;
             for (const [yr, yObj] of Object.entries(yearsData)) {
-              const yearDocRef = doc(db, "comico_schools", school.id, "years", yr);
-              batch.set(yearDocRef, {
-                year: yr,
-                dataJson: JSON.stringify(yObj || {}),
-                updatedAt: new Date().toISOString()
-              }, { merge: true });
+              const yJson = JSON.stringify(yObj || {});
+              if (byteSizeOf(yJson) <= FIRESTORE_DOC_BYTE_LIMIT) {
+                const yearDocRef = doc(db, "comico_schools", school.id, "years", yr);
+                batch.set(yearDocRef, {
+                  year: yr,
+                  dataJson: yJson,
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
+                batchCount++;
+              }
             }
-            await batch.commit();
+            if (batchCount > 0) {
+              await withTimeout(batch.commit(), NETWORK_TIMEOUT_MS, "batch années scolaires");
+            }
           }
         }
       }
@@ -1464,8 +1559,15 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       window.setSyncBadge("syncing", "Chargement Firebase...");
     }
     try {
-      await ensureAuthenticated();
-      const snap = await getDoc(PLATFORM_DOC_REF);
+      const user = await ensureAuthenticated();
+      if (!user) {
+        if (typeof window.setSyncBadge === "function") {
+          window.setSyncBadge("offline", "Hors ligne / Local");
+        }
+        return null;
+      }
+
+      const snap = await withTimeout(getDoc(PLATFORM_DOC_REF), NETWORK_TIMEOUT_MS, "lecture Firestore");
       if (snap.exists() && snap.data() && snap.data().payload) {
         if (typeof window.setSyncBadge === "function") {
           window.setSyncBadge("online", "Synchronisé Firebase");
@@ -1485,9 +1587,12 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
     }
   };
 
-  ensureAuthenticated();
-  if (typeof window.initComicoFirebase === "function") {
-    window.initComicoFirebase();
+  window.firebaseModuleReady = true;
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (typeof window.initComicoFirebase === "function" && !window.__comicoFirebaseInitialized) {
+      window.__comicoFirebaseInitialized = true;
+      window.initComicoFirebase();
+    }
   }
 </script>
 
@@ -1539,7 +1644,7 @@ function exportFullBackupJson() {
 }
 
 const ADMIN_MASTER_PASSWORD = "ADMIN-2026";
-const FIREBASE_SAFE_MAX_BYTES = 750000;
+const FIREBASE_SAFE_MAX_BYTES = 450000;
 let appData = { schools: [], adminRequests: [], jobApplications: [] };
 let activeSchoolId = null;
 let currentCreatedSecretCode = "";
@@ -1549,6 +1654,7 @@ let selectedJobIndexForReply = null;
 let teachersUnlocked = false; 
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
+let saveQueuePromise = Promise.resolve();
 
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -1674,7 +1780,7 @@ function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
         }
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        let quality = 0.82;
+        let quality = 0.75;
         let outUrl = '';
 
         for (let attempt = 0; attempt < 6; attempt++) {
@@ -1685,9 +1791,9 @@ function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
             ctx.drawImage(img, 0, 0, width, height);
             outUrl = canvas.toDataURL('image/jpeg', quality);
             if (outUrl.length <= maxBytes) break;
-            quality = Math.max(0.35, quality - 0.12);
-            width = Math.max(320, Math.round(width * 0.82));
-            height = Math.max(320, Math.round(height * 0.82));
+            quality = Math.max(0.3, quality - 0.12);
+            width = Math.max(240, Math.round(width * 0.8));
+            height = Math.max(240, Math.round(height * 0.8));
         }
         callback({ dataUrl: outUrl, fileType: 'image/jpeg', normalized: true });
     };
@@ -1707,7 +1813,7 @@ function normalizeHeavyPdfDataUrl(dataUrl, fileName, maxBytes, callback) {
     const pdfContent = `%PDF-1.4
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
-3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
+3 0 obj << /Type /Page /Parent 2 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
 4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
 5 0 obj << /Length 220 >>
 stream
@@ -1769,7 +1875,7 @@ function readFileAsLocalDataUrl(file, callback) {
         const isPdf = fType.includes('pdf') || rawUrl.startsWith('data:application/pdf') || /\.pdf$/i.test(fName);
 
         if (isImg) {
-            compressImageDataUrlToLimit(rawUrl, 1280, FIREBASE_SAFE_MAX_BYTES, function(res) {
+            compressImageDataUrlToLimit(rawUrl, 800, FIREBASE_SAFE_MAX_BYTES, function(res) {
                 const finalName = res.normalized ? fName.replace(/\.[^.]+$/, '') + '.jpg' : fName;
                 callback({ dataUrl: res.dataUrl, fileName: finalName, fileType: res.fileType });
             });
@@ -1897,6 +2003,12 @@ function normalizeAndRenderAppData(rawData) {
 }
 
 window.initComicoFirebase = async function() {
+    if (typeof window.firebaseLoadState !== "function") {
+        if (typeof window.setSyncBadge === "function") {
+            window.setSyncBadge("offline", "Hors ligne / Local");
+        }
+        return;
+    }
     const cloudData = await window.firebaseLoadState();
     if (cloudData) {
         normalizeAndRenderAppData(cloudData);
@@ -1924,7 +2036,8 @@ window.onload = function() {
     } else {
         normalizeAndRenderAppData({ schools: [], adminRequests: [], jobApplications: [] });
     }
-    if (typeof window.firebaseLoadState === "function") {
+    if (typeof window.initComicoFirebase === "function" && !window.__comicoFirebaseInitialized) {
+        window.__comicoFirebaseInitialized = true;
         window.initComicoFirebase();
     }
 };
@@ -1936,11 +2049,9 @@ function saveData() {
         console.warn("LocalStorage quota atteint.");
     }
     if (typeof window.firebaseSaveState === "function") {
-        window.firebaseSaveState(appData).then(function(ok) {
-            if (!ok) {
-                CommicoAlert("Avertissement : Vérifiez votre connexion, l'authentification ou les règles Firebase Firestore.");
-            }
-        });
+        saveQueuePromise = saveQueuePromise.then(() => window.firebaseSaveState(appData)).catch(() => false);
+    } else if (typeof window.setSyncBadge === "function") {
+        window.setSyncBadge("offline", "Hors ligne / Local");
     }
 }
 
@@ -1986,7 +2097,7 @@ function compressLocalLogo(file, callback) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            const maxDim = 200;
+            const maxDim = 160;
             let width = img.width || maxDim;
             let height = img.height || maxDim;
             if (width > maxDim || height > maxDim) {
@@ -2001,7 +2112,7 @@ function compressLocalLogo(file, callback) {
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
-            callback(canvas.toDataURL('image/jpeg', 0.75));
+            callback(canvas.toDataURL('image/jpeg', 0.7));
         };
         img.onerror = function() {
             callback("img/logo1.jpg");
@@ -4029,7 +4140,7 @@ function verifyCommAccess() {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
-        CommicoAlert("Accès Communication validé.");
+        CommicoAlert("Accès Communication Directeur validé.");
     } else {
         CommicoAlert("Code secret directeur incorrect.");
     }
@@ -4038,42 +4149,55 @@ function verifyCommAccess() {
 function handleSaveCommunication() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    const text = document.getElementById('announcementText').value.trim();
+    const msg = document.getElementById('announcementText').value.trim();
     const files = document.getElementById('commImageInput').files;
-    let images = [];
-    let attachments = [];
-    let processed = 0;
-    const now = Date.now();
-    if(files && files.length > 0) {
-        const count = Math.min(files.length, 3);
-        for(let i=0; i<count; i++) {
-            const currentFile = files[i];
-            readFileAsDataUrl(currentFile, function(res) {
-                if (res.dataUrl) {
-                    attachments.push({ url: res.dataUrl, name: res.fileName, type: res.fileType });
-                    if (isPdfOrImageUrl(res.dataUrl, res.fileType) === 'image') {
-                        images.push(res.dataUrl);
-                    }
-                }
-                processed++;
-                if(processed === count) { finishCommSave(s, text, images, attachments, now); }
-            }, 'communications');
-        }
-    } else {
-        finishCommSave(s, text, [], [], now);
-    }
-}
+    if(!msg && (!files || !files.length)) { CommicoAlert("Veuillez saisir un message ou joindre une image/PDF."); return; }
 
-function finishCommSave(s, text, images, attachments, timestamp) {
-    if(text || images.length || attachments.length) {
-        if(!s.communications) s.communications = [];
-        s.communications.push({ date: new Date().toLocaleString(), message: text, images: images, attachments: attachments, timestamp: timestamp });
+    if(!s.communications) s.communications = [];
+
+    const finishSaveComm = function(attachments) {
+        const imgs = attachments.filter(a => isPdfOrImageUrl(a.url, a.type) === 'image').map(a => a.url);
+        s.communications.push({
+            id: 'COM-' + Date.now(),
+            date: new Date().toLocaleString(),
+            timestamp: Date.now(),
+            message: msg,
+            images: imgs,
+            attachments: attachments
+        });
         saveData();
         renderCommTable();
         renderPortalAnnouncements();
         document.getElementById('announcementText').value = '';
         document.getElementById('commImageInput').value = '';
-        CommicoAlert("Annonce publiée (valable 72h) !");
+        CommicoAlert("Annonce enregistrée et publiée (valide 72h) !");
+    };
+
+    if(files && files.length > 0) {
+        const fileList = Array.from(files);
+        const collected = [];
+        let index = 0;
+
+        const processNextFile = function() {
+            if (index >= fileList.length) {
+                finishSaveComm(collected);
+                return;
+            }
+            const currentFile = fileList[index++];
+            readFileAsDataUrl(currentFile, function(res) {
+                if (res.dataUrl) {
+                    collected.push({
+                        url: res.dataUrl,
+                        name: res.fileName || currentFile.name,
+                        type: res.fileType || currentFile.type || ''
+                    });
+                }
+                processNextFile();
+            }, 'announcements');
+        };
+        processNextFile();
+    } else {
+        finishSaveComm([]);
     }
 }
 
@@ -4082,72 +4206,72 @@ function renderCommTable() {
     const tbody = document.getElementById('commTableBody');
     if(!tbody || !s) return;
     tbody.innerHTML = (s.communications || []).map((c, i) => {
-        const atts = c.attachments && c.attachments.length ? c.attachments : (c.images || []).map((u, idx) => ({ url: u, name: `Image_${idx+1}`, type: 'image/*' }));
-        const mediaHtml = atts.length ? atts.map(att => {
-            if (isPdfOrImageUrl(att.url, att.type) === 'pdf') {
-                return `<button type="button" class="btn btn-sm btn-outline-danger me-1 mb-1" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'PDF')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'PDF')}</button>`;
+        const atts = c.attachments && c.attachments.length ? c.attachments : (c.images || []).map((u, idx) => ({ url: u, name: `Image_${idx + 1}.jpg`, type: 'image/jpeg' }));
+        const mediaHtml = atts.map(att => {
+            const kind = isPdfOrImageUrl(att.url, att.type);
+            if (kind === 'pdf') {
+                return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'Document PDF')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'PDF')}</button>`;
             }
-            return `<img src="${att.url}" style="max-height:140px; width:auto; border-radius:4px; margin-right:5px; object-fit:contain; cursor:pointer;" class="border" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'Image')}', 'image/*')">`;
-        }).join('') : '-';
+            return `<img src="${att.url}" style="max-height:110px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="border" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'Image Annonce')}', 'image/*')">`;
+        }).join('');
+
         return `
-            <tr><td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.message)}</td><td>${mediaHtml}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteComm(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+            <tr>
+                <td>${escapeHtml(c.date)}</td>
+                <td>${escapeHtml(c.message)}</td>
+                <td><div class="d-flex flex-wrap gap-2">${mediaHtml || '-'}</div></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
         `;
-    }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune annonce.</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune communication.</td></tr>';
 }
 
-function deleteComm(index) {
+function deleteCommItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    s.communications.splice(index, 1);
-    saveData();
-    renderCommTable();
-    renderPortalAnnouncements();
+    if(s && s.communications) {
+        s.communications.splice(index, 1);
+        saveData();
+        renderCommTable();
+        renderPortalAnnouncements();
+    }
 }
 
 function openJobApplicationSection() {
     const select = document.getElementById('jobSchoolSelect');
-    if(!select) return;
-    select.innerHTML = '<option value="">-- Choisir une Madras --</option>' + (appData.schools || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.province)})</option>`).join('');
-    document.getElementById('candidateResponseDisplayArea').style.display = 'none';
+    if(!appData.schools || !appData.schools.length) {
+        CommicoAlert("Aucune Madras enregistrée.");
+        return;
+    }
+    select.innerHTML = appData.schools.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
     showSection('view-job-application');
 }
 
 function handleSendJobApplication(e) {
     e.preventDefault();
     const schoolId = document.getElementById('jobSchoolSelect').value;
-    const name = document.getElementById('jobApplicantName').value.trim();
-    const role = document.getElementById('jobRole').value.trim();
-    const s = (appData.schools || []).find(x => x.id === schoolId);
-    if(!s) { CommicoAlert("Veuillez choisir une Madras."); return; }
-
+    const s = appData.schools.find(x => x.id === schoolId);
+    if(!s) return;
+    if(!s.jobApplications) s.jobApplications = [];
     const trackingCode = 'CND-' + Math.floor(1000 + Math.random() * 9000);
-    const jobItem = {
+    const appObj = {
         id: 'JOB-' + Date.now(),
         trackingCode: trackingCode,
-        schoolId: s.id,
-        schoolName: s.name,
-        applicantName: name,
-        role: role,
-        status: 'En attente',
-        ownerReply: '',
-        repliedAt: '',
-        createdAt: new Date().toLocaleString()
+        applicantName: document.getElementById('jobApplicantName').value.trim(),
+        role: document.getElementById('jobRole').value.trim(),
+        date: new Date().toLocaleDateString(),
+        ownerReply: ''
     };
-
-    if(!appData.jobApplications) appData.jobApplications = [];
-    appData.jobApplications.push(jobItem);
-    if(!s.jobApplications) s.jobApplications = [];
-    s.jobApplications.push(jobItem);
-
+    s.jobApplications.push(appObj);
+    appData.jobApplications.push({ schoolId: s.id, schoolName: s.name, ...appObj });
     saveData();
-    e.target.reset();
+    document.querySelector('#view-job-application form').reset();
     currentCreatedCandidateCode = trackingCode;
     document.getElementById('modalCandidateCodeDisplay').innerText = trackingCode;
     document.getElementById('candidateCodeModal').style.display = 'flex';
 }
 
 function copyCandidateTrackingCode() {
-    if(navigator.clipboard && currentCreatedCandidateCode) {
+    if (navigator.clipboard && currentCreatedCandidateCode) {
         navigator.clipboard.writeText(currentCreatedCandidateCode);
     }
     CommicoAlert("Code secret de suivi copié !");
@@ -4159,147 +4283,112 @@ function closeCandidateCodeModal() {
 
 function openCandidateResponseSection() {
     const input = document.getElementById('candidateTrackingCodeInput');
-    const code = input ? input.value.trim().toUpperCase() : '';
     const area = document.getElementById('candidateResponseDisplayArea');
-    if(!code) {
-        CommicoAlert("Veuillez saisir votre code secret de suivi (ex: CND-1234).");
+    if (!input || !area) return;
+    const code = input.value.trim().toUpperCase();
+    if (!code) {
+        CommicoAlert("Veuillez saisir votre Code Secret de Suivi (ex: CND-1234).");
         return;
     }
 
-    let foundJob = null;
-    (appData.jobApplications || []).forEach(j => {
-        if((j.trackingCode || '').toUpperCase() === code) foundJob = j;
-    });
-    if(!foundJob) {
-        (appData.schools || []).forEach(s => {
-            (s.jobApplications || []).forEach(j => {
-                if((j.trackingCode || '').toUpperCase() === code) foundJob = j;
-            });
-        });
+    let foundEntry = null;
+    for (const s of (appData.schools || [])) {
+        const list = s.jobApplications || [];
+        const match = list.find(j => j.trackingCode && j.trackingCode.toUpperCase() === code);
+        if (match) {
+            foundEntry = { school: s, job: match };
+            break;
+        }
     }
 
-    if(!foundJob) {
+    if (!foundEntry) {
         area.style.display = 'block';
         area.innerHTML = `<div class="alert alert-warning mb-0">Aucune candidature trouvée avec le code <b>${escapeHtml(code)}</b>.</div>`;
         return;
     }
 
+    const { school, job } = foundEntry;
     area.style.display = 'block';
     area.innerHTML = `
-        <div class="card p-3 bg-light border">
-            <h6 class="fw-bold text-primary mb-2"><i class="fa fa-envelope-open me-1"></i> Dossier de Candidature - ${escapeHtml(foundJob.trackingCode)}</h6>
-            <div class="small mb-1"><b>Candidat :</b> ${escapeHtml(foundJob.applicantName)}</div>
-            <div class="small mb-1"><b>Madras :</b> ${escapeHtml(foundJob.schoolName || '-')}</div>
-            <div class="small mb-2"><b>Poste sollicité :</b> ${escapeHtml(foundJob.role)}</div>
-            <hr class="my-2">
-            ${foundJob.ownerReply
-                ? `<div class="alert alert-success mb-0">
-                     <div class="fw-bold mb-1"><i class="fa fa-check-circle me-1"></i> Réponse du Propriétaire ${foundJob.repliedAt ? '(' + escapeHtml(foundJob.repliedAt) + ')' : ''} :</div>
-                     <div>${escapeHtml(foundJob.ownerReply)}</div>
-                   </div>`
-                : `<div class="alert alert-secondary mb-0 small"><i class="fa fa-clock me-1"></i> Aucune réponse encore envoyée par le propriétaire de la Madras. Revenez vérifier plus tard avec votre code <b>${escapeHtml(foundJob.trackingCode)}</b>.</div>`
-            }
+        <div class="card border-primary bg-light p-3">
+            <h6 class="fw-bold text-primary mb-2"><i class="fa fa-file-alt me-1"></i> Dossier de Candidature - ${escapeHtml(school.name)}</h6>
+            <div class="small mb-2">
+                <b>Candidat :</b> ${escapeHtml(job.applicantName)} | <b>Poste :</b> ${escapeHtml(job.role)} | <b>Date :</b> ${escapeHtml(job.date)}
+            </div>
+            <div class="p-3 bg-white border rounded">
+                <div class="small fw-bold text-success mb-1"><i class="fa fa-reply me-1"></i> Réponse / Message du Propriétaire :</div>
+                <div class="small">${job.ownerReply ? escapeHtml(job.ownerReply) : '<span class="text-muted fst-italic">En attente de réponse du propriétaire de la Madras.</span>'}</div>
+            </div>
         </div>
     `;
-}
-
-function getSchoolJobsList(school) {
-    if(!school) return [];
-    const fromSchool = Array.isArray(school.jobApplications) ? school.jobApplications : [];
-    const fromGlobal = (appData.jobApplications || []).filter(j => j.schoolId === school.id);
-    const mapById = new Map();
-    fromGlobal.forEach(j => { if(j && j.id) mapById.set(j.id, j); });
-    fromSchool.forEach(j => { if(j && j.id) mapById.set(j.id, Object.assign({}, mapById.get(j.id) || {}, j)); });
-    return Array.from(mapById.values());
-}
-
-function syncJobItemAcrossStore(school, updatedJob) {
-    if(!school || !updatedJob) return;
-    if(!Array.isArray(school.jobApplications)) school.jobApplications = [];
-    const sIdx = school.jobApplications.findIndex(j => j.id === updatedJob.id);
-    if(sIdx !== -1) school.jobApplications[sIdx] = updatedJob;
-    else school.jobApplications.push(updatedJob);
-
-    if(!Array.isArray(appData.jobApplications)) appData.jobApplications = [];
-    const gIdx = appData.jobApplications.findIndex(j => j.id === updatedJob.id);
-    if(gIdx !== -1) appData.jobApplications[gIdx] = updatedJob;
-    else appData.jobApplications.push(updatedJob);
 }
 
 function renderSchoolJobsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('schoolJobsTableBody');
     if(!tbody || !s) return;
-    const jobs = getSchoolJobsList(s);
-    tbody.innerHTML = jobs.map((j, i) => `
+    tbody.innerHTML = (s.jobApplications || []).map((j, i) => `
         <tr>
-            <td><b>${escapeHtml(j.applicantName)}</b><br><small class="text-muted">${escapeHtml(j.createdAt || '')}</small></td>
+            <td>${escapeHtml(j.applicantName)}</td>
             <td>${escapeHtml(j.role)}</td>
             <td>
-                <div>Code suivi : <code>${escapeHtml(j.trackingCode || '-')}</code></div>
-                <div class="small mt-1">${j.ownerReply ? `<span class="badge bg-success">Répondu</span> <span class="text-dark">${escapeHtml(j.ownerReply)}</span>` : '<span class="badge bg-secondary">En attente</span>'}</div>
+                <div><code class="fw-bold">${escapeHtml(j.trackingCode || '-')}</code></div>
+                <div class="small mt-1"><b>Réponse :</b> ${j.ownerReply ? `<span class="text-success fw-bold">${escapeHtml(j.ownerReply)}</span>` : '<span class="text-muted">Aucune réponse</span>'}</div>
             </td>
             <td class="no-print">
                 <button type="button" class="btn btn-sm btn-primary me-1" onclick="openJobReplyEditor(${i})"><i class="fa fa-reply"></i> Répondre</button>
                 <button type="button" class="btn btn-sm btn-danger" onclick="deleteJobItem(${i})"><i class="fa fa-trash"></i> Supprimer</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue.</td></tr>';
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande.</td></tr>';
 }
 
 function openJobReplyEditor(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const jobs = getSchoolJobsList(s);
-    const job = jobs[index];
-    if(!job) return;
+    if (!s || !s.jobApplications || !s.jobApplications[index]) return;
     selectedJobIndexForReply = index;
-    document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(job.applicantName)} | <b>Poste :</b> ${escapeHtml(job.role)} | <b>Code :</b> <code>${escapeHtml(job.trackingCode || '-')}</code>`;
+    const job = s.jobApplications[index];
+    document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(job.applicantName)} — <b>Poste :</b> ${escapeHtml(job.role)} — <b>Code Suivi :</b> <code>${escapeHtml(job.trackingCode || '-')}</code>`;
     document.getElementById('jobOwnerReplyText').value = job.ownerReply || '';
     document.getElementById('jobReplyEditorBox').style.display = 'block';
-    document.getElementById('jobOwnerReplyText').focus();
 }
 
 function closeJobReplyEditor() {
     selectedJobIndexForReply = null;
     const box = document.getElementById('jobReplyEditorBox');
-    if(box) box.style.display = 'none';
+    if (box) box.style.display = 'none';
 }
 
 function sendJobOwnerReply() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s || selectedJobIndexForReply === null) return;
-    const jobs = getSchoolJobsList(s);
-    const job = jobs[selectedJobIndexForReply];
-    if(!job) return;
+    if (!s || selectedJobIndexForReply === null || !s.jobApplications[selectedJobIndexForReply]) return;
     const replyText = document.getElementById('jobOwnerReplyText').value.trim();
-    if(!replyText) {
+    if (!replyText) {
         CommicoAlert("Veuillez écrire une réponse avant d'envoyer.");
         return;
     }
-    const updated = Object.assign({}, job, {
-        ownerReply: replyText,
-        repliedAt: new Date().toLocaleString(),
-        status: 'Répondu'
-    });
-    syncJobItemAcrossStore(s, updated);
+    const job = s.jobApplications[selectedJobIndexForReply];
+    job.ownerReply = replyText;
+
+    if (Array.isArray(appData.jobApplications)) {
+        const globalMatch = appData.jobApplications.find(g => g.id === job.id || (job.trackingCode && g.trackingCode === job.trackingCode));
+        if (globalMatch) globalMatch.ownerReply = replyText;
+    }
+
     saveData();
     renderSchoolJobsTable();
     closeJobReplyEditor();
-    CommicoAlert("Réponse envoyée au candidat (Code : " + (updated.trackingCode || '') + ") !");
+    CommicoAlert("Réponse envoyée et enregistrée pour le candidat (" + (job.trackingCode || '') + ") !");
 }
 
 function deleteJobItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const jobs = getSchoolJobsList(s);
-    const target = jobs[index];
-    if(!target) return;
-    s.jobApplications = (s.jobApplications || []).filter(j => j.id !== target.id);
-    appData.jobApplications = (appData.jobApplications || []).filter(j => j.id !== target.id);
-    saveData();
-    renderSchoolJobsTable();
-    closeJobReplyEditor();
+    if(s && s.jobApplications) {
+        s.jobApplications.splice(index, 1);
+        saveData();
+        renderSchoolJobsTable();
+        closeJobReplyEditor();
+    }
 }
 
 function handleSaveArmoiries(e) {
@@ -4307,58 +4396,54 @@ function handleSaveArmoiries(e) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const devise = document.getElementById('schoolDeviseInput').value.trim();
-    const file = document.getElementById('schoolArmoiriesFile').files[0];
-
-    if(devise) s.devise = devise;
-
+    const fileInput = document.getElementById('schoolArmoiriesFile');
+    const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
     if(file) {
         readFileAsDataUrl(file, function(res) {
             if (res.dataUrl) {
                 s.armoiries = res.dataUrl;
-                s.armoiriesType = res.fileType || (isPdfOrImageUrl(res.dataUrl, '') === 'pdf' ? 'application/pdf' : 'image/*');
                 s.armoiriesName = res.fileName || file.name;
+                s.armoiriesType = res.fileType || file.type || '';
             }
+            s.devise = devise;
             saveData();
             renderArmoiriesDisplay();
-            document.getElementById('schoolArmoiriesFile').value = '';
-            CommicoAlert("Emblème / Symbole et devise enregistrés !");
-        }, 'emblems');
+            CommicoAlert("Emblèmes & Devise enregistrés !");
+        }, 'armoiries');
     } else {
+        s.devise = devise;
         saveData();
         renderArmoiriesDisplay();
-        CommicoAlert("Devise mise à jour !");
+        CommicoAlert("Devise enregistrée !");
     }
-}
-
-function deleteArmoiries() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    s.armoiries = '';
-    s.armoiriesType = '';
-    s.armoiriesName = '';
-    s.devise = '';
-    saveData();
-    renderArmoiriesDisplay();
-    CommicoAlert("Emblème et devise supprimés.");
 }
 
 function renderArmoiriesDisplay() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('armoiriesDisplayContainer');
     if(!container || !s) return;
-    let html = '';
-    if(s.armoiries) {
+    let mediaHtml = '';
+    if (s.armoiries) {
         const kind = isPdfOrImageUrl(s.armoiries, s.armoiriesType);
         if (kind === 'pdf') {
-            html += `<div class="mb-3"><button type="button" class="btn btn-outline-danger fw-bold" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', '${escapeJsAttr(s.armoiriesName || 'Emblème PDF')}', 'application/pdf')"><i class="fa fa-file-pdf me-2"></i>Consulter l'Emblème / Document PDF</button></div>`;
+            mediaHtml = `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', '${escapeJsAttr(s.armoiriesName || 'Emblème PDF')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> Consulter Emblème PDF</button>`;
         } else {
-            html += `<img src="${s.armoiries}" style="max-height: 150px; object-fit: contain; cursor: pointer;" class="mb-3 rounded border p-1 bg-white" alt="Emblème" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', 'Emblème Officiel', 'image/*')">`;
+            mediaHtml = `<img src="${s.armoiries}" style="max-height:140px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="mb-2 border" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', 'Emblème Madras', 'image/*')">`;
         }
     }
-    if(s.devise) {
-        html += `<h5 class="fw-bold text-dark fst-italic">« ${escapeHtml(s.devise)} »</h5>`;
-    }
-    container.innerHTML = html || '<p class="text-muted small mb-0">Aucun emblème ni devise enregistré.</p>';
+    container.innerHTML = `${mediaHtml}<div class="fw-bold lead">"${escapeHtml(s.devise || 'Devise officielle')}"</div>`;
+}
+
+function deleteArmoiries() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    s.armoiries = '';
+    s.armoiriesName = '';
+    s.armoiriesType = '';
+    s.devise = '';
+    saveData();
+    renderArmoiriesDisplay();
+    CommicoAlert("Emblèmes et devise supprimés.");
 }
 
 function renderPalmaresTable() {
@@ -4367,68 +4452,55 @@ function renderPalmaresTable() {
     if(!container || !s) return;
     const yData = getActiveYearData(s);
     const students = yData.students || [];
-    
-    container.innerHTML = `
-        <table class="table table-bordered table-sm align-middle">
-            <thead><tr class="table-primary"><th>Matricule</th><th>Nom & Prénom</th><th>Classe</th><th>Pourcentage</th><th>Mention / Dist.</th></tr></thead>
-            <tbody>
-                ${students.map(st => {
-                    const clsCourses = yData.courses[st.classe] || [];
-                    const nObj = (yData.notes && yData.notes[st.matricule]) ? yData.notes[st.matricule] : {};
-                    let tot = 0, mTot = 0;
-                    clsCourses.forEach(c => { tot += (nObj[c.name] || 0); mTot += parseFloat(c.max); });
-                    let pct = mTot > 0 ? (tot / mTot) * 100 : 0;
-                    let mention = pct >= 80 ? "Grande Distinction" : (pct >= 70 ? "Distinction" : (pct >= 50 ? "Satisfaction" : "Ajourné"));
-                    return `<tr><td>${escapeHtml(st.matricule)}</td><td><b>${escapeHtml(st.name)}</b></td><td>${escapeHtml(st.classe)}</td><td>${pct.toFixed(1)} %</td><td><span class="badge bg-info text-dark">${escapeHtml(mention)}</span></td></tr>`;
-                }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun élève évalué.</td></tr>'}
-            </tbody>
-        </table>
-    `;
+    container.innerHTML = `<table class="table table-bordered"><thead><tr><th>Rang</th><th>Élève</th><th>Classe</th></tr></thead><tbody>${students.map((st, idx) => `<tr><td><b>${idx + 1}</b></td><td>${escapeHtml(st.name)}</td><td>${escapeHtml(st.classe)}</td></tr>`).join('') || '<tr><td colspan="3" class="text-center text-muted">Aucune donnée.</td></tr>'}</tbody></table>`;
 }
 
-// COURRIERS ET ARCHIVES
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
     const now = new Date();
-    const type = document.getElementById('courrierType').value;
     const numDoc = document.getElementById('courrierNumDoc').value.trim();
-    const date = document.getElementById('courrierDate').value;
-    const exp = document.getElementById('courrierExp').value.trim();
-    const dest = document.getElementById('courrierDest').value.trim();
-    const objet = document.getElementById('courrierObjet').value.trim();
-    const heure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const jour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
-    const file = document.getElementById('courrierFileInput').files[0];
+    const baseItem = {
+        id: 'CR-' + Date.now(),
+        type: document.getElementById('courrierType').value,
+        numDoc: numDoc,
+        date: document.getElementById('courrierDate').value,
+        exp: document.getElementById('courrierExp').value,
+        dest: document.getElementById('courrierDest').value,
+        objet: document.getElementById('courrierObjet').value,
+        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+        fileData: '',
+        fileName: '',
+        fileType: ''
+    };
 
-    readFileAsDataUrl(file, function(res) {
-        const courrierItem = {
-            id: 'COR-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-            type: type,
-            numDoc: numDoc,
-            date: date,
-            exp: exp,
-            dest: dest,
-            objet: objet,
-            heure: heure,
-            jour: jour,
-            fileData: res.dataUrl || '',
-            fileName: res.fileName || '',
-            fileType: res.fileType || ''
+    const saveItemWithFile = function(fileObj) {
+        const finalItem = {
+            ...baseItem,
+            fileData: fileObj.dataUrl || '',
+            fileName: fileObj.fileName || '',
+            fileType: fileObj.fileType || ''
         };
-
-        yData.courriers.push(courrierItem);
-        if(!yData.dossiersArchive) yData.dossiersArchive = [];
-        yData.dossiersArchive.push(courrierItem);
-
+        yData.courriers.push(finalItem);
+        if (!yData.dossiersArchive) yData.dossiersArchive = [];
+        yData.dossiersArchive.push({ ...finalItem });
         saveData();
         renderCourriersTable();
         renderDossiersTable();
         document.getElementById('formCourrier').reset();
-        CommicoAlert("Correspondance enregistrée et archivée automatiquement dans les Dossiers !");
-    }, 'correspondances');
+        CommicoAlert("Correspondance enregistrée et classée dans les Archives !");
+    };
+
+    const fileInput = document.getElementById('courrierFileInput');
+    const file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+    if (file) {
+        readFileAsDataUrl(file, saveItemWithFile, 'courriers');
+    } else {
+        saveItemWithFile({ dataUrl: '', fileName: '', fileType: '' });
+    }
 }
 
 function renderCourriersTable() {
@@ -4437,35 +4509,34 @@ function renderCourriersTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.courriers || []).map((c, i) => {
-        let docBtn = '-';
-        if(c.fileData) {
-            docBtn = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(c.fileData)}', '${escapeJsAttr(c.numDoc || c.fileName || 'Document')}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye"></i> Voir</button>`;
-        }
+        const docBtn = c.fileData
+            ? `<button type="button" class="btn btn-sm btn-outline-info fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileData)}', '${escapeJsAttr(c.fileName || ('Doc ' + (c.numDoc || '')))}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye me-1"></i> Voir</button>`
+            : '<span class="text-muted small">-</span>';
         return `
             <tr>
                 <td>${escapeHtml(c.date)}</td>
-                <td><span class="badge ${c.type === 'Entrant' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${escapeHtml(c.type)}</span></td>
-                <td><code>${escapeHtml(c.numDoc || '-')}</code></td>
+                <td>${escapeHtml(c.type)}</td>
+                <td><b>${escapeHtml(c.numDoc)}</b></td>
                 <td>${escapeHtml(c.exp)}</td>
                 <td>${escapeHtml(c.dest)}</td>
                 <td>${escapeHtml(c.objet)}</td>
-                <td><small>${escapeHtml(c.heure || '')}<br>${escapeHtml(c.jour || '')}</small></td>
+                <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance enregistrée.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucun courrier.</td></tr>';
 }
 
-function deleteCourrier(index) {
+function deleteCourrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const target = yData.courriers[index];
-    if(!target) return;
+    const removed = yData.courriers[index];
     yData.courriers.splice(index, 1);
-    if(yData.dossiersArchive) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(d => d.id !== target.id && !(d.numDoc === target.numDoc && d.date === target.date && d.objet === target.objet));
+    if (removed && Array.isArray(yData.dossiersArchive)) {
+        const archIdx = yData.dossiersArchive.findIndex(a => a.id === removed.id);
+        if (archIdx !== -1) yData.dossiersArchive.splice(archIdx, 1);
     }
     saveData();
     renderCourriersTable();
@@ -4476,128 +4547,121 @@ function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if(yData.courriers && yData.courriers.length > 0) {
-        deleteCourrier(yData.courriers.length - 1);
-        CommicoAlert("Dernière correspondance supprimée.");
+    if (yData.courriers && yData.courriers.length > 0) {
+        deleteCourrierItem(yData.courriers.length - 1);
+        CommicoAlert("Correspondance supprimée.");
     } else {
         CommicoAlert("Aucune correspondance à supprimer.");
     }
 }
 
-let archiveForceShowAll = false;
-
-function onArchiveClasseurOrSearchChange() {
-    archiveForceShowAll = false;
-    renderDossiersTable();
+function getAllArchiveItems(yData) {
+    const arch = Array.isArray(yData.dossiersArchive) ? yData.dossiersArchive : [];
+    const cour = Array.isArray(yData.courriers) ? yData.courriers : [];
+    const map = new Map();
+    arch.forEach(item => { map.set(item.id || (item.type + '_' + item.numDoc + '_' + item.date), item); });
+    cour.forEach(item => {
+        const key = item.id || (item.type + '_' + item.numDoc + '_' + item.date);
+        if (!map.has(key)) map.set(key, item);
+    });
+    return Array.from(map.values());
 }
 
-function searchArchiveByNumDoc() {
-    archiveForceShowAll = false;
-    renderDossiersTable();
-}
-
-function showAllArchiveCorrespondances() {
-    archiveForceShowAll = true;
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    if(searchInput) searchInput.value = '';
-    renderDossiersTable();
-}
-
-function saveCurrentArchiveCorrespondence() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    if(!yData.dossiersArchive) yData.dossiersArchive = [];
-    if((!yData.dossiersArchive.length) && (yData.courriers && yData.courriers.length)) {
-        yData.dossiersArchive = yData.courriers.slice();
-    }
-    saveData();
-    renderDossiersTable();
-    CommicoAlert("Archives et dossiers enregistrés avec succès !");
-}
-
-function deleteCurrentArchiveCorrespondence() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
-    const query = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
-
-    if(!yData.dossiersArchive || !yData.dossiersArchive.length) {
-        CommicoAlert("Aucune archive enregistrée à supprimer.");
-        return;
-    }
-
-    if(query) {
-        const beforeLen = yData.dossiersArchive.length;
-        yData.dossiersArchive = yData.dossiersArchive.filter(d => !((d.numDoc || '').toLowerCase().includes(query) && (!classeur || d.type === classeur)));
-        if(yData.dossiersArchive.length < beforeLen) {
-            saveData();
-            renderDossiersTable();
-            CommicoAlert("Archive correspondante supprimée.");
-            return;
-        }
-    }
-
-    yData.dossiersArchive.pop();
-    saveData();
-    renderDossiersTable();
-    CommicoAlert("Dernière archive supprimée.");
-}
-
-function deleteArchiveItemById(id) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    yData.dossiersArchive = (yData.dossiersArchive || []).filter(d => d.id !== id);
-    saveData();
-    renderDossiersTable();
-}
-
-function renderDossiersTable() {
+function renderDossiersTable(filteredList) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    let archives = yData.dossiersArchive || [];
-    if(!archives.length && yData.courriers && yData.courriers.length) {
-        archives = yData.courriers.slice();
-        yData.dossiersArchive = archives;
-    }
+    const list = Array.isArray(filteredList) ? filteredList : getAllArchiveItems(yData);
 
-    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
-    const query = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
-
-    let filtered = archives;
-    if(!archiveForceShowAll) {
-        if(classeur) {
-            filtered = filtered.filter(d => d.type === classeur);
-        }
-        if(query) {
-            filtered = filtered.filter(d => (d.numDoc || '').toLowerCase().includes(query) || (d.objet || '').toLowerCase().includes(query));
-        }
-    }
-
-    tbody.innerHTML = filtered.map((d, idx) => {
-        const safeId = d.id || ('ARC-' + idx);
-        let docBtn = '-';
-        if(d.fileData) {
-            docBtn = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(d.fileData)}', '${escapeJsAttr(d.numDoc || d.fileName || 'Document Archivé')}', '${escapeJsAttr(d.fileType || '')}')"><i class="fa fa-eye"></i> Voir</button>`;
-        }
+    tbody.innerHTML = list.map((a) => {
+        const docBtn = a.fileData
+            ? `<button type="button" class="btn btn-sm btn-outline-primary fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(a.fileData)}', '${escapeJsAttr(a.fileName || ('Archive ' + (a.numDoc || '')))}', '${escapeJsAttr(a.fileType || '')}')"><i class="fa fa-folder-open me-1"></i> Consulter</button>`
+            : '<span class="text-muted small">-</span>';
         return `
             <tr>
-                <td><span class="badge ${d.type === 'Entrant' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${escapeHtml(d.type || '-')}</span></td>
-                <td><code>${escapeHtml(d.numDoc || '-')}</code></td>
-                <td>${escapeHtml(d.date || '-')}</td>
-                <td>${escapeHtml(d.exp || '-')}</td>
-                <td>${escapeHtml(d.dest || '-')}</td>
-                <td>${escapeHtml(d.objet || '-')}</td>
-                <td><small>${escapeHtml(d.heure || '')}<br>${escapeHtml(d.jour || '')}</small></td>
+                <td><span class="badge ${a.type === 'Entrant' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${escapeHtml(a.type || '-')}</span></td>
+                <td><b>${escapeHtml(a.numDoc || '-')}</b></td>
+                <td>${escapeHtml(a.date || '-')}</td>
+                <td>${escapeHtml(a.exp || '-')}</td>
+                <td>${escapeHtml(a.dest || '-')}</td>
+                <td>${escapeHtml(a.objet || '-')}</td>
+                <td>${escapeHtml(a.heure || '')} (${escapeHtml(a.jour || '')})</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveItemById('${escapeJsAttr(safeId)}')"><i class="fa fa-trash"></i> Suppr.</button></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteArchiveItemById('${escapeJsAttr(a.id)}', '${escapeJsAttr(a.numDoc)}')"><i class="fa fa-trash"></i> Suppr.</button></td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance archivée pour ce filtre.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucun document archivé correspondant.</td></tr>';
+}
+
+function onArchiveClasseurOrSearchChange() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const classeur = document.getElementById('archiveClasseur').value;
+    const numQuery = document.getElementById('searchArchiveNumInput').value.trim().toLowerCase();
+    let list = getAllArchiveItems(yData);
+    if (classeur) {
+        list = list.filter(item => (item.type || '').toLowerCase() === classeur.toLowerCase());
+    }
+    if (numQuery) {
+        list = list.filter(item => (item.numDoc || '').toLowerCase().includes(numQuery));
+    }
+    renderDossiersTable(list);
+}
+
+function searchArchiveByNumDoc() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const numQuery = document.getElementById('searchArchiveNumInput').value.trim().toLowerCase();
+    const classeur = document.getElementById('archiveClasseur').value;
+    let list = getAllArchiveItems(yData).filter(item => (item.type || '').toLowerCase() === classeur.toLowerCase());
+    if (numQuery) {
+        list = list.filter(item => (item.numDoc || '').toLowerCase().includes(numQuery));
+    }
+    renderDossiersTable(list);
+}
+
+function showAllArchiveCorrespondances() {
+    document.getElementById('searchArchiveNumInput').value = '';
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    renderDossiersTable(getAllArchiveItems(yData));
+}
+
+function saveCurrentArchiveCorrespondence() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    yData.dossiersArchive = getAllArchiveItems(yData);
+    saveData();
+    renderDossiersTable(yData.dossiersArchive);
+    CommicoAlert("Archives enregistrées et synchronisées avec succès !");
+}
+
+function deleteArchiveItemById(id, numDoc) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    yData.dossiersArchive = getAllArchiveItems(yData).filter(item => !(item.id && id && item.id === id) && !(!id && numDoc && item.numDoc === numDoc));
+    saveData();
+    onArchiveClasseurOrSearchChange();
+    CommicoAlert("Élément supprimé des archives.");
+}
+
+function deleteCurrentArchiveCorrespondence() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) return;
+    const yData = getActiveYearData(s);
+    const all = getAllArchiveItems(yData);
+    if (!all.length) {
+        CommicoAlert("Aucune archive à supprimer.");
+        return;
+    }
+    const last = all[all.length - 1];
+    deleteArchiveItemById(last.id, last.numDoc);
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4621,16 +4685,17 @@ function handleSaveCalendrierScolaire(e) {
 function renderCalendrierTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('calendrierTableBody');
+    const filterEl = document.getElementById('calendarFilterSelect');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    let list = yData.calendrierVacances || [];
-    const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    if(filterVal !== 'Tous') {
-        list = list.filter(ev => ev.type === filterVal);
-    }
-    tbody.innerHTML = list.map((ev, i) => `
-        <tr><td><span class="badge bg-primary">${escapeHtml(ev.type)}</span></td><td><b>${escapeHtml(ev.titre)}</b></td><td>${escapeHtml(ev.debut)}</td><td>${escapeHtml(ev.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
+    const filterVal = filterEl ? filterEl.value : 'Tous';
+    const list = (yData.calendrierVacances || []).filter(item => {
+        if (filterVal === 'Tous') return true;
+        return item.type === filterVal;
+    });
+    tbody.innerHTML = list.map((c, i) => `
+        <tr><td><span class="badge ${c.type.includes('Islamique') ? 'bg-success' : 'bg-primary'}">${escapeHtml(c.type)}</span></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement.</td></tr>';
 }
 
 function deleteCalendrierItem(index) {
@@ -4657,7 +4722,7 @@ function handleSaveHoraireCours(e) {
     saveData();
     renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire ajouté avec succès !");
+    CommicoAlert("Horaire ajouté !");
 }
 
 function renderHorairesTable() {
@@ -4666,8 +4731,8 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td><b>${escapeHtml(h.jour)}</b></td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire défini.</td></tr>';
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
 function deleteHoraireItem(index) {
@@ -4688,24 +4753,53 @@ function renderStatistiques() {
     const nStudents = (yData.students || []).length;
     const nTeachers = (yData.teachers || []).length;
     const nClasses = (yData.classes || []).length;
-    const totalCaisseUsd = (yData.caisse || []).filter(c => (c.devise || '$') === '$').reduce((acc, c) => acc + (parseFloat(c.montant) || 0), 0);
-    const totalCaisseFc = (yData.caisse || []).filter(c => c.devise === 'FC').reduce((acc, c) => acc + (parseFloat(c.montant) || 0), 0);
+    
+    let totalRecettes = 0;
+    (yData.caisse || []).forEach(c => {
+        totalRecettes += parseFloat(c.montant) || 0;
+    });
+    (yData.studentPayments || []).forEach(m => {
+        totalRecettes += parseFloat(m.amount) || 0;
+    });
 
     container.innerHTML = `
-        <div class="col-md-3"><div class="card p-3 bg-primary text-white text-center shadow-sm"><h6 class="text-white">Élèves / Étudiants</h6><h3 class="fw-bold">${escapeHtml(nStudents)}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-success text-white text-center shadow-sm"><h6 class="text-white">Enseignants</h6><h3 class="fw-bold">${escapeHtml(nTeachers)}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-warning text-dark text-center shadow-sm"><h6>Classes</h6><h3 class="fw-bold">${escapeHtml(nClasses)}</h3></div></div>
-        <div class="col-md-3"><div class="card p-3 bg-dark text-white text-center shadow-sm"><h6 class="text-white">Caisse Totale</h6><div class="fw-bold small">${totalCaisseUsd.toFixed(2)} $ / ${totalCaisseFc.toFixed(0)} FC</div></div></div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light text-center shadow-sm border-0">
+                <i class="fa fa-user-graduate fa-2x text-primary mb-2"></i>
+                <h4 class="fw-bold m-0">${nStudents}</h4>
+                <small class="text-muted">Élèves inscrits</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light text-center shadow-sm border-0">
+                <i class="fa fa-chalkboard-teacher fa-2x text-success mb-2"></i>
+                <h4 class="fw-bold m-0">${nTeachers}</h4>
+                <small class="text-muted">Enseignants</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light text-center shadow-sm border-0">
+                <i class="fa fa-door-open fa-2x text-warning mb-2"></i>
+                <h4 class="fw-bold m-0">${nClasses}</h4>
+                <small class="text-muted">Classes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 bg-light text-center shadow-sm border-0">
+                <i class="fa fa-wallet fa-2x text-info mb-2"></i>
+                <h4 class="fw-bold m-0">${totalRecettes}</h4>
+                <small class="text-muted">Recettes Totales</small>
+            </div>
+        </div>
     `;
 }
 
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
-            renderAdminLitigiousMessages();
             showSection('view-admin-central');
-        } else if(pass !== null) {
+        } else if (pass !== null) {
             CommicoAlert("Mot de passe incorrect.");
         }
     });
@@ -4714,56 +4808,66 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => {
-        let dirCode = "-";
+    tbody.innerHTML = (appData.schools || []).map((s) => {
+        let dirCode = "Non généré";
         if(s.direction && s.direction.length > 0) {
-            const d = s.direction.find(x => x.role === 'Directeur / Propriétaire' && x.secretCode);
-            if(d) dirCode = d.secretCode;
+            const d = s.direction.find(x => x.role === "Directeur / Propriétaire");
+            if(d && d.secretCode) dirCode = d.secretCode;
         }
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width: 40px; height: 40px; object-fit: contain; background:#fff;" class="rounded-circle border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width: 40px; height: 40px; object-fit: contain; background:#fff; border-radius: 50%;" onerror="handleLogoFallback(this, 40, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
-                <td>${escapeHtml(s.province)} (${escapeHtml(s.subDivision)})</td>
+                <td>${escapeHtml(s.province)} | ${escapeHtml(s.subDivision)}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><div>Madras : <code>${escapeHtml(s.secretCode)}</code></div><div>Dir : <code>${escapeHtml(dirCode)}</code></div></td>
+                <td><code>${escapeHtml(s.secretCode)}</code> / <code class="text-primary">${escapeHtml(dirCode)}</code></td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-success me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')"><i class="fa fa-check"></i> Statut</button>
-                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
+                    <button type="button" class="btn btn-sm btn-success fw-bold mb-1" onclick="adminUpdatePaymentStatus('${escapeJsAttr(s.id)}', 'A jour')">Activer</button>
+                    <button type="button" class="btn btn-sm btn-warning fw-bold mb-1" onclick="adminUpdatePaymentStatus('${escapeJsAttr(s.id)}', 'En retard')">Bloquer</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id) {
-    const s = appData.schools.find(x => x.id === id);
+function adminUpdatePaymentStatus(schoolId, newStatus) {
+    const s = (appData.schools || []).find(x => x.id === schoolId);
     if(!s) return;
-    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'En retard / Bloqué' : 'A jour';
+    s.paiementStatut = newStatus;
     saveData();
     renderAdminCentralTable();
     renderSchoolsList();
-    CommicoAlert("Statut mis à jour : " + s.paiementStatut);
+    CommicoAlert("Statut de paiement mis à jour : " + newStatus);
 }
 
-function openDirectRegistrationModal() {
+function downloadSectionData(sec) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) { CommicoAlert("Veuillez d'abord ouvrir une Madras."); return; }
-    proceedToDashboardOpen(activeSchoolId);
-    switchTab('tab-eleves-reg');
-}
-
-function downloadSectionData(sectionName) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
+    if (!s) return;
     const yData = getActiveYearData(s);
-    const data = JSON.stringify(yData[sectionName] || s[sectionName] || [], null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
+    const dataMap = {
+        direction: s.direction || [],
+        classes: yData.classes || [],
+        profs: yData.teachers || [],
+        eleves: yData.students || [],
+        caisse: yData.caisse || [],
+        momo: yData.studentPayments || [],
+        presences: yData.presenceStudents || [],
+        discipline: yData.discipline || [],
+        comm: s.communications || [],
+        armoiries: { devise: s.devise || '', hasLogo: !!s.armoiries },
+        palmares: yData.students || [],
+        courriers: yData.courriers || [],
+        horaires: yData.horairesCours || []
+    };
+    const content = JSON.stringify(dataMap[sec] || {}, null, 2);
+    const blob = new Blob([content], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `COMICO_${sectionName}_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `COMICO_${sec}_${s.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 </script>
