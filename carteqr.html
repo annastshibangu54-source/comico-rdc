@@ -123,28 +123,6 @@
             </div>
         </div>
 
-        <!-- Paramètres de la Madras (Nom, Année & Logo) -->
-        <div class="bg-white p-3 rounded shadow-sm border mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="text-primary m-0 fw-bold"><i class="fa fa-cog me-2"></i>Paramètres de la Madras &amp; Logo</h6>
-                <span class="badge bg-secondary" id="badgeProprietaireActif">Propriétaire : ---</span>
-            </div>
-            <div class="row g-2 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold mb-1">Nom officiel de la Madras :</label>
-                    <input type="text" class="form-control form-control-sm" id="inputMadrasName" placeholder="Ex: Madras Al-Nour" oninput="mettreAJourInfosMadras()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold mb-1">Année Scolaire :</label>
-                    <input type="text" class="form-control form-control-sm" id="inputSchoolYear" placeholder="2025-2026" oninput="mettreAJourInfosMadras()">
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold mb-1">Logo de la Madras (PC / Téléphone) :</label>
-                    <input type="file" class="form-control form-control-sm" id="inputSchoolLogoFile" accept="image/*" onchange="chargerLogoMadras(event)">
-                </div>
-            </div>
-        </div>
-
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bg-white p-3 rounded shadow-sm border">
@@ -482,7 +460,6 @@
             return "";
         }
 
-        // Recherche dans tout localStorage par code secret propriétaire en priorité, puis par nom
         function chercherParCodeOuNomDansLocalStorage(codeRecherche, nomRechercheUpper) {
             const matches = [];
             for (let i = 0; i < localStorage.length; i++) {
@@ -515,7 +492,6 @@
                     // Ignorer les entrées non JSON
                 }
             }
-            // Prioriser les correspondances exactes par code secret
             matches.sort((a, b) => (b.matchCode ? 1 : 0) - (a.matchCode ? 1 : 0));
             return matches;
         }
@@ -527,8 +503,6 @@
             document.getElementById("viewSchoolNameTitle").innerText = currentSchoolName || "COMICO-RDC";
             document.getElementById("lockedSchoolTitle").innerText =
                 `${currentSchoolName || "COMICO-RDC"} (${currentSchoolYear || "2025-2026"}) - COMICO-RDC`;
-            document.getElementById("badgeProprietaireActif").innerText =
-                `Propriétaire : ${currentOwnerName || "Non défini"}`;
         }
 
         window.onload = function() {
@@ -562,7 +536,6 @@
 
             chargerDonneesLocales();
 
-            // 1. Reconnaître d'abord la Madras / le propriétaire grâce au code secret
             const trouvaillesParCode = chercherParCodeOuNomDansLocalStorage(saisieSecret, "");
             const trouvaillesGlobales = chercherParCodeOuNomDansLocalStorage(saisieSecret, saisieNom);
 
@@ -584,7 +557,7 @@
                 ecoleTrouvee = {
                     id: sourceExterne.id || ("MADRAS-" + Date.now()),
                     ownerName: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
-                    name: extraireNomEcoleMadras(sourceExterne) || "COMICO-RDC",
+                    name: extraireNomEcoleMadras(sourceExterne) || saisieNomRaw || "COMICO-RDC",
                     secretCode: codeExterne || saisieSecret,
                     activeYear: sourceExterne.activeYear || "2025-2026",
                     logoUrl: extraireLogoMadras(sourceExterne) || "",
@@ -596,7 +569,7 @@
                 ecoleTrouvee = {
                     id: "MADRAS-" + Date.now(),
                     ownerName: saisieNomRaw,
-                    name: "COMICO-RDC",
+                    name: saisieNomRaw || "COMICO-RDC",
                     secretCode: saisieSecret,
                     activeYear: "2025-2026",
                     logoUrl: "",
@@ -624,6 +597,7 @@
                 const nomMadrasReconnu = (sourceCode && extraireNomEcoleMadras(sourceCode))
                     || extraireNomEcoleMadras(ecoleTrouvee)
                     || trouvaillesGlobales.map(m => extraireNomEcoleMadras(m.data)).find(Boolean)
+                    || saisieNomRaw
                     || "";
                 if (nomMadrasReconnu) {
                     ecoleTrouvee.name = nomMadrasReconnu;
@@ -641,15 +615,12 @@
 
             currentSchoolId = ecoleTrouvee.id;
             currentOwnerName = extraireNomProprietaire(ecoleTrouvee) || saisieNomRaw;
-            currentSchoolName = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+            currentSchoolName = extraireNomEcoleMadras(ecoleTrouvee) || saisieNomRaw || "COMICO-RDC";
             currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
             base64SchoolLogo = extraireLogoMadras(ecoleTrouvee) || "";
 
             document.getElementById("authSection").style.display = "none";
             document.getElementById("cardGeneratorSection").style.display = "block";
-
-            document.getElementById("inputMadrasName").value = currentSchoolName;
-            document.getElementById("inputSchoolYear").value = currentSchoolYear;
 
             appliquerVisuelsMadras();
             window.mettreAJour();
@@ -664,55 +635,6 @@
             document.getElementById("authSecretCode").value = "";
             document.getElementById("cardGeneratorSection").style.display = "none";
             document.getElementById("authSection").style.display = "block";
-        };
-
-        window.mettreAJourInfosMadras = function() {
-            const nouveauNom = document.getElementById("inputMadrasName").value.trim();
-            const nouvelleAnnee = document.getElementById("inputSchoolYear").value.trim();
-
-            currentSchoolName = nouveauNom || "COMICO-RDC";
-            currentSchoolYear = nouvelleAnnee || "2025-2026";
-
-            chargerDonneesLocales();
-            const ecole = appData.schools.find(s => s.id === currentSchoolId);
-            if (ecole) {
-                ecole.name = currentSchoolName;
-                ecole.schoolName = currentSchoolName;
-                ecole.activeYear = currentSchoolYear;
-                sauvegarderDonneesLocales();
-            }
-
-            appliquerVisuelsMadras();
-            window.mettreAJour();
-        };
-
-        window.chargerLogoMadras = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement("canvas");
-                    const ctx = canvas.getContext("2d");
-                    canvas.width = 200;
-                    canvas.height = 200;
-                    ctx.drawImage(img, 0, 0, 200, 200);
-                    base64SchoolLogo = canvas.toDataURL("image/png", 0.85);
-
-                    chargerDonneesLocales();
-                    const ecole = appData.schools.find(s => s.id === currentSchoolId);
-                    if (ecole) {
-                        ecole.logoUrl = base64SchoolLogo;
-                        sauvegarderDonneesLocales();
-                    }
-
-                    appliquerVisuelsMadras();
-                    window.mettreAJour();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
         };
 
         window.chargerPhoto = function(event) {
