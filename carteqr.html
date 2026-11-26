@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>EDU-RDC - Cartes QR & Identifications</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- html2canvas pour permettre le téléchargement direct de la carte en image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Firebase SDK (Compat v10) pour une parfaite synchronisation globale -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+    <style>
+        .id-card {
+            width: 8.5cm;
+            height: 5.5cm;
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%) !important;
+            border-radius: 8px;
+            color: #ffffff !important;
+            padding: 5px 8px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            -webkit-print-color-adjust: exact !important;
+        }
+        /* Logo d'école transparent en fond au centre */
+        .id-card::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 3.5cm;
+            height: 3.5cm;
+            background-image: var(--bg-school-logo, url('img/team-1.jpg'));
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.12;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .id-card > * {
+            position: relative;
+            z-index: 1;
+        }
+        .card-photo {
+            width: 1.3cm;
+            height: 1.6cm;
+            object-fit: cover;
+            border: 1px solid #ffffff;
+            border-radius: 3px;
+            background-color: #ffffff;
+        }
+        /* Rubrique d'identité taille police 12 */
+        .card-details { font-size: 12px; line-height: 1.12; color: #fff; }
+        .qr-container {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            background: #ffffff;
+            padding: 1px;
+            border-radius: 3px;
+            width: 0.9cm;
+            height: 0.9cm;
+        }
+        .qr-container img { width: 100%; height: 100%; object-fit: contain; }
+        /* Mot d'assistance tout en bas, taille police 10, avec espace protégé pour ne pas passer sous le QR code */
+        .assistance-text {
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.05;
+            color: #ffeb3b;
+            font-weight: bold;
+            margin-bottom: 2px;
+            padding-right: 1.1cm;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #cardPreviewContainer, #cardPreviewContainer * { visibility: visible; }
+            #cardPreviewContainer { position: absolute; left: 0; top: 0; margin: 0; }
+        }
+    </style>
+</head>
+<body style="background-color: #f8f9fa; padding: 10px;">
+
+    <!-- Écran Accès École -->
+    <div class="container" id="authSection" style="max-width: 500px; margin-top: 40px;">
+        <div class="card shadow p-4 bg-white rounded border-0">
+            <h3 class="text-center text-primary mb-4"><i class="fa fa-school me-2"></i>Accès Établissement</h3>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nom Complet de l'École</label>
+                <input type="text" id="authSchoolName" class="form-control" placeholder="ex: C.S. LA REVOLUTION">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Code Secret de l'École</label>
+                <input type="password" id="authSecretCode" class="form-control" placeholder="Entrez le code secret (ex: SEC-1234)">
+            </div>
+            <button type="button" onclick="ouvrirEspace()" class="btn btn-primary w-100 py-2 fw-bold">
+                <i class="fa fa-key me-2"></i>Ouvrir l'Espace École
+            </button>
+            <div class="mt-3 text-center">
+                <a href="gestion_ecole.html" class="text-muted small"><i class="fa fa-arrow-left me-1"></i> Retour à la plateforme principale</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Espace de Génération -->
+    <div class="container" id="cardGeneratorSection" style="display: none; margin-top: 10px; max-width: 950px;">
+        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+            <span><i class="fa fa-shield-alt me-2"></i>École Active : <strong id="lockedSchoolTitle">---</strong></span>
+            <div>
+                <a href="gestion_ecole.html" class="btn btn-sm btn-primary me-1"><i class="fa fa-home"></i> Accueil</a>
+                <button class="btn btn-sm btn-danger" onclick="location.reload()"><i class="fa fa-sign-out-alt"></i> Changer</button>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="bg-white p-3 rounded shadow-sm border">
+                    <h5 class="text-primary mb-3">Formulaire Carte & QR</h5>
+                    
+                    <!-- Sélection du type de carte -->
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold mb-1">Type de Carte :</label>
+                        <select class="form-select form-select-sm mb-2" id="selectCardType" onchange="mettreAJour()">
+                            <option value="Élève">Élève</option>
+                            <option value="Enseignant">Enseignant</option>
+                            <option value="Administrateur">Administrateur</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold mb-1">Nom :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputNom" placeholder="Nom" value="KALOMBO" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Postnom :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputPostnom" placeholder="Postnom" value="TSHIBANGU" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Prénom :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputPrenom" placeholder="Prénom" value="Mike" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Matricule ou Code Secret :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputMatricule" placeholder="Matricule" value="MAT-001" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Date et Lieu de Naissance :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputNaiss" placeholder="Ex: 23/03/1993 à Mbuji-Mayi" value="23/03/1993 à Mbuji-Mayi" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Adresse Physique :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputAdresse" placeholder="Adresse Physique" value="Kinshasa, RDC" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Nom du Père :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputPere" placeholder="Nom du père" value="KALOMBO Père" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Nom de la Mère :</label>
+                        <input type="text" class="form-control form-control-sm mb-1" id="inputMere" placeholder="Nom de la mère" value="MUKADI Mère" oninput="mettreAJour()">
+                        
+                        <label class="form-label small fw-bold mb-1">Photo (PC / Téléphone) :</label>
+                        <input type="file" class="form-control form-control-sm mb-2" id="inputPhotoFile" accept="image/*" onchange="chargerPhoto(event)">
+                    </div>
+                    <button type="button" onclick="enregistrerSurFirebase()" class="btn btn-outline-primary w-100 py-2 fw-bold">
+                        <i class="fa fa-cloud-upload-alt me-2"></i>Enregistrer dans l'École Active (Firebase)
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-lg-6 text-center">
+                <div id="cardPreviewContainer">
+                    <div class="id-card" id="cardPreview">
+                        <!-- En-tête : taille de police 13 -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center pb-1 border-bottom" style="font-size: 13px;">
+                                <div class="d-flex align-items-center">
+                                    <span style="background: linear-gradient(to bottom, #007fff 33%, #ffd700 33%, #ffd700 66%, #ce1126 66%); width: 0.45cm; height: 0.3cm; display: inline-block; margin-right: 3px; border: 0.5px solid #fff;"></span>
+                                    <span class="fw-bold">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</span>
+                                </div>
+                                <img id="viewSchoolLogoHeader" src="img/team-1.jpg" style="width: 0.42cm; height: 0.42cm; object-fit: cover; border-radius: 50%; border: 1px solid #fff;" alt="Logo">
+                            </div>
+
+                            <!-- Nom complet de l'école : taille de police 13 -->
+                            <div class="text-center fw-bold my-1" id="viewSchoolNameTitle" style="font-size: 13px; text-transform: uppercase;">C.S. LA REVOLUTION</div>
+                            <div style="border-bottom: 1px solid rgba(255,255,255,0.5); margin-bottom: 2px;"></div>
+                        </div>
+
+                        <!-- Corps de la carte : Détails à gauche (taille 12), Photo à droite -->
+                        <div class="d-flex align-items-start justify-content-between my-auto">
+                            <div class="card-details text-start" style="width: 72%;">
+                                <div><strong>Nom :</strong> <span id="viewNom">KALOMBO</span></div>
+                                <div><strong>Postnom :</strong> <span id="viewPostnom">TSHIBANGU</span></div>
+                                <div><strong>Prénom :</strong> <span id="viewPrenom">Mike</span></div>
+                                <div><strong>Matricule :</strong> <span id="viewMatricule">MAT-001</span></div>
+                                <div><strong>Né(e) à :</strong> <span id="viewNaiss">23/03/1993 à Mbuji-Mayi</span></div>
+                                <div><strong>Adresse :</strong> <span id="viewAdresse">Kinshasa, RDC</span></div>
+                                <div><strong>Père :</strong> <span id="viewPere">KALOMBO Père</span></div>
+                                <div><strong>Mère :</strong> <span id="viewMere">MUKADI Mère</span></div>
+                            </div>
+                            <div class="text-end" style="width: 26%;">
+                                <img id="cardUserPhoto" src="img/team-1.jpg" class="card-photo" alt="Photo">
+                            </div>
+                        </div>
+
+                        <!-- Mot d'assistance tout en bas, taille de police 10 -->
+                        <div>
+                            <div class="assistance-text">
+                                Prière aux autorités civiles et militaires de porter assistance au porteur en cas de besoin.
+                            </div>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div class="qr-container" id="qrcodePreview"></div>
+                    </div>
+                </div>
+                
+                <!-- Espace d'actions : Télécharger et Imprimer -->
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <button onclick="telechargerCarte()" class="btn btn-primary py-2 px-3 fw-bold"><i class="fa fa-download me-1"></i> Télécharger la Carte</button>
+                    <button onclick="window.print()" class="btn btn-success py-2 px-3 fw-bold"><i class="fa fa-print me-1"></i> Imprimer la Carte</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Espace de Liste / Répertoire des Cartes Enregistrées (Générées ici) -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="bg-white p-3 rounded shadow-sm border">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-primary m-0"><i class="fa fa-address-card me-2"></i>Mes Cartes Générées et Enregistrées</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="chargerRepertoireCartes()"><i class="fa fa-sync-alt me-1"></i> Actualiser</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle small">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Matricule / Code</th>
+                                    <th>Nom Complet</th>
+                                    <th>Date Naiss. & Adresse</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRepertoireCartes">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Aucune carte enregistrée.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Start (Pied de Page d'origine complet) -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="text-white mb-3">Liens Rapides</h4>
+                    <a class="btn btn-link" href="about.html">À propos de nous</a>
+                    <a class="btn btn-link" href="contact.html">Contactez-nous</a>
+                    <a class="btn btn-link" href="politique.html">Politique de Confidentialité</a>
+                    <a class="btn btn-link" href="termes.html">Termes & Conditions</a>
+                    <a class="btn btn-link" href="aide.html">Aide & FAQ</a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="text-white mb-3">Contact</h4>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Avenue de l'École, Kinshasa, RDC</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+243 90 681 99 93</p>
+                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>jeunessesocial52@gmail.com</p>
+                    <div class="d-flex pt-2">
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="text-white mb-3">Galerie</h4>
+                    <div class="row g-2 pt-2">
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-1.jpg" alt="">
+                        </div>
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-2.jpg" alt="">
+                        </div>
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-3.jpg" alt="">
+                        </div>
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-2.jpg" alt="">
+                        </div>
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-3.jpg" alt="">
+                        </div>
+                        <div class="col-4">
+                            <img class="img-fluid bg-light p-1" src="img/course-1.jpg" alt="">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="text-white mb-3">Bulletin d'Information</h4>
+                    <p class="text-light">Restez informés des communiqués officiels du Ministère de l'Éducation Nationale.</p>
+                    
+                    <div class="position-relative mx-auto" style="max-width: 400px;">
+                        <input id="newsletterEmailInput" class="form-control border-0 w-100 py-3 ps-4 pe-5" type="email" placeholder="Votre Email">
+                        <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2" onclick="handleNewsletterSubscribe()">S'inscrire</button>
+                    </div>
+                    <div id="newsletterMsgArea" class="mt-2 small"></div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        &copy; <a class="border-bottom" href="#">EDU-RDC</a>, Tous Droits Réservés.
+                        Conçu par Ir Mike TSHIBANGU, pour la Gestion des Institutions Éducationnelles en RDC
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <div class="footer-menu">
+                            <a href="index.html">Accueil</a>
+                            <a href="cookies.html">Cookies</a>
+                            <a href="aide.html">Aide</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Script de Synchronisation Firebase Identique à gestion_ecole.html -->
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyAfLQc6uveuaqdKLDLnc5BpNK-yoO_0eCE",
+          authDomain: "edu-rdc-5c858.firebaseapp.com",
+          projectId: "edu-rdc-5c858",
+          storageBucket: "edu-rdc-5c858.appspot.com",
+          messagingSenderId: "610052383238",
+          appId: "1:610052383238:web:5c69f493d1aa12baca5987"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        let appData = { schools: [] };
+        let currentSchoolId = null;
+        let currentSchoolName = "";
+        let currentSchoolYear = "2025-2026";
+        let base64Photo = "";
+        let base64SchoolLogo = "";
+
+        window.onload = function() {
+            db.collection("platformData").doc("mainConfig").get().then((doc) => {
+                if (doc.exists) {
+                    appData = doc.data();
+                }
+                if(!appData.schools) appData.schools = [];
+            }).catch((error) => {
+                console.error("Erreur de chargement Firebase:", error);
+            });
+        };
+
+        window.ouvrirEspace = function() {
+            const saisieNom = document.getElementById('authSchoolName').value.trim().toUpperCase();
+            const saisieSecret = document.getElementById('authSecretCode').value.trim();
+
+            if(!saisieNom) { alert("Veuillez saisir le nom complet de l'école !"); return; }
+            if(!saisieSecret) { alert("Veuillez saisir le code secret !"); return; }
+            
+            // Récupération directe et fraîche depuis Firebase au moment du clic pour garantir l'exactitude des données
+            db.collection("platformData").doc("mainConfig").get().then((doc) => {
+                if (doc.exists) {
+                    appData = doc.data();
+                }
+                if(!appData.schools) appData.schools = [];
+
+                let ecoleTrouvee = appData.schools.find(s => s.name && s.name.trim().toUpperCase() === saisieNom);
+                
+                if (!ecoleTrouvee) {
+                    alert("École introuvable dans le registre national de gestion ! Veuillez d'abord créer l'école dans la page principale \"gestion_ecole.html\".");
+                    return;
+                } else {
+                    if (ecoleTrouvee.secretCode && ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
+                        alert("Code secret incorrect pour cette école !");
+                        return;
+                    }
+                }
+
+                currentSchoolId = ecoleTrouvee.id;
+                currentSchoolName = ecoleTrouvee.name;
+                currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
+                base64SchoolLogo = ecoleTrouvee.logoUrl || "";
+
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('cardGeneratorSection').style.display = 'block';
+                document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ")";
+                document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
+                
+                if(base64SchoolLogo) {
+                    document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
+                    document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
+                }
+
+                window.mettreAJour();
+                chargerRepertoireCartes();
+            }).catch((error) => {
+                console.error("Erreur de connexion Firebase:", error);
+                alert("Erreur de connexion avec la base de données. Vérifiez votre connexion Internet.");
+            });
+        };
+
+        window.chargerPhoto = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 150;
+                    canvas.height = 180;
+                    ctx.drawImage(img, 0, 0, 150, 180);
+                    base64Photo = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('cardUserPhoto').src = base64Photo;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.mettreAJour = function() {
+            const typeCarte = document.getElementById('selectCardType').value;
+            const nom = document.getElementById('inputNom').value || '---';
+            const postnom = document.getElementById('inputPostnom').value || '---';
+            const prenom = document.getElementById('inputPrenom').value || '---';
+            const mat = document.getElementById('inputMatricule').value || '---';
+            const naiss = document.getElementById('inputNaiss').value || '---';
+            const adresse = document.getElementById('inputAdresse').value || '---';
+            const pere = document.getElementById('inputPere').value || '---';
+            const mere = document.getElementById('inputMere').value || '---';
+
+            document.getElementById('viewNom').innerText = nom;
+            document.getElementById('viewPostnom').innerText = postnom;
+            document.getElementById('viewPrenom').innerText = prenom;
+            document.getElementById('viewMatricule').innerText = mat;
+            document.getElementById('viewNaiss').innerText = naiss;
+            document.getElementById('viewAdresse').innerText = adresse;
+            document.getElementById('viewPere').innerText = pere;
+            document.getElementById('viewMere').innerText = mere;
+            document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
+
+            const qrText = "EDU-RDC:" + typeCarte.toUpperCase() + ":" + currentSchoolName + ":" + mat + ":" + nom + " " + postnom + " " + prenom;
+            document.getElementById('qrcodePreview').innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(qrText) + '">';
+        };
+
+        // Fonction pour télécharger la carte sous format image (PNG)
+        window.telechargerCarte = function() {
+            const cardElement = document.getElementById('cardPreview');
+            html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Carte_' + (document.getElementById('inputNom').value || 'Identite') + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        };
+
+        // Fonction pour afficher uniquement les cartes spécifiquement enregistrées depuis cet outil (stockées dans savedCards)
+        window.chargerRepertoireCartes = function() {
+            const ecole = appData.schools.find(s => s.id === currentSchoolId);
+            const tbody = document.getElementById('tableRepertoireCartes');
+            tbody.innerHTML = "";
+
+            if (!ecole) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">École introuvable.</td></tr>';
+                return;
+            }
+
+            if(!ecole.savedCards) ecole.savedCards = [];
+            const allCards = ecole.savedCards;
+
+            if (allCards.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucune carte enregistrée. Remplissez le formulaire et cliquez sur "Enregistrer".</td></tr>';
+                return;
+            }
+
+            allCards.forEach((card) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge bg-info text-dark">${card.type || 'Élève'}</span></td>
+                    <td class="fw-bold">${card.mat || ''}</td>
+                    <td>${card.name || (card.nom + ' ' + (card.postnom || ''))}</td>
+                    <td>${card.naiss || ''} ${card.adresse ? '/ ' + card.adresse : ''}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick='chargerCarteDansFormulaire(${JSON.stringify(card)})' title="Charger dans l'aperçu"><i class="fa fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick='supprimerCarte("${card.id}")' title="Supprimer"><i class="fa fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.chargerCarteDansFormulaire = function(card) {
+            document.getElementById('selectCardType').value = card.type || 'Élève';
+            document.getElementById('inputNom').value = card.nom || '';
+            document.getElementById('inputPostnom').value = card.postnom || '';
+            document.getElementById('inputPrenom').value = card.prenom || '';
+            document.getElementById('inputMatricule').value = card.mat || '';
+            document.getElementById('inputNaiss').value = card.naiss || '';
+            document.getElementById('inputAdresse').value = card.adresse || '';
+            document.getElementById('inputPere').value = card.pere || '';
+            document.getElementById('inputMere').value = card.mere || '';
+            if (card.photo) {
+                base64Photo = card.photo;
+                document.getElementById('cardUserPhoto').src = base64Photo;
+            }
+            window.mettreAJour();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.supprimerCarte = function(cardId) {
+            if(!confirm("Voulez-vous vraiment supprimer cette carte du registre ?")) return;
+            const ecole = appData.schools.find(s => s.id === currentSchoolId);
+            if (!ecole) return;
+
+            if(!ecole.savedCards) ecole.savedCards = [];
+            ecole.savedCards = ecole.savedCards.filter(c => c.id !== cardId);
+
+            db.collection("platformData").doc("mainConfig").set(appData).then(() => {
+                alert("Carte supprimée avec succès !");
+                chargerRepertoireCartes();
+            }).catch(err => {
+                console.error("Erreur suppression :", err);
+                alert("Erreur lors de la suppression en ligne.");
+            });
+        };
+
+        window.enregistrerSurFirebase = async function() {
+            const typeCarte = document.getElementById('selectCardType').value;
+            const nom = document.getElementById('inputNom').value.trim();
+            const postnom = document.getElementById('inputPostnom').value.trim();
+            const prenom = document.getElementById('inputPrenom').value.trim();
+            const mat = document.getElementById('inputMatricule').value.trim();
+
+            if(!nom || !mat) {
+                alert("Veuillez remplir au moins le nom et le matricule !");
+                return;
+            }
+
+            const ecole = appData.schools.find(s => s.id === currentSchoolId);
+            if (ecole) {
+                if(!ecole.savedCards) ecole.savedCards = [];
+
+                const fullName = nom + " " + postnom + " " + prenom;
+                const cardPayload = {
+                    id: 'CARD-' + Date.now(),
+                    type: typeCarte,
+                    mat: mat,
+                    name: fullName,
+                    nom, postnom, prenom,
+                    naiss: document.getElementById('inputNaiss').value,
+                    adresse: document.getElementById('inputAdresse').value,
+                    pere: document.getElementById('inputPere').value,
+                    mere: document.getElementById('inputMere').value,
+                    photo: base64Photo || "",
+                    schoolLogo: base64SchoolLogo || ""
+                };
+
+                // Vérifier si la carte existe déjà par matricule pour la mettre à jour, sinon l'ajouter
+                let existingIndex = ecole.savedCards.findIndex(c => c.mat === mat && c.type === typeCarte);
+                if (existingIndex >= 0) {
+                    cardPayload.id = ecole.savedCards[existingIndex].id; // Conserver l'ID d'origine
+                    ecole.savedCards[existingIndex] = cardPayload;
+                } else {
+                    ecole.savedCards.push(cardPayload);
+                }
+
+                // Sauvegarde globale sur Firebase
+                db.collection("platformData").doc("mainConfig").set(appData).then(() => {
+                    alert(`Carte (${typeCarte}) enregistrée avec succès dans l'école ${currentSchoolName} et synchronisée sur Firebase !`);
+                    chargerRepertoireCartes();
+                }).catch(err => {
+                    console.error("Erreur sync Firebase :", err);
+                    alert("Erreur lors de l'enregistrement en ligne.");
+                });
+            } else {
+                alert("Erreur : École active introuvable.");
+            }
+        };
+    </script>
+</body>
+</html>
