@@ -2,16 +2,31 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>COMICO-RDC - Cartes QR & Identifications</title>
+    <title>COMICO-RDC - Cartes QR &amp; Identifications</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Icon Font Stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Template Stylesheet -->
+    <link href="css/style.css" rel="stylesheet">
+
     <!-- html2canvas pour permettre le téléchargement direct de la carte en image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Nunito', sans-serif;
+            color: #1f2937;
+            padding: 0;
+            margin: 0;
+        }
         .id-card {
             width: 8.5cm;
             height: 5.5cm;
@@ -29,8 +44,9 @@
             flex-direction: column;
             justify-content: space-between;
             -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
-        /* Logo d'école transparent en fond au centre */
+        /* Logo d'école / Madras transparent en fond au centre */
         .id-card::before {
             content: "";
             position: absolute;
@@ -39,11 +55,11 @@
             transform: translate(-50%, -50%);
             width: 3.5cm;
             height: 3.5cm;
-            background-image: var(--bg-school-logo, url('img/team-1.jpg'));
+            background-image: var(--bg-school-logo, url('img/logo1.jpg'));
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.12;
+            opacity: 0.14;
             z-index: 0;
             pointer-events: none;
         }
@@ -89,7 +105,31 @@
         }
     </style>
 </head>
-<body style="background-color: #f8f9fa; padding: 10px;">
+<body>
+    <!-- Navigation Principale Harmonisée avec edu_comico.html -->
+    <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
+        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <img id="navBrandLogo"
+                 src="img/logo1.jpg"
+                 alt="Logo COMICO-RDC"
+                 class="me-3 rounded-circle border"
+                 style="width: 45px; height: 45px; object-fit: contain; background:#fff; display: inline-block;">
+            <h2 class="m-0 text-primary">COMICO-RDC</h2>
+        </a>
+        <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav ms-auto p-4 p-lg-0">
+                <a href="index.html" class="nav-item nav-link">Accueil</a>
+                <a href="edu_comico.html" class="nav-item nav-link">Gestion Madras</a>
+                <a href="carteqr.html" class="nav-item nav-link active">Cartes QR</a>
+                <a href="dashboard.html" class="nav-item nav-link">Dashboard</a>
+                <a href="contact.html" class="nav-item nav-link">Contact</a>
+            </div>
+            <a href="edu_comico.html" class="btn btn-primary py-4 px-lg-5 d-none d-lg-block text-white">Retour Gestion<i class="fa fa-school ms-3"></i></a>
+        </div>
+    </nav>
 
     <!-- Écran Accès COMICO-RDC -->
     <div class="container" id="authSection" style="max-width: 500px; margin-top: 40px;">
@@ -97,7 +137,7 @@
             <h3 class="text-center text-primary mb-4"><i class="fa fa-school me-2"></i>Accès COMICO-RDC</h3>
             <div class="mb-3">
                 <label class="form-label fw-bold">Nom propriétaire de Madras</label>
-                <input type="text" id="authSchoolName" class="form-control" placeholder="ex: MADRAS...">
+                <input type="text" id="authSchoolName" class="form-control" placeholder="ex: Nom du propriétaire...">
             </div>
             <div class="mb-3">
                 <label class="form-label fw-bold">Code secret propriétaire Madras</label>
@@ -107,17 +147,18 @@
                 <i class="fa fa-key me-2"></i>Ouvrir l'Espace COMICO-RDC
             </button>
             <div class="mt-3 text-center">
-                <a href="gestion_ecole.html" class="text-muted small"><i class="fa fa-arrow-left me-1"></i> Retour à la plateforme principale COMICO-RDC</a>
+                <a href="edu_comico.html" class="text-muted small"><i class="fa fa-arrow-left me-1"></i> Retour à la gestion des Madras (edu_comico.html)</a>
             </div>
         </div>
     </div>
 
     <!-- Espace de Génération -->
-    <div class="container" id="cardGeneratorSection" style="display: none; margin-top: 10px; max-width: 950px;">
-        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+    <div class="container" id="cardGeneratorSection" style="display: none; margin-top: 20px; max-width: 950px;">
+        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <span><i class="fa fa-shield-alt me-2"></i>COMICO-RDC Actif : <strong id="lockedSchoolTitle">---</strong></span>
             <div>
-                <a href="gestion_ecole.html" class="btn btn-sm btn-primary me-1"><i class="fa fa-home"></i> Accueil</a>
+                <a href="edu_comico.html" class="btn btn-sm btn-primary me-1"><i class="fa fa-school"></i> Gestion Madras</a>
+                <a href="dashboard.html" class="btn btn-sm btn-outline-primary me-1"><i class="fa fa-chart-line"></i> Dashboard</a>
                 <button class="btn btn-sm btn-danger" onclick="location.reload()"><i class="fa fa-sign-out-alt"></i> Changer</button>
             </div>
         </div>
@@ -125,8 +166,8 @@
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bg-white p-3 rounded shadow-sm border">
-                    <h5 class="text-primary mb-3">Formulaire Carte & QR - COMICO-RDC</h5>
-                    
+                    <h5 class="text-primary mb-3">Formulaire Carte &amp; QR - COMICO-RDC</h5>
+
                     <!-- Sélection du type de carte -->
                     <div class="mb-2">
                         <label class="form-label small fw-bold mb-1">Type de Carte :</label>
@@ -140,28 +181,28 @@
                     <div class="mb-2">
                         <label class="form-label small fw-bold mb-1">Nom :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputNom" placeholder="Nom" value="KALOMBO" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Postnom :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputPostnom" placeholder="Postnom" value="TSHIBANGU" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Prénom :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputPrenom" placeholder="Prénom" value="Mike" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Matricule ou Code Secret :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputMatricule" placeholder="Matricule" value="MAT-001" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Date et Lieu de Naissance :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputNaiss" placeholder="Ex: 23/03/1993 à Mbuji-Mayi" value="23/03/1993 à Mbuji-Mayi" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Adresse Physique :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputAdresse" placeholder="Adresse Physique" value="Kinshasa, RDC" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Nom du Père :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputPere" placeholder="Nom du père" value="KALOMBO Père" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Nom de la Mère :</label>
                         <input type="text" class="form-control form-control-sm mb-1" id="inputMere" placeholder="Nom de la mère" value="MUKADI Mère" oninput="mettreAJour()">
-                        
+
                         <label class="form-label small fw-bold mb-1">Photo (PC / Téléphone) :</label>
                         <input type="file" class="form-control form-control-sm mb-2" id="inputPhotoFile" accept="image/*" onchange="chargerPhoto(event)">
                     </div>
@@ -181,7 +222,7 @@
                                     <i class="fas fa-star-and-crescent me-1" style="color: #ffeb3b; font-size: 13px;"></i>
                                     <span class="fw-bold">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</span>
                                 </div>
-                                <img id="viewSchoolLogoHeader" src="img/team-1.jpg" style="width: 0.42cm; height: 0.42cm; object-fit: cover; border-radius: 50%; border: 1px solid #fff;" alt="Logo">
+                                <img id="viewSchoolLogoHeader" src="img/logo1.jpg" style="width: 0.42cm; height: 0.42cm; object-fit: cover; border-radius: 50%; border: 1px solid #fff;" alt="Logo">
                             </div>
 
                             <!-- Nom complet de l'école / Madras : taille de police 13 -->
@@ -217,7 +258,7 @@
                         <div class="qr-container" id="qrcodePreview"></div>
                     </div>
                 </div>
-                
+
                 <!-- Espace d'actions : Télécharger et Imprimer -->
                 <div class="d-flex justify-content-center gap-2 mt-3">
                     <button onclick="telechargerCarte()" class="btn btn-primary py-2 px-3 fw-bold"><i class="fa fa-download me-1"></i> Télécharger la Carte</button>
@@ -241,7 +282,7 @@
                                     <th>Type</th>
                                     <th>Matricule / Code</th>
                                     <th>Nom Complet</th>
-                                    <th>Date Naiss. & Adresse</th>
+                                    <th>Date Naiss. &amp; Adresse</th>
                                     <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
@@ -257,8 +298,8 @@
         </div>
     </div>
 
-    <!-- Footer Start (Pied de Page d'origine complet adapté à COMICO-RDC) -->
-    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+    <!-- Footer Start (Liens et chemins harmonisés avec edu_comico.html) -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5">
         <div class="container py-5">
             <div class="row g-5">
                 <div class="col-lg-3 col-md-6">
@@ -266,8 +307,8 @@
                     <a class="btn btn-link" href="about.html">À propos de nous</a>
                     <a class="btn btn-link" href="contact.html">Contactez-nous</a>
                     <a class="btn btn-link" href="politique.html">Politique de Confidentialité</a>
-                    <a class="btn btn-link" href="termes.html">Termes & Conditions</a>
-                    <a class="btn btn-link" href="aide.html">Aide & FAQ</a>
+                    <a class="btn btn-link" href="termes.html">Termes &amp; Conditions</a>
+                    <a class="btn btn-link" href="aide.html">Aide &amp; FAQ</a>
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <h4 class="text-white mb-3">Contact</h4>
@@ -307,7 +348,7 @@
                 <div class="col-lg-3 col-md-6">
                     <h4 class="text-white mb-3">Bulletin d'Information</h4>
                     <p class="text-light">Restez informés des communiqués officiels de COMICO-RDC.</p>
-                    
+
                     <div class="position-relative mx-auto" style="max-width: 400px;">
                         <input id="newsletterEmailInput" class="form-control border-0 w-100 py-3 ps-4 pe-5" type="email" placeholder="Votre Email">
                         <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2" onclick="handleNewsletterSubscribe()">S'inscrire</button>
@@ -320,7 +361,7 @@
             <div class="copyright">
                 <div class="row">
                     <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        &copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.
+                        &copy; <a class="border-bottom" href="index.html">COMICO-RDC</a>, Tous Droits Réservés.
                         Conçu par Ir Mike TSHIBANGU, pour COMICO-RDC en RDC
                     </div>
                     <div class="col-md-6 text-center text-md-end">
@@ -336,47 +377,67 @@
     </div>
     <!-- Footer End -->
 
-    <!-- Script Local Sans Firebase -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const STORAGE_KEY = "comico_rdc_local_data_v1";
+        const DEFAULT_LOGO = "img/logo1.jpg";
+        const DEFAULT_BG_LOGO = "img/team-1.jpg";
+        const STORAGE_KEY_QR = "comico_rdc_local_data_v1";
+        const STORAGE_KEY_EDU = "comico_appData";
 
         let appData = { schools: [] };
+        let eduData = { schools: [] };
         let currentSchoolId = null;
+        let currentEduSchoolId = null;
         let currentSchoolName = "";
         let currentSchoolYear = "2025-2026";
         let base64Photo = "";
         let base64SchoolLogo = "";
 
+        function handleNewsletterSubscribe() {
+            const input = document.getElementById('newsletterEmailInput');
+            const msg = document.getElementById('newsletterMsgArea');
+            if (!input || !msg) return;
+            const email = input.value.trim();
+            if (!email || !email.includes('@')) {
+                msg.innerHTML = '<span class="text-warning">Veuillez entrer une adresse email valide.</span>';
+                return;
+            }
+            msg.innerHTML = '<span class="text-success">Inscription enregistrée pour COMICO-RDC.</span>';
+            input.value = '';
+        }
+
         function chargerDonneesLocales() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    appData = JSON.parse(raw);
-                }
-                if (!appData || typeof appData !== "object") {
-                    appData = { schools: [] };
-                }
-                if (!Array.isArray(appData.schools)) {
-                    appData.schools = [];
-                }
+                const rawQr = localStorage.getItem(STORAGE_KEY_QR);
+                appData = rawQr ? JSON.parse(rawQr) : { schools: [] };
             } catch (e) {
                 appData = { schools: [] };
             }
+            if (!appData || typeof appData !== "object") appData = { schools: [] };
+            if (!Array.isArray(appData.schools)) appData.schools = [];
+
+            try {
+                const rawEdu = localStorage.getItem(STORAGE_KEY_EDU);
+                eduData = rawEdu ? JSON.parse(rawEdu) : { schools: [] };
+            } catch (e) {
+                eduData = { schools: [] };
+            }
+            if (!eduData || typeof eduData !== "object") eduData = { schools: [] };
+            if (!Array.isArray(eduData.schools)) eduData.schools = [];
         }
 
         function sauvegarderDonneesLocales() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            localStorage.setItem(STORAGE_KEY_QR, JSON.stringify(appData));
+            localStorage.setItem(STORAGE_KEY_EDU, JSON.stringify(eduData));
         }
 
         function extraireNomProprietaire(obj) {
             if (!obj || typeof obj !== "object") return "";
-            const candidats = [
-                obj.ownerName,
-                obj.proprietaire,
-                obj.nomProprietaire,
-                obj.owner,
-                obj.name
-            ];
+            if (Array.isArray(obj.direction)) {
+                const dir = obj.direction.find(d => d && d.name && String(d.name).trim() !== "");
+                if (dir) return String(dir.name).trim();
+            }
+            const candidats = [obj.ownerName, obj.proprietaire, obj.nomProprietaire, obj.owner];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
                     return String(val).trim();
@@ -387,14 +448,7 @@
 
         function extraireNomEcoleMadras(obj) {
             if (!obj || typeof obj !== "object") return "";
-            const candidats = [
-                obj.schoolName,
-                obj.madrasName,
-                obj.ecole,
-                obj.nomEcole,
-                obj.madras,
-                obj.name
-            ];
+            const candidats = [obj.schoolName, obj.madrasName, obj.ecole, obj.nomEcole, obj.madras, obj.name];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
                     return String(val).trim();
@@ -403,37 +457,28 @@
             return "";
         }
 
-        function extraireCodeProprietaire(obj) {
-            if (!obj || typeof obj !== "object") return "";
-            const candidats = [
-                obj.secretCode,
-                obj.codeSecret,
-                obj.secret,
-                obj.password,
-                obj.motDePasse,
-                obj.code,
-                obj.pin,
-                obj.accessCode,
-                obj.madrasCode,
-                obj.ownerCode
-            ];
-            for (const val of candidats) {
-                if (val !== undefined && val !== null && String(val).trim() !== "") {
-                    return String(val).trim();
+        function extraireCodesAutorises(obj) {
+            const codes = [];
+            if (!obj || typeof obj !== "object") return codes;
+            const directs = [obj.secretCode, obj.codeSecret, obj.secret, obj.password, obj.motDePasse, obj.code, obj.pin, obj.accessCode, obj.madrasCode, obj.ownerCode];
+            directs.forEach(c => {
+                if (c !== undefined && c !== null && String(c).trim() !== "") {
+                    codes.push(String(c).trim());
                 }
+            });
+            if (Array.isArray(obj.direction)) {
+                obj.direction.forEach(d => {
+                    if (d && d.secretCode && String(d.secretCode).trim() !== "") {
+                        codes.push(String(d.secretCode).trim());
+                    }
+                });
             }
-            return "";
+            return codes;
         }
 
         function extraireLogoMadras(obj) {
             if (!obj || typeof obj !== "object") return "";
-            const candidats = [
-                obj.logoUrl,
-                obj.logo,
-                obj.madrasLogo,
-                obj.schoolLogo,
-                obj.image
-            ];
+            const candidats = [obj.logoUrl, obj.logo, obj.madrasLogo, obj.schoolLogo, obj.image];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
                     return String(val).trim();
@@ -442,36 +487,17 @@
             return "";
         }
 
-        function chercherProprietaireDansToutLocalStorage(nomRechercheUpper) {
-            const matches = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const cle = localStorage.key(i);
-                if (!cle) continue;
-                try {
-                    const parsed = JSON.parse(localStorage.getItem(cle));
-                    const parcourir = (node) => {
-                        if (!node || typeof node !== "object") return;
-                        if (Array.isArray(node)) {
-                            node.forEach(parcourir);
-                            return;
-                        }
-                        const nomNode = extraireNomProprietaire(node).toUpperCase();
-                        const ecoleNode = extraireNomEcoleMadras(node).toUpperCase();
-                        if ((nomNode && nomNode === nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper)) {
-                            matches.push({ key: cle, data: node });
-                        }
-                        Object.values(node).forEach(val => {
-                            if (val && typeof val === "object") {
-                                parcourir(val);
-                            }
-                        });
-                    };
-                    parcourir(parsed);
-                } catch (e) {
-                    // Ignorer les entrées non JSON
-                }
+        function getEduYearSavedCards(eduSchool) {
+            if (!eduSchool) return [];
+            const yr = eduSchool.activeYear || "2025-2026";
+            if (!eduSchool.yearsData) eduSchool.yearsData = {};
+            if (!eduSchool.yearsData[yr]) {
+                eduSchool.yearsData[yr] = { savedCards: [] };
             }
-            return matches;
+            if (!Array.isArray(eduSchool.yearsData[yr].savedCards)) {
+                eduSchool.yearsData[yr].savedCards = [];
+            }
+            return eduSchool.yearsData[yr].savedCards;
         }
 
         window.onload = function() {
@@ -483,27 +509,33 @@
             const saisieNom = saisieNomRaw.toUpperCase();
             const saisieSecret = document.getElementById('authSecretCode').value.trim();
 
-            if(!saisieNom) { alert("Veuillez saisir le nom propriétaire de Madras !"); return; }
-            if(!saisieSecret) { alert("Veuillez saisir le code secret propriétaire Madras !"); return; }
+            if (!saisieNom) { alert("Veuillez saisir le nom propriétaire de Madras !"); return; }
+            if (!saisieSecret) { alert("Veuillez saisir le code secret propriétaire Madras !"); return; }
 
             chargerDonneesLocales();
 
-            const trouvaillesGlobales = chercherProprietaireDansToutLocalStorage(saisieNom);
+            // 1. Recherche dans les Madras de edu_comico.html (comico_appData)
+            const eduMatch = eduData.schools.find(s =>
+                extraireNomProprietaire(s).toUpperCase() === saisieNom ||
+                extraireNomEcoleMadras(s).toUpperCase() === saisieNom
+            );
+
+            // 2. Recherche dans l'espace local carteqr (comico_rdc_local_data_v1)
             let ecoleTrouvee = appData.schools.find(s =>
                 extraireNomProprietaire(s).toUpperCase() === saisieNom ||
                 extraireNomEcoleMadras(s).toUpperCase() === saisieNom
             );
 
-            if (!ecoleTrouvee && trouvaillesGlobales.length > 0) {
-                const sourceExterne = trouvaillesGlobales[0].data;
+            if (!ecoleTrouvee && eduMatch) {
+                const syncedCards = getEduYearSavedCards(eduMatch);
                 ecoleTrouvee = {
-                    id: sourceExterne.id || ('MADRAS-' + Date.now()),
-                    ownerName: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
-                    name: extraireNomEcoleMadras(sourceExterne) || "COMICO-RDC",
-                    secretCode: extraireCodeProprietaire(sourceExterne) || saisieSecret,
-                    activeYear: sourceExterne.activeYear || "2025-2026",
-                    logoUrl: extraireLogoMadras(sourceExterne),
-                    savedCards: Array.isArray(sourceExterne.savedCards) ? sourceExterne.savedCards : []
+                    id: eduMatch.id || ('MADRAS-' + Date.now()),
+                    ownerName: extraireNomProprietaire(eduMatch) || saisieNomRaw,
+                    name: extraireNomEcoleMadras(eduMatch) || "COMICO-RDC",
+                    secretCode: extraireCodesAutorises(eduMatch)[0] || saisieSecret,
+                    activeYear: eduMatch.activeYear || "2025-2026",
+                    logoUrl: extraireLogoMadras(eduMatch) || DEFAULT_LOGO,
+                    savedCards: Array.isArray(syncedCards) ? [...syncedCards] : []
                 };
                 appData.schools.push(ecoleTrouvee);
                 sauvegarderDonneesLocales();
@@ -516,19 +548,18 @@
                     name: "COMICO-RDC",
                     secretCode: saisieSecret,
                     activeYear: "2025-2026",
-                    logoUrl: "",
+                    logoUrl: DEFAULT_LOGO,
                     savedCards: []
                 };
                 appData.schools.push(ecoleTrouvee);
                 sauvegarderDonneesLocales();
             } else {
                 const codesConnus = [
-                    extraireCodeProprietaire(ecoleTrouvee),
-                    ...trouvaillesGlobales.map(m => extraireCodeProprietaire(m.data))
+                    ...extraireCodesAutorises(ecoleTrouvee),
+                    ...(eduMatch ? extraireCodesAutorises(eduMatch) : [])
                 ].filter(Boolean);
 
                 const codeValide = codesConnus.length === 0 || codesConnus.some(c => c.toLowerCase() === saisieSecret.toLowerCase());
-
                 if (!codeValide) {
                     alert("Code secret propriétaire Madras incorrect !");
                     return;
@@ -541,33 +572,35 @@
                     ecoleTrouvee.ownerName = saisieNomRaw;
                 }
                 if (!ecoleTrouvee.name) {
-                    ecoleTrouvee.name = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+                    ecoleTrouvee.name = extraireNomEcoleMadras(eduMatch) || extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
                 }
-                if (!ecoleTrouvee.logoUrl) {
-                    const logoTrouve = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
-                    if (logoTrouve) ecoleTrouvee.logoUrl = logoTrouve;
+                const logoTrouve = (eduMatch && extraireLogoMadras(eduMatch)) || extraireLogoMadras(ecoleTrouvee) || DEFAULT_LOGO;
+                ecoleTrouvee.logoUrl = logoTrouve;
+
+                if (eduMatch) {
+                    currentEduSchoolId = eduMatch.id;
+                    const eduCards = getEduYearSavedCards(eduMatch);
+                    if (!Array.isArray(ecoleTrouvee.savedCards) || ecoleTrouvee.savedCards.length === 0) {
+                        ecoleTrouvee.savedCards = [...eduCards];
+                    }
                 }
                 sauvegarderDonneesLocales();
             }
 
             currentSchoolId = ecoleTrouvee.id;
-            const nomEcoleAffiche = extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
-            currentSchoolName = nomEcoleAffiche;
-            currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
-            base64SchoolLogo = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
+            currentSchoolName = (eduMatch && extraireNomEcoleMadras(eduMatch)) || extraireNomEcoleMadras(ecoleTrouvee) || "COMICO-RDC";
+            currentSchoolYear = (eduMatch && eduMatch.activeYear) || ecoleTrouvee.activeYear || "2025-2026";
+            base64SchoolLogo = (eduMatch && extraireLogoMadras(eduMatch)) || extraireLogoMadras(ecoleTrouvee) || DEFAULT_LOGO;
 
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('cardGeneratorSection').style.display = 'block';
             document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ") - COMICO-RDC";
             document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
 
-            if(base64SchoolLogo) {
-                document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
-                document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
-            } else {
-                document.getElementById('viewSchoolLogoHeader').src = "img/team-1.jpg";
-                document.getElementById('cardPreview').style.setProperty('--bg-school-logo', "url('img/team-1.jpg')");
-            }
+            const logoSrc = base64SchoolLogo || DEFAULT_LOGO;
+            const bgLogoSrc = base64SchoolLogo || DEFAULT_BG_LOGO;
+            document.getElementById('viewSchoolLogoHeader').src = logoSrc;
+            document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${bgLogoSrc}')`);
 
             window.mettreAJour();
             chargerRepertoireCartes();
@@ -614,7 +647,7 @@
             document.getElementById('viewMere').innerText = mere;
             document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
 
-            if(base64SchoolLogo) {
+            if (base64SchoolLogo) {
                 document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
                 document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
             }
@@ -623,7 +656,6 @@
             document.getElementById('qrcodePreview').innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(qrText) + '">';
         };
 
-        // Fonction pour télécharger la carte sous format image (PNG)
         window.telechargerCarte = function() {
             const cardElement = document.getElementById('cardPreview');
             html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
@@ -634,7 +666,6 @@
             });
         };
 
-        // Fonction pour afficher uniquement les cartes spécifiquement enregistrées depuis cet outil (stockées dans savedCards)
         window.chargerRepertoireCartes = function() {
             chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
@@ -646,7 +677,7 @@
                 return;
             }
 
-            if(!ecole.savedCards) ecole.savedCards = [];
+            if (!ecole.savedCards) ecole.savedCards = [];
             const allCards = ecole.savedCards;
 
             if (allCards.length === 0) {
@@ -658,8 +689,8 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge bg-info text-dark">${card.type || 'Élève'}</span></td>
-                    <td class="fw-bold">${card.mat || ''}</td>
-                    <td>${card.name || (card.nom + ' ' + (card.postnom || ''))}</td>
+                    <td class="fw-bold">${card.mat || card.matricule || ''}</td>
+                    <td>${card.name || ((card.nom || '') + ' ' + (card.postnom || '')).trim()}</td>
                     <td>${card.naiss || ''} ${card.adresse ? '/ ' + card.adresse : ''}</td>
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-primary me-1" onclick='chargerCarteDansFormulaire(${JSON.stringify(card)})' title="Charger dans l'aperçu"><i class="fa fa-eye"></i></button>
@@ -675,7 +706,7 @@
             document.getElementById('inputNom').value = card.nom || '';
             document.getElementById('inputPostnom').value = card.postnom || '';
             document.getElementById('inputPrenom').value = card.prenom || '';
-            document.getElementById('inputMatricule').value = card.mat || '';
+            document.getElementById('inputMatricule').value = card.mat || card.matricule || '';
             document.getElementById('inputNaiss').value = card.naiss || '';
             document.getElementById('inputAdresse').value = card.adresse || '';
             document.getElementById('inputPere').value = card.pere || '';
@@ -689,13 +720,24 @@
         };
 
         window.supprimerCarte = function(cardId) {
-            if(!confirm("Voulez-vous vraiment supprimer cette carte du registre COMICO-RDC ?")) return;
+            if (!confirm("Voulez-vous vraiment supprimer cette carte du registre COMICO-RDC ?")) return;
             chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             if (!ecole) return;
 
-            if(!ecole.savedCards) ecole.savedCards = [];
+            if (!ecole.savedCards) ecole.savedCards = [];
             ecole.savedCards = ecole.savedCards.filter(c => c.id !== cardId);
+
+            if (currentEduSchoolId) {
+                const eduSchool = eduData.schools.find(s => s.id === currentEduSchoolId);
+                if (eduSchool) {
+                    const yr = eduSchool.activeYear || "2025-2026";
+                    if (eduSchool.yearsData && eduSchool.yearsData[yr] && Array.isArray(eduSchool.yearsData[yr].savedCards)) {
+                        eduSchool.yearsData[yr].savedCards = eduSchool.yearsData[yr].savedCards.filter(c => c.id !== cardId);
+                    }
+                }
+            }
+
             sauvegarderDonneesLocales();
             alert("Carte supprimée avec succès dans COMICO-RDC !");
             chargerRepertoireCartes();
@@ -708,7 +750,7 @@
             const prenom = document.getElementById('inputPrenom').value.trim();
             const mat = document.getElementById('inputMatricule').value.trim();
 
-            if(!nom || !mat) {
+            if (!nom || !mat) {
                 alert("Veuillez remplir au moins le nom et le matricule !");
                 return;
             }
@@ -716,13 +758,14 @@
             chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             if (ecole) {
-                if(!ecole.savedCards) ecole.savedCards = [];
+                if (!ecole.savedCards) ecole.savedCards = [];
 
-                const fullName = nom + " " + postnom + " " + prenom;
+                const fullName = (nom + " " + postnom + " " + prenom).trim();
                 const cardPayload = {
                     id: 'CARD-' + Date.now(),
                     type: typeCarte,
                     mat: mat,
+                    matricule: mat,
                     name: fullName,
                     nom, postnom, prenom,
                     naiss: document.getElementById('inputNaiss').value,
@@ -730,16 +773,28 @@
                     pere: document.getElementById('inputPere').value,
                     mere: document.getElementById('inputMere').value,
                     photo: base64Photo || "",
-                    schoolLogo: base64SchoolLogo || ""
+                    schoolLogo: base64SchoolLogo || DEFAULT_LOGO
                 };
 
-                // Vérifier si la carte existe déjà par matricule pour la mettre à jour, sinon l'ajouter
-                let existingIndex = ecole.savedCards.findIndex(c => c.mat === mat && c.type === typeCarte);
+                const existingIndex = ecole.savedCards.findIndex(c => (c.mat || c.matricule) === mat && c.type === typeCarte);
                 if (existingIndex >= 0) {
-                    cardPayload.id = ecole.savedCards[existingIndex].id; // Conserver l'ID d'origine
+                    cardPayload.id = ecole.savedCards[existingIndex].id;
                     ecole.savedCards[existingIndex] = cardPayload;
                 } else {
                     ecole.savedCards.push(cardPayload);
+                }
+
+                if (currentEduSchoolId) {
+                    const eduSchool = eduData.schools.find(s => s.id === currentEduSchoolId);
+                    if (eduSchool) {
+                        const eduCards = getEduYearSavedCards(eduSchool);
+                        const eduIdx = eduCards.findIndex(c => (c.mat || c.matricule) === mat && c.type === typeCarte);
+                        if (eduIdx >= 0) {
+                            eduCards[eduIdx] = { ...cardPayload };
+                        } else {
+                            eduCards.push({ ...cardPayload });
+                        }
+                    }
                 }
 
                 sauvegarderDonneesLocales();
