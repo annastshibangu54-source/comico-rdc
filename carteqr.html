@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>EDU-RDC - Cartes QR & Identifications</title>
+    <title>COMICO-RDC - Cartes QR & Identifications</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
@@ -96,23 +96,23 @@
 </head>
 <body style="background-color: #f8f9fa; padding: 10px;">
 
-    <!-- Écran Accès École -->
+    <!-- Écran Accès COMICO-RDC -->
     <div class="container" id="authSection" style="max-width: 500px; margin-top: 40px;">
         <div class="card shadow p-4 bg-white rounded border-0">
-            <h3 class="text-center text-primary mb-4"><i class="fa fa-school me-2"></i>Accès Établissement</h3>
+            <h3 class="text-center text-primary mb-4"><i class="fa fa-school me-2"></i>Accès COMICO-RDC</h3>
             <div class="mb-3">
-                <label class="form-label fw-bold">Nom Complet de l'École</label>
-                <input type="text" id="authSchoolName" class="form-control" placeholder="ex: C.S. LA REVOLUTION">
+                <label class="form-label fw-bold">Nom propriétaire de Madras</label>
+                <input type="text" id="authSchoolName" class="form-control" placeholder="ex: MADRAS...">
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Code Secret de l'École</label>
-                <input type="password" id="authSecretCode" class="form-control" placeholder="Entrez le code secret (ex: SEC-1234)">
+                <label class="form-label fw-bold">Code secret propriétaire Madras</label>
+                <input type="password" id="authSecretCode" class="form-control" placeholder="Entrez le code secret propriétaire Madras">
             </div>
             <button type="button" onclick="ouvrirEspace()" class="btn btn-primary w-100 py-2 fw-bold">
-                <i class="fa fa-key me-2"></i>Ouvrir l'Espace École
+                <i class="fa fa-key me-2"></i>Ouvrir l'Espace COMICO-RDC
             </button>
             <div class="mt-3 text-center">
-                <a href="gestion_ecole.html" class="text-muted small"><i class="fa fa-arrow-left me-1"></i> Retour à la plateforme principale</a>
+                <a href="gestion_ecole.html" class="text-muted small"><i class="fa fa-arrow-left me-1"></i> Retour à la plateforme principale COMICO-RDC</a>
             </div>
         </div>
     </div>
@@ -120,7 +120,7 @@
     <!-- Espace de Génération -->
     <div class="container" id="cardGeneratorSection" style="display: none; margin-top: 10px; max-width: 950px;">
         <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
-            <span><i class="fa fa-shield-alt me-2"></i>École Active : <strong id="lockedSchoolTitle">---</strong></span>
+            <span><i class="fa fa-shield-alt me-2"></i>COMICO-RDC Actif : <strong id="lockedSchoolTitle">---</strong></span>
             <div>
                 <a href="gestion_ecole.html" class="btn btn-sm btn-primary me-1"><i class="fa fa-home"></i> Accueil</a>
                 <button class="btn btn-sm btn-danger" onclick="location.reload()"><i class="fa fa-sign-out-alt"></i> Changer</button>
@@ -130,7 +130,7 @@
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bg-white p-3 rounded shadow-sm border">
-                    <h5 class="text-primary mb-3">Formulaire Carte & QR</h5>
+                    <h5 class="text-primary mb-3">Formulaire Carte & QR - COMICO-RDC</h5>
                     
                     <!-- Sélection du type de carte -->
                     <div class="mb-2">
@@ -171,7 +171,7 @@
                         <input type="file" class="form-control form-control-sm mb-2" id="inputPhotoFile" accept="image/*" onchange="chargerPhoto(event)">
                     </div>
                     <button type="button" onclick="enregistrerSurFirebase()" class="btn btn-outline-primary w-100 py-2 fw-bold">
-                        <i class="fa fa-cloud-upload-alt me-2"></i>Enregistrer dans l'École Active (Firebase)
+                        <i class="fa fa-cloud-upload-alt me-2"></i>Enregistrer dans COMICO-RDC (Firebase)
                     </button>
                 </div>
             </div>
@@ -189,8 +189,8 @@
                                 <img id="viewSchoolLogoHeader" src="img/team-1.jpg" style="width: 0.42cm; height: 0.42cm; object-fit: cover; border-radius: 50%; border: 1px solid #fff;" alt="Logo">
                             </div>
 
-                            <!-- Nom complet de l'école : taille de police 13 -->
-                            <div class="text-center fw-bold my-1" id="viewSchoolNameTitle" style="font-size: 13px; text-transform: uppercase;">C.S. LA REVOLUTION</div>
+                            <!-- Nom complet de l'école / Madras : taille de police 13 -->
+                            <div class="text-center fw-bold my-1" id="viewSchoolNameTitle" style="font-size: 13px; text-transform: uppercase;">COMICO-RDC</div>
                             <div style="border-bottom: 1px solid rgba(255,255,255,0.5); margin-bottom: 2px;"></div>
                         </div>
 
@@ -236,7 +236,7 @@
             <div class="col-12">
                 <div class="bg-white p-3 rounded shadow-sm border">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary m-0"><i class="fa fa-address-card me-2"></i>Mes Cartes Générées et Enregistrées</h5>
+                        <h5 class="text-primary m-0"><i class="fa fa-address-card me-2"></i>Mes Cartes Générées et Enregistrées - COMICO-RDC</h5>
                         <button class="btn btn-sm btn-outline-secondary" onclick="chargerRepertoireCartes()"><i class="fa fa-sync-alt me-1"></i> Actualiser</button>
                     </div>
                     <div class="table-responsive">
@@ -262,7 +262,7 @@
         </div>
     </div>
 
-    <!-- Footer Start (Pied de Page d'origine complet) -->
+    <!-- Footer Start (Pied de Page d'origine complet adapté à COMICO-RDC) -->
     <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row g-5">
@@ -311,7 +311,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <h4 class="text-white mb-3">Bulletin d'Information</h4>
-                    <p class="text-light">Restez informés des communiqués officiels du Ministère de l'Éducation Nationale.</p>
+                    <p class="text-light">Restez informés des communiqués officiels de COMICO-RDC.</p>
                     
                     <div class="position-relative mx-auto" style="max-width: 400px;">
                         <input id="newsletterEmailInput" class="form-control border-0 w-100 py-3 ps-4 pe-5" type="email" placeholder="Votre Email">
@@ -325,8 +325,8 @@
             <div class="copyright">
                 <div class="row">
                     <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        &copy; <a class="border-bottom" href="#">EDU-RDC</a>, Tous Droits Réservés.
-                        Conçu par Ir Mike TSHIBANGU, pour la Gestion des Institutions Éducationnelles en RDC
+                        &copy; <a class="border-bottom" href="#">COMICO-RDC</a>, Tous Droits Réservés.
+                        Conçu par Ir Mike TSHIBANGU, pour COMICO-RDC en RDC
                     </div>
                     <div class="col-md-6 text-center text-md-end">
                         <div class="footer-menu">
@@ -379,8 +379,8 @@
             const saisieNom = document.getElementById('authSchoolName').value.trim().toUpperCase();
             const saisieSecret = document.getElementById('authSecretCode').value.trim();
 
-            if(!saisieNom) { alert("Veuillez saisir le nom complet de l'école !"); return; }
-            if(!saisieSecret) { alert("Veuillez saisir le code secret !"); return; }
+            if(!saisieNom) { alert("Veuillez saisir le nom propriétaire de Madras !"); return; }
+            if(!saisieSecret) { alert("Veuillez saisir le code secret propriétaire Madras !"); return; }
             
             // Récupération directe et fraîche depuis Firebase au moment du clic pour garantir l'exactitude des données
             db.collection("platformData").doc("mainConfig").get().then((doc) => {
@@ -392,11 +392,11 @@
                 let ecoleTrouvee = appData.schools.find(s => s.name && s.name.trim().toUpperCase() === saisieNom);
                 
                 if (!ecoleTrouvee) {
-                    alert("École introuvable dans le registre national de gestion ! Veuillez d'abord créer l'école dans la page principale \"gestion_ecole.html\".");
+                    alert("Propriétaire de Madras introuvable dans le registre de COMICO-RDC ! Veuillez d'abord créer l'entrée dans la page principale \"gestion_ecole.html\".");
                     return;
                 } else {
                     if (ecoleTrouvee.secretCode && ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
-                        alert("Code secret incorrect pour cette école !");
+                        alert("Code secret propriétaire Madras incorrect !");
                         return;
                     }
                 }
@@ -408,7 +408,7 @@
 
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('cardGeneratorSection').style.display = 'block';
-                document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ")";
+                document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ") - COMICO-RDC";
                 document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
                 
                 if(base64SchoolLogo) {
@@ -420,7 +420,7 @@
                 chargerRepertoireCartes();
             }).catch((error) => {
                 console.error("Erreur de connexion Firebase:", error);
-                alert("Erreur de connexion avec la base de données. Vérifiez votre connexion Internet.");
+                alert("Erreur de connexion avec la base de données COMICO-RDC. Vérifiez votre connexion Internet.");
             });
         };
 
@@ -465,7 +465,7 @@
             document.getElementById('viewMere').innerText = mere;
             document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
 
-            const qrText = "EDU-RDC:" + typeCarte.toUpperCase() + ":" + currentSchoolName + ":" + mat + ":" + nom + " " + postnom + " " + prenom;
+            const qrText = "COMICO-RDC:" + typeCarte.toUpperCase() + ":" + currentSchoolName + ":" + mat + ":" + nom + " " + postnom + " " + prenom;
             document.getElementById('qrcodePreview').innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(qrText) + '">';
         };
 
@@ -474,7 +474,7 @@
             const cardElement = document.getElementById('cardPreview');
             html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Carte_' + (document.getElementById('inputNom').value || 'Identite') + '.png';
+                link.download = 'Carte_COMICO-RDC_' + (document.getElementById('inputNom').value || 'Identite') + '.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
@@ -487,7 +487,7 @@
             tbody.innerHTML = "";
 
             if (!ecole) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">École introuvable.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Entrée COMICO-RDC introuvable.</td></tr>';
                 return;
             }
 
@@ -495,7 +495,7 @@
             const allCards = ecole.savedCards;
 
             if (allCards.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucune carte enregistrée. Remplissez le formulaire et cliquez sur "Enregistrer".</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucune carte enregistrée dans COMICO-RDC. Remplissez le formulaire et cliquez sur "Enregistrer".</td></tr>';
                 return;
             }
 
@@ -534,7 +534,7 @@
         };
 
         window.supprimerCarte = function(cardId) {
-            if(!confirm("Voulez-vous vraiment supprimer cette carte du registre ?")) return;
+            if(!confirm("Voulez-vous vraiment supprimer cette carte du registre COMICO-RDC ?")) return;
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             if (!ecole) return;
 
@@ -542,7 +542,7 @@
             ecole.savedCards = ecole.savedCards.filter(c => c.id !== cardId);
 
             db.collection("platformData").doc("mainConfig").set(appData).then(() => {
-                alert("Carte supprimée avec succès !");
+                alert("Carte supprimée avec succès dans COMICO-RDC !");
                 chargerRepertoireCartes();
             }).catch(err => {
                 console.error("Erreur suppression :", err);
@@ -592,14 +592,14 @@
 
                 // Sauvegarde globale sur Firebase
                 db.collection("platformData").doc("mainConfig").set(appData).then(() => {
-                    alert(`Carte (${typeCarte}) enregistrée avec succès dans l'école ${currentSchoolName} et synchronisée sur Firebase !`);
+                    alert(`Carte (${typeCarte}) enregistrée avec succès dans ${currentSchoolName} (COMICO-RDC) et synchronisée sur Firebase !`);
                     chargerRepertoireCartes();
                 }).catch(err => {
                     console.error("Erreur sync Firebase :", err);
                     alert("Erreur lors de l'enregistrement en ligne.");
                 });
             } else {
-                alert("Erreur : École active introuvable.");
+                alert("Erreur : Espace COMICO-RDC actif introuvable.");
             }
         };
     </script>
