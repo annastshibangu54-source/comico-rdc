@@ -463,8 +463,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 <div class="list-group sidebar-menu shadow-sm">
 <a class="list-group-item list-group-item-action bg-dark text-white fw-bold" href="javascript:void(0);" onclick="toggleParamsSubmenu()">Paramètres <i class="fa fa-chevron-down float-end" id="arrowIcon"></i></a>
 <div class="mb-2 px-2 pt-2">
-<a href="qrcode.html" class="btn btn-outline-primary btn-sm w-100 fw-bold"><i class="fa fa-qrcode me-1"></i> Afficher QRCode</a>
-<a href="carteqr.html" class="btn btn-outline-primary btn-sm w-100 fw-bold mt-2"><i class="fa fa-qrcode me-1"></i> Afficher QRCode</a>
+<a href="carteqr.html" class="btn btn-outline-primary btn-sm w-100 fw-bold"><i class="fa fa-qrcode me-1"></i> Afficher QRCode</a>
 </div>
 <div id="paramsSubmenu" class="params-submenu">
 <a class="list-group-item rubric-item" href="javascript:void(0);" onclick="promptSecureTabAccess('tab-direction', this)"><i class="fa fa-user-tie me-2"></i> Comité Directeur</a>
@@ -4134,237 +4133,219 @@ function renderCourriersTable() {
     const tbody = document.getElementById('courriersTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    tbody.innerHTML = (yData.courriers || []).map((c, i) => `
-        <tr>
-            <td>${escapeHtml(c.date)}</td>
-            <td><span class="badge ${c.type === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(c.type)}</span></td>
-            <td>${escapeHtml(c.numDoc)}</td>
-            <td>${escapeHtml(c.exp)}</td>
-            <td>${escapeHtml(c.dest)}</td>
-            <td>${escapeHtml(c.objet)}</td>
-            <td>${escapeHtml(c.heure || '')} / ${escapeHtml(c.jour || '')}</td>
-            <td>${c.fileUrl ? `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye"></i> Voir</button>` : '-'}</td>
-            <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance.</td></tr>';
+    tbody.innerHTML = (yData.courriers || []).map((c, i) => {
+        let docBtn = '-';
+        if (c.fileUrl) {
+            docBtn = `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}')"><i class="fa fa-eye me-1"></i> Voir / Télécharger</button>`;
+        }
+        return `
+            <tr>
+                <td>${escapeHtml(c.date)}</td>
+                <td><span class="badge ${c.type === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(c.type)}</span></td>
+                <td><code>${escapeHtml(c.numDoc)}</code></td>
+                <td>${escapeHtml(c.exp)}</td>
+                <td>${escapeHtml(c.dest)}</td>
+                <td>${escapeHtml(c.objet)}</td>
+                <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
+                <td>${docBtn}</td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance enregistrée.</td></tr>';
 }
 
 function deleteCourrier(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.courriers.splice(index, 1);
-    saveData();
-    renderCourriersTable();
+    if (yData && yData.courriers) {
+        yData.courriers.splice(index, 1);
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+    }
 }
 
 function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if(yData && yData.courriers && yData.courriers.length > 0) {
+    if (yData && yData.courriers && yData.courriers.length > 0) {
         yData.courriers.pop();
         saveData();
         renderCourriersTable();
-        CommicoAlert("Dernière correspondance supprimée avec succès.");
+        renderDossiersTable();
+        CommicoAlert("Dernière correspondance supprimée.");
     } else {
         CommicoAlert("Aucune correspondance à supprimer.");
     }
 }
 
-// ARCHIVES & DOSSIERS (CLASSEUR ENTRANT / SORTANT + RECHERCHE NUMDOC + STOCKAGE PERSISTANT)
+let archiveFilterMode = 'all';
+
 function onArchiveClasseurOrSearchChange() {
-    const numInput = document.getElementById('searchArchiveNumInput');
-    const q = numInput ? numInput.value.trim() : '';
-    renderDossiersTable(q);
+    archiveFilterMode = 'filter';
+    renderDossiersTable();
 }
 
 function searchArchiveByNumDoc() {
-    const numInput = document.getElementById('searchArchiveNumInput');
-    const q = numInput ? numInput.value.trim() : '';
-    renderDossiersTable(q);
+    archiveFilterMode = 'filter';
+    renderDossiersTable();
 }
 
 function showAllArchiveCorrespondances() {
-    const numInput = document.getElementById('searchArchiveNumInput');
-    if (numInput) numInput.value = '';
-    renderDossiersTable('');
+    archiveFilterMode = 'all';
+    const searchInput = document.getElementById('searchArchiveNumInput');
+    if (searchInput) searchInput.value = '';
+    renderDossiersTable();
 }
 
 function saveCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.dossiersArchive) yData.dossiersArchive = [];
-
-    const classeurSel = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
     const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-    const allCourriers = yData.courriers || [];
 
-    const sourceList = allCourriers.filter(c => {
-        const matchType = !classeurSel || c.type === classeurSel;
-        const matchNum = !numQuery || (c.numDoc || '').toLowerCase().includes(numQuery.toLowerCase());
-        return matchType && matchNum;
-    });
-
-    if (!sourceList.length) {
-        CommicoAlert("Aucune correspondance trouvée pour ce classeur ou numéro de document à archiver.");
+    if (!yData.courriers || !yData.courriers.length) {
+        CommicoAlert("Aucune correspondance disponible à archiver.");
         return;
     }
 
-    let addedCount = 0;
-    sourceList.forEach(c => {
-        const exists = yData.dossiersArchive.some(a =>
-            (a.numDoc || '') === (c.numDoc || '') &&
-            (a.date || '') === (c.date || '') &&
-            (a.classeur || a.type || '') === (c.type || classeurSel)
-        );
-        if (!exists) {
-            yData.dossiersArchive.push({
-                id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
-                classeur: c.type || classeurSel,
-                type: c.type || classeurSel,
-                numDoc: c.numDoc || '',
-                date: c.date || '',
-                exp: c.exp || '',
-                dest: c.dest || '',
-                objet: c.objet || '',
-                heure: c.heure || '',
-                jour: c.jour || '',
-                fileUrl: c.fileUrl || '',
-                fileName: c.fileName || '',
-                fileType: c.fileType || ''
-            });
-            addedCount++;
-        }
-    });
-
-    saveData();
-    renderDossiersTable(numQuery);
-    if (addedCount > 0) {
-        CommicoAlert(addedCount + " correspondance(s) enregistrée(s) dans les Archives !");
-    } else {
-        CommicoAlert("La correspondance est déjà archivée.");
+    let candidate = null;
+    if (numQuery) {
+        candidate = yData.courriers.find(c => (c.numDoc || '').toLowerCase().includes(numQuery.toLowerCase()));
     }
+    if (!candidate) {
+        candidate = yData.courriers.find(c => c.type === classeur) || yData.courriers[yData.courriers.length - 1];
+    }
+
+    if (!yData.dossiersArchive) yData.dossiersArchive = [];
+    const exists = yData.dossiersArchive.some(d => d.numDoc === candidate.numDoc && d.classeur === classeur);
+    if (!exists) {
+        yData.dossiersArchive.push({
+            classeur: classeur,
+            numDoc: candidate.numDoc,
+            date: candidate.date,
+            heure: candidate.heure || '',
+            jour: candidate.jour || '',
+            exp: candidate.exp,
+            dest: candidate.dest,
+            objet: candidate.objet,
+            fileUrl: candidate.fileUrl || '',
+            fileName: candidate.fileName || '',
+            fileType: candidate.fileType || ''
+        });
+    }
+    saveData();
+    archiveFilterMode = 'all';
+    renderDossiersTable();
+    CommicoAlert("Correspondance enregistrée dans les Archives & Dossiers !");
 }
 
 function deleteCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
+
     if (!yData.dossiersArchive || !yData.dossiersArchive.length) {
-        CommicoAlert("Aucune correspondance archivée à supprimer.");
+        CommicoAlert("Aucun dossier archivé à supprimer.");
         return;
     }
 
-    const classeurSel = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
-    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
-
-    let targetIdx = -1;
-    for (let i = yData.dossiersArchive.length - 1; i >= 0; i--) {
-        const item = yData.dossiersArchive[i];
-        const itemClasseur = item.classeur || item.type || '';
-        const matchClasseur = !classeurSel || itemClasseur === classeurSel;
-        const matchNum = !numQuery || (item.numDoc || '').toLowerCase().includes(numQuery);
-        if (matchClasseur && matchNum) {
-            targetIdx = i;
-            break;
-        }
+    let idx = -1;
+    if (numQuery) {
+        idx = yData.dossiersArchive.findIndex(d => (d.numDoc || '').toLowerCase().includes(numQuery) && d.classeur === classeur);
+    }
+    if (idx === -1) {
+        idx = yData.dossiersArchive.findIndex(d => d.classeur === classeur);
+    }
+    if (idx === -1) {
+        idx = yData.dossiersArchive.length - 1;
     }
 
-    if (targetIdx === -1) {
-        targetIdx = yData.dossiersArchive.length - 1;
-    }
-
-    yData.dossiersArchive.splice(targetIdx, 1);
+    yData.dossiersArchive.splice(idx, 1);
     saveData();
-    renderDossiersTable(numQuery);
-    CommicoAlert("Correspondance supprimée des archives.");
+    renderDossiersTable();
+    CommicoAlert("Dossier supprimé des archives.");
 }
 
-function deleteArchiveItemById(arcId) {
+function deleteDossierArchiveRow(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.dossiersArchive) return;
-    yData.dossiersArchive = yData.dossiersArchive.filter(item => item.id !== arcId);
-    saveData();
-    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
-    renderDossiersTable(numQuery);
-    CommicoAlert("Élément archivé supprimé.");
+    if (yData && yData.dossiersArchive && yData.dossiersArchive[index] !== undefined) {
+        yData.dossiersArchive.splice(index, 1);
+        saveData();
+        renderDossiersTable();
+    }
 }
 
-function renderDossiersTable(filterNumDoc) {
+function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
-    if(!tbody || !s) return;
+    if (!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const classeurSel = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
-    const query = (filterNumDoc || '').trim().toLowerCase();
 
-    const archivedList = yData.dossiersArchive || [];
-    const courriersList = yData.courriers || [];
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
 
-    const combined = archivedList.map(item => ({
-        isArchived: true,
-        id: item.id,
-        classeur: item.classeur || item.type || 'Entrant',
-        numDoc: item.numDoc || '',
-        date: item.date || '',
-        exp: item.exp || '',
-        dest: item.dest || '',
-        objet: item.objet || '',
-        heure: item.heure || '',
-        jour: item.jour || '',
-        fileUrl: item.fileUrl || '',
-        fileName: item.fileName || '',
-        fileType: item.fileType || ''
-    }));
-
-    courriersList.forEach(c => {
-        const alreadyInArchive = archivedList.some(a =>
-            (a.numDoc || '') === (c.numDoc || '') &&
-            (a.date || '') === (c.date || '') &&
-            (a.classeur || a.type || '') === (c.type || '')
-        );
-        if (!alreadyInArchive) {
-            combined.push({
-                isArchived: false,
-                id: '',
+    let sourceList = [];
+    if (yData.dossiersArchive && yData.dossiersArchive.length > 0) {
+        sourceList = yData.dossiersArchive.map((d, idx) => ({ item: d, realIndex: idx }));
+    } else if (yData.courriers && yData.courriers.length > 0) {
+        sourceList = yData.courriers.map((c, idx) => ({
+            item: {
                 classeur: c.type || 'Entrant',
-                numDoc: c.numDoc || '',
-                date: c.date || '',
-                exp: c.exp || '',
-                dest: c.dest || '',
-                objet: c.objet || '',
+                numDoc: c.numDoc,
+                date: c.date,
                 heure: c.heure || '',
                 jour: c.jour || '',
+                exp: c.exp,
+                dest: c.dest,
+                objet: c.objet,
                 fileUrl: c.fileUrl || '',
                 fileName: c.fileName || '',
                 fileType: c.fileType || ''
-            });
-        }
-    });
+            },
+            realIndex: idx,
+            isFallbackCourrier: true
+        }));
+    }
 
-    const filtered = combined.filter(row => {
-        const matchClasseur = !classeurSel || row.classeur === classeurSel;
-        const matchNum = !query || (row.numDoc || '').toLowerCase().includes(query);
-        return matchClasseur && matchNum;
-    });
+    let filtered = sourceList;
+    if (archiveFilterMode === 'filter') {
+        filtered = sourceList.filter(entry => {
+            const matchClasseur = (entry.item.classeur || 'Entrant') === classeur;
+            const matchNum = !numQuery || (entry.item.numDoc || '').toLowerCase().includes(numQuery);
+            return matchClasseur && matchNum;
+        });
+    }
 
-    tbody.innerHTML = filtered.map(row => `
-        <tr>
-            <td><span class="badge ${row.classeur === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(row.classeur)}</span></td>
-            <td><b>${escapeHtml(row.numDoc)}</b></td>
-            <td>${escapeHtml(row.date)}</td>
-            <td>${escapeHtml(row.exp)}</td>
-            <td>${escapeHtml(row.dest)}</td>
-            <td>${escapeHtml(row.objet)}</td>
-            <td>${escapeHtml(row.heure || '')} / ${escapeHtml(row.jour || '')}</td>
-            <td>${row.fileUrl ? `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(row.fileUrl)}', '${escapeJsAttr(row.fileName || row.numDoc || 'Document')}', '${escapeJsAttr(row.fileType || '')}')"><i class="fa fa-eye"></i> Voir</button>` : '-'}</td>
-            <td class="no-print">${row.isArchived ? `<span class="badge bg-success me-1">Archivé</span><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveItemById('${escapeJsAttr(row.id)}')"><i class="fa fa-trash"></i></button>` : '<span class="badge bg-secondary">Correspondance</span>'}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans les dossiers.</td></tr>';
+    tbody.innerHTML = filtered.map(entry => {
+        const d = entry.item;
+        const docBtn = d.fileUrl
+            ? `<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.numDoc || 'Document')}', '${escapeJsAttr(d.fileType || '')}')"><i class="fa fa-eye me-1"></i> Voir / Télécharger</button>`
+            : '-';
+        const delAction = entry.isFallbackCourrier
+            ? `<button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrier(${entry.realIndex})"><i class="fa fa-trash"></i></button>`
+            : `<button type="button" class="btn btn-sm btn-danger" onclick="deleteDossierArchiveRow(${entry.realIndex})"><i class="fa fa-trash"></i></button>`;
+        return `
+            <tr>
+                <td><span class="badge ${d.classeur === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(d.classeur || 'Entrant')}</span></td>
+                <td><code>${escapeHtml(d.numDoc || '-')}</code></td>
+                <td>${escapeHtml(d.date || '-')}</td>
+                <td>${escapeHtml(d.exp || '-')}</td>
+                <td>${escapeHtml(d.dest || '-')}</td>
+                <td>${escapeHtml(d.objet || '-')}</td>
+                <td>${escapeHtml(d.heure || '')} (${escapeHtml(d.jour || '')})</td>
+                <td>${docBtn}</td>
+                <td class="no-print">${delAction}</td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance archivée trouvée.</td></tr>';
 }
 
 function handleSaveCalendrierScolaire(e) {
@@ -4372,6 +4353,7 @@ function handleSaveCalendrierScolaire(e) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    if(!yData.calendrierVacances) yData.calendrierVacances = [];
     yData.calendrierVacances.push({
         type: document.getElementById('calType').value,
         titre: document.getElementById('calTitre').value.trim(),
@@ -4381,7 +4363,7 @@ function handleSaveCalendrierScolaire(e) {
     saveData();
     renderCalendrierTable();
     document.getElementById('formCalendrierScolaire').reset();
-    CommicoAlert("Événement ajouté au calendrier !");
+    CommicoAlert("Événement ajouté au calendrier scolaire !");
 }
 
 function renderCalendrierTable() {
@@ -4390,15 +4372,17 @@ function renderCalendrierTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    
-    let list = yData.calendrierVacances || [];
-    if(filterVal !== 'Tous') {
-        list = list.filter(c => c.type === filterVal);
+    let list = (yData.calendrierVacances || []).map((c, idx) => ({ item: c, realIndex: idx }));
+    if (filterVal !== 'Tous') {
+        list = list.filter(entry => entry.item.type === filterVal);
     }
-
-    tbody.innerHTML = list.map((c, i) => `
-        <tr><td><b>${escapeHtml(c.type || 'Calendrier Solaire (Chrétien)')}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrier(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement.</td></tr>';
+    tbody.innerHTML = list.map(entry => {
+        const c = entry.item;
+        const idx = entry.realIndex;
+        return `
+            <tr><td><b>${escapeHtml(c.type || 'Calendrier Solaire (Chrétien)')}</b></td><td>${escapeHtml(c.titre)}</td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrier(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+        `;
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement.</td></tr>';
 }
 
 function deleteCalendrier(index) {
@@ -4415,6 +4399,7 @@ function handleSaveHoraireCours(e) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    if(!yData.horairesCours) yData.horairesCours = [];
     yData.horairesCours.push({
         classe: document.getElementById('horaireClassSelect').value,
         jour: document.getElementById('horaireJour').value,
@@ -4424,7 +4409,7 @@ function handleSaveHoraireCours(e) {
     saveData();
     renderHorairesTable();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré !");
+    CommicoAlert("Horaire de cours enregistré !");
 }
 
 function renderHorairesTable() {
@@ -4433,7 +4418,7 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraire(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+        <tr><td>${escapeHtml(h.classe)}</td><td><b>${escapeHtml(h.jour)}</b></td><td>${escapeHtml(h.plage)}</td><td>${escapeHtml(h.cours)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraire(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
 }
 
@@ -4451,56 +4436,27 @@ function renderStatistiques() {
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
-
-    const students = yData.students || [];
-    const totalStudents = students.length;
-    const boys = students.filter(st => st.sex === 'M').length;
-    const girls = students.filter(st => st.sex === 'F').length;
-    const teachersCount = (yData.teachers || []).length;
-    const classesCount = (yData.classes || []).length;
-
-    let totalPaidUSD = 0;
-    let totalPaidFC = 0;
-    (yData.caisse || []).forEach(c => {
-        const val = parseFloat(c.montant) || 0;
-        if(c.devise === 'FC') totalPaidFC += val;
-        else totalPaidUSD += val;
-    });
-    (yData.studentPayments || []).forEach(m => {
-        totalPaidUSD += parseFloat(m.amount) || 0;
-    });
+    
+    let totalEleves = (yData.students || []).length;
+    let totalProfs = (yData.teachers || []).length;
+    let totalRecettes = 0;
+    (yData.caisse || []).forEach(c => { totalRecettes += (parseFloat(c.montant) || 0); });
 
     container.innerHTML = `
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-primary"><h6>Total Élèves</h6><h3 class="fw-bold">${totalStudents}</h3><small class="text-muted">Garçons : ${boys} | Filles : ${girls}</small></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-success"><h6>Enseignants & Classes</h6><h3 class="fw-bold">${teachersCount} Profs</h3><small class="text-muted">Classes : ${classesCount}</small></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light border-start border-4 border-warning"><h6>Trésorerie Perçue</h6><h3 class="fw-bold">$${totalPaidUSD.toFixed(2)}</h3><small class="text-muted">FC : ${totalPaidFC.toLocaleString()}</small></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-0 text-center"><h2 class="text-primary fw-bold">${totalEleves}</h2><div class="small text-muted">Élèves / Étudiants</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-0 text-center"><h2 class="text-success fw-bold">${totalProfs}</h2><div class="small text-muted">Enseignants</div></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light border-0 text-center"><h2 class="text-warning fw-bold">${totalRecettes.toLocaleString()}</h2><div class="small text-muted">Total Recettes (Caisse)</div></div></div>
     `;
 }
 
-function downloadSectionData(sectionName) {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    const content = `Rapport d'exportation - Commico-RDC\nMadras: ${s.name}\nSection: ${sectionName}\nAnnée: ${s.activeYear}\nDonnées: ${JSON.stringify(yData[sectionName] || [], null, 2)}`;
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Commico_${s.name.replace(/[^a-zA-Z0-9]/g, '_')}_${sectionName}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// ADMINISTRATION CENTRALE
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
         if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
+            renderAdminLitigiousMessages();
             showSection('view-admin-central');
         } else if(pass !== null) {
-            CommicoAlert("Mot de passe Administrateur Central incorrect.");
+            CommicoAlert("Mot de passe incorrect.");
         }
     });
 }
@@ -4508,50 +4464,71 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => {
-        let dirCode = 'Non généré';
-        if(s.direction) {
-            const d = s.direction.find(x => x.role === 'Directeur / Propriétaire' && x.secretCode);
-            if(d) dirCode = d.secretCode;
+    tbody.innerHTML = (appData.schools || []).map((s) => {
+        let dirCodeDisplay = '<span class="text-muted small">Non généré</span>';
+        if(s.direction && s.direction.length > 0) {
+            const d = s.direction[0];
+            if(d.secretCode) dirCodeDisplay = `<code class="text-success">${escapeHtml(d.secretCode)}</code>`;
         }
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:35px; height:35px; object-fit:contain;" onerror="handleLogoFallback(this, 35, 'MD');"></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;border-radius:50%;object-fit:contain;background:#fff;" class="border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
                 <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><code>${escapeHtml(s.secretCode)}</code> / <code>${escapeHtml(dirCode)}</code></td>
+                <td><code>${escapeHtml(s.secretCode)}</code><br>${dirCodeDisplay}</td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-success me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'A jour')">Activer</button>
-                    <button class="btn btn-sm btn-warning me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}', 'Bloqué')">Bloquer</button>
-                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')">Suppr.</button>
+                    <button class="btn btn-sm btn-primary me-1 mb-1" onclick="checkAndOpenSchoolDashboard('${escapeJsAttr(s.id)}')"><i class="fa fa-folder-open"></i> Ouvrir</button>
+                    <button class="btn btn-sm ${s.paiementStatut === 'A jour' ? 'btn-danger' : 'btn-success'} me-1 mb-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')">${s.paiementStatut === 'A jour' ? 'Bloquer' : 'Débloquer'}</button>
+                    <button class="btn btn-sm btn-dark mb-1" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i> Suppr.</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id, status) {
+function toggleSchoolPaymentStatus(id) {
     const s = appData.schools.find(x => x.id === id);
-    if(s) {
-        s.paiementStatut = status;
-        saveData();
-        renderAdminCentralTable();
-        renderSchoolsList();
-        CommicoAlert("Statut de la Madras mis à jour : " + status);
-    }
+    if(!s) return;
+    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
+    saveData();
+    renderAdminCentralTable();
+    renderSchoolsList();
+    CommicoAlert("Statut de la Madras mis à jour : " + s.paiementStatut);
 }
 
 function openDirectRegistrationModal() {
-    if (!appData.schools || appData.schools.length === 0) {
-        CommicoAlert("Veuillez d'abord créer une Madras.");
-        return;
-    }
-    if (appData.schools.length === 1) {
-        promptLoginCode(appData.schools[0].id);
+    if(!activeSchoolId) {
+        if(!appData.schools || appData.schools.length === 0) {
+            CommicoAlert("Veuillez d'abord créer une Madras (Étape 1).");
+            return;
+        }
+        const s = appData.schools[0];
+        CommicoPrompt("Entrez le code secret de la Madras (" + s.name + ") :", function(code) {
+            if(code && code.trim().toUpperCase() === s.secretCode.toUpperCase()) {
+                activeSchoolId = s.id;
+                showSection('view-school-dashboard');
+                toggleParamsSubmenu();
+                switchTab('tab-eleves-reg');
+            } else if(code !== null) {
+                CommicoAlert("Code secret incorrect.");
+            }
+        });
     } else {
-        CommicoAlert("Sélectionnez une Madras dans la liste ci-dessous puis cliquez sur Ouvrir pour accéder à l'inscription.");
+        showSection('view-school-dashboard');
+        toggleParamsSubmenu();
+        switchTab('tab-eleves-reg');
     }
+}
+
+function downloadSectionData(type) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(s, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `COMICO_${type}_${s.name.replace(/\s+/g,'_')}.json`);
+    dlAnchorElem.click();
 }
 </script>
 </body>
