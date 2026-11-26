@@ -418,9 +418,18 @@
                 appData.schools.push(ecoleTrouvee);
                 sauvegarderDonneesLocales();
             } else {
-                if (!ecoleTrouvee.secretCode) {
+                const codeEnregistre = String(
+                    ecoleTrouvee.secretCode ||
+                    ecoleTrouvee.codeSecret ||
+                    ecoleTrouvee.secret ||
+                    ecoleTrouvee.password ||
+                    ecoleTrouvee.code ||
+                    ""
+                ).trim();
+
+                if (!codeEnregistre) {
                     ecoleTrouvee.secretCode = saisieSecret;
-                } else if (ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
+                } else if (codeEnregistre.toUpperCase() !== saisieSecret.toUpperCase()) {
                     alert("Code secret propriétaire Madras incorrect !");
                     return;
                 }
