@@ -30,7 +30,7 @@
             justify-content: space-between;
             -webkit-print-color-adjust: exact !important;
         }
-        /* Logo de Madras transparent en fond au centre */
+        /* Logo d'école transparent en fond au centre */
         .id-card::before {
             content: "";
             position: absolute;
@@ -102,10 +102,6 @@
             <div class="mb-3">
                 <label class="form-label fw-bold">Code secret propriétaire Madras</label>
                 <input type="password" id="authSecretCode" class="form-control" placeholder="Entrez le code secret propriétaire Madras">
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Logo de Madras (Optionnel)</label>
-                <input type="file" id="authMadrasLogoFile" class="form-control form-control-sm" accept="image/*" onchange="chargerLogoMadras(event)">
             </div>
             <button type="button" onclick="ouvrirEspace()" class="btn btn-primary w-100 py-2 fw-bold">
                 <i class="fa fa-key me-2"></i>Ouvrir l'Espace COMICO-RDC
@@ -372,6 +368,25 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         }
 
+        function extraireNomProprietaire(obj) {
+            if (!obj || typeof obj !== "object") return "";
+            const candidats = [
+                obj.name,
+                obj.ownerName,
+                obj.proprietaire,
+                obj.nomProprietaire,
+                obj.madrasName,
+                obj.schoolName,
+                obj.ecole
+            ];
+            for (const val of candidats) {
+                if (val !== undefined && val !== null && String(val).trim() !== "") {
+                    return String(val).trim();
+                }
+            }
+            return "";
+        }
+
         function extraireCodeProprietaire(obj) {
             if (!obj || typeof obj !== "object") return "";
             const candidats = [
@@ -394,16 +409,15 @@
             return "";
         }
 
-        function extraireNomProprietaire(obj) {
+        function extraireLogoMadras(obj) {
             if (!obj || typeof obj !== "object") return "";
             const candidats = [
-                obj.name,
-                obj.ownerName,
-                obj.proprietaire,
-                obj.nomProprietaire,
-                obj.madrasName,
-                obj.schoolName,
-                obj.ecole
+                obj.logoUrl,
+                obj.logo,
+                obj.madrasLogo,
+                obj.schoolLogo,
+                obj.image,
+                obj.photo
             ];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
@@ -444,25 +458,6 @@
             return matches;
         }
 
-        window.chargerLogoMadras = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = 200;
-                    canvas.height = 200;
-                    ctx.drawImage(img, 0, 0, 200, 200);
-                    base64SchoolLogo = canvas.toDataURL('image/png', 0.85);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
         window.onload = function() {
             chargerDonneesLocales();
         };
@@ -487,7 +482,7 @@
                     name: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
                     secretCode: extraireCodeProprietaire(sourceExterne) || saisieSecret,
                     activeYear: sourceExterne.activeYear || "2025-2026",
-                    logoUrl: sourceExterne.logoUrl || sourceExterne.logo || "",
+                    logoUrl: extraireLogoMadras(sourceExterne),
                     savedCards: Array.isArray(sourceExterne.savedCards) ? sourceExterne.savedCards : []
                 };
                 appData.schools.push(ecoleTrouvee);
@@ -500,7 +495,7 @@
                     name: saisieNomRaw,
                     secretCode: saisieSecret,
                     activeYear: "2025-2026",
-                    logoUrl: base64SchoolLogo || "",
+                    logoUrl: "",
                     savedCards: []
                 };
                 appData.schools.push(ecoleTrouvee);
@@ -521,11 +516,9 @@
                 if (!ecoleTrouvee.secretCode) {
                     ecoleTrouvee.secretCode = codesConnus[0] || saisieSecret;
                 }
-                if (!ecoleTrouvee.name) {
-                    ecoleTrouvee.name = saisieNomRaw;
-                }
-                if (base64SchoolLogo) {
-                    ecoleTrouvee.logoUrl = base64SchoolLogo;
+                if (!ecoleTrouvee.logoUrl) {
+                    const logoTrouve = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
+                    if (logoTrouve) ecoleTrouvee.logoUrl = logoTrouve;
                 }
                 sauvegarderDonneesLocales();
             }
@@ -533,7 +526,7 @@
             currentSchoolId = ecoleTrouvee.id;
             currentSchoolName = ecoleTrouvee.name || saisieNomRaw;
             currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
-            base64SchoolLogo = ecoleTrouvee.logoUrl || ecoleTrouvee.logo || "";
+            base64SchoolLogo = extraireLogoMadras(ecoleTrouvee) || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean) || "";
 
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('cardGeneratorSection').style.display = 'block';
