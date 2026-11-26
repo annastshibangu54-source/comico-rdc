@@ -11,11 +11,6 @@
     <!-- html2canvas pour permettre le téléchargement direct de la carte en image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Firebase SDK (Compat v10) pour une parfaite synchronisation globale -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-
     <style>
         .id-card {
             width: 8.5cm;
@@ -171,7 +166,7 @@
                         <input type="file" class="form-control form-control-sm mb-2" id="inputPhotoFile" accept="image/*" onchange="chargerPhoto(event)">
                     </div>
                     <button type="button" onclick="enregistrerSurFirebase()" class="btn btn-outline-primary w-100 py-2 fw-bold">
-                        <i class="fa fa-cloud-upload-alt me-2"></i>Enregistrer dans COMICO-RDC (Firebase)
+                        <i class="fa fa-cloud-upload-alt me-2"></i>Enregistrer dans COMICO-RDC (Local)
                     </button>
                 </div>
             </div>
@@ -341,21 +336,9 @@
     </div>
     <!-- Footer End -->
 
-    <!-- Script de Synchronisation Firebase Identique à gestion_ecole.html -->
+    <!-- Script Local Sans Firebase -->
     <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyAfLQc6uveuaqdKLDLnc5BpNK-yoO_0eCE",
-          authDomain: "edu-rdc-5c858.firebaseapp.com",
-          projectId: "edu-rdc-5c858",
-          storageBucket: "edu-rdc-5c858.appspot.com",
-          messagingSenderId: "610052383238",
-          appId: "1:610052383238:web:5c69f493d1aa12baca5987"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
+        const STORAGE_KEY = "comico_rdc_local_data_v1";
 
         let appData = { schools: [] };
         let currentSchoolId = null;
@@ -364,15 +347,29 @@
         let base64Photo = "";
         let base64SchoolLogo = "";
 
-        window.onload = function() {
-            db.collection("platformData").doc("mainConfig").get().then((doc) => {
-                if (doc.exists) {
-                    appData = doc.data();
+        function chargerDonneesLocales() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    appData = JSON.parse(raw);
                 }
-                if(!appData.schools) appData.schools = [];
-            }).catch((error) => {
-                console.error("Erreur de chargement Firebase:", error);
-            });
+                if (!appData || typeof appData !== "object") {
+                    appData = { schools: [] };
+                }
+                if (!Array.isArray(appData.schools)) {
+                    appData.schools = [];
+                }
+            } catch (e) {
+                appData = { schools: [] };
+            }
+        }
+
+        function sauvegarderDonneesLocales() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        window.onload = function() {
+            chargerDonneesLocales();
         };
 
         window.ouvrirEspace = function() {
@@ -381,47 +378,49 @@
 
             if(!saisieNom) { alert("Veuillez saisir le nom propriétaire de Madras !"); return; }
             if(!saisieSecret) { alert("Veuillez saisir le code secret propriétaire Madras !"); return; }
-            
-            // Récupération directe et fraîche depuis Firebase au moment du clic pour garantir l'exactitude des données
-            db.collection("platformData").doc("mainConfig").get().then((doc) => {
-                if (doc.exists) {
-                    appData = doc.data();
-                }
-                if(!appData.schools) appData.schools = [];
 
-                let ecoleTrouvee = appData.schools.find(s => s.name && s.name.trim().toUpperCase() === saisieNom);
-                
-                if (!ecoleTrouvee) {
-                    alert("Propriétaire de Madras introuvable dans le registre de COMICO-RDC ! Veuillez d'abord créer l'entrée dans la page principale \"gestion_ecole.html\".");
+            chargerDonneesLocales();
+
+            let ecoleTrouvee = appData.schools.find(s => s.name && s.name.trim().toUpperCase() === saisieNom);
+
+            if (!ecoleTrouvee) {
+                ecoleTrouvee = {
+                    id: 'MADRAS-' + Date.now(),
+                    name: saisieNom,
+                    secretCode: saisieSecret,
+                    activeYear: "2025-2026",
+                    logoUrl: "",
+                    savedCards: []
+                };
+                appData.schools.push(ecoleTrouvee);
+                sauvegarderDonneesLocales();
+            } else {
+                if (!ecoleTrouvee.secretCode) {
+                    ecoleTrouvee.secretCode = saisieSecret;
+                    sauvegarderDonneesLocales();
+                } else if (ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
+                    alert("Code secret propriétaire Madras incorrect !");
                     return;
-                } else {
-                    if (ecoleTrouvee.secretCode && ecoleTrouvee.secretCode.toUpperCase() !== saisieSecret.toUpperCase()) {
-                        alert("Code secret propriétaire Madras incorrect !");
-                        return;
-                    }
                 }
+            }
 
-                currentSchoolId = ecoleTrouvee.id;
-                currentSchoolName = ecoleTrouvee.name;
-                currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
-                base64SchoolLogo = ecoleTrouvee.logoUrl || "";
+            currentSchoolId = ecoleTrouvee.id;
+            currentSchoolName = ecoleTrouvee.name;
+            currentSchoolYear = ecoleTrouvee.activeYear || "2025-2026";
+            base64SchoolLogo = ecoleTrouvee.logoUrl || "";
 
-                document.getElementById('authSection').style.display = 'none';
-                document.getElementById('cardGeneratorSection').style.display = 'block';
-                document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ") - COMICO-RDC";
-                document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
-                
-                if(base64SchoolLogo) {
-                    document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
-                    document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
-                }
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('cardGeneratorSection').style.display = 'block';
+            document.getElementById('lockedSchoolTitle').innerText = currentSchoolName + " (" + currentSchoolYear + ") - COMICO-RDC";
+            document.getElementById('viewSchoolNameTitle').innerText = currentSchoolName;
+            
+            if(base64SchoolLogo) {
+                document.getElementById('viewSchoolLogoHeader').src = base64SchoolLogo;
+                document.getElementById('cardPreview').style.setProperty('--bg-school-logo', `url('${base64SchoolLogo}')`);
+            }
 
-                window.mettreAJour();
-                chargerRepertoireCartes();
-            }).catch((error) => {
-                console.error("Erreur de connexion Firebase:", error);
-                alert("Erreur de connexion avec la base de données COMICO-RDC. Vérifiez votre connexion Internet.");
-            });
+            window.mettreAJour();
+            chargerRepertoireCartes();
         };
 
         window.chargerPhoto = function(event) {
@@ -482,6 +481,7 @@
 
         // Fonction pour afficher uniquement les cartes spécifiquement enregistrées depuis cet outil (stockées dans savedCards)
         window.chargerRepertoireCartes = function() {
+            chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             const tbody = document.getElementById('tableRepertoireCartes');
             tbody.innerHTML = "";
@@ -535,19 +535,15 @@
 
         window.supprimerCarte = function(cardId) {
             if(!confirm("Voulez-vous vraiment supprimer cette carte du registre COMICO-RDC ?")) return;
+            chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             if (!ecole) return;
 
             if(!ecole.savedCards) ecole.savedCards = [];
             ecole.savedCards = ecole.savedCards.filter(c => c.id !== cardId);
-
-            db.collection("platformData").doc("mainConfig").set(appData).then(() => {
-                alert("Carte supprimée avec succès dans COMICO-RDC !");
-                chargerRepertoireCartes();
-            }).catch(err => {
-                console.error("Erreur suppression :", err);
-                alert("Erreur lors de la suppression en ligne.");
-            });
+            sauvegarderDonneesLocales();
+            alert("Carte supprimée avec succès dans COMICO-RDC !");
+            chargerRepertoireCartes();
         };
 
         window.enregistrerSurFirebase = async function() {
@@ -562,6 +558,7 @@
                 return;
             }
 
+            chargerDonneesLocales();
             const ecole = appData.schools.find(s => s.id === currentSchoolId);
             if (ecole) {
                 if(!ecole.savedCards) ecole.savedCards = [];
@@ -590,14 +587,9 @@
                     ecole.savedCards.push(cardPayload);
                 }
 
-                // Sauvegarde globale sur Firebase
-                db.collection("platformData").doc("mainConfig").set(appData).then(() => {
-                    alert(`Carte (${typeCarte}) enregistrée avec succès dans ${currentSchoolName} (COMICO-RDC) et synchronisée sur Firebase !`);
-                    chargerRepertoireCartes();
-                }).catch(err => {
-                    console.error("Erreur sync Firebase :", err);
-                    alert("Erreur lors de l'enregistrement en ligne.");
-                });
+                sauvegarderDonneesLocales();
+                alert(`Carte (${typeCarte}) enregistrée avec succès dans ${currentSchoolName} (COMICO-RDC) en local !`);
+                chargerRepertoireCartes();
             } else {
                 alert("Erreur : Espace COMICO-RDC actif introuvable.");
             }
