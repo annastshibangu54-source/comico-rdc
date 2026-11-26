@@ -340,6 +340,7 @@
     <!-- Script Local Sécurisé Sans Firebase -->
     <script>
         const STORAGE_KEY = "comico_rdc_local_data_v1";
+        const EDU_STORAGE_KEY = "comico_appData";
         const DEFAULT_IMG = "img/team-1.jpg";
 
         let appData = { schools: [] };
@@ -387,8 +388,16 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         }
 
-        function extraireNomProprietaire(obj) {
-            if (!obj || typeof obj !== "object") return "";
+        function extraireNomsProprietaires(obj) {
+            const noms = [];
+            if (!obj || typeof obj !== "object") return noms;
+            if (Array.isArray(obj.direction)) {
+                obj.direction.forEach(d => {
+                    if (d && d.name && String(d.name).trim() !== "") {
+                        noms.push(String(d.name).trim());
+                    }
+                });
+            }
             const candidats = [
                 obj.ownerName,
                 obj.proprietaire,
@@ -397,10 +406,15 @@
             ];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
-                    return String(val).trim();
+                    noms.push(String(val).trim());
                 }
             }
-            return "";
+            return noms;
+        }
+
+        function extraireNomProprietaire(obj) {
+            const noms = extraireNomsProprietaires(obj);
+            return noms.length > 0 ? noms[0] : "";
         }
 
         function extraireNomEcoleMadras(obj) {
@@ -421,8 +435,16 @@
             return "";
         }
 
-        function extraireCodeProprietaire(obj) {
-            if (!obj || typeof obj !== "object") return "";
+        function extraireTousLesCodes(obj) {
+            const codes = [];
+            if (!obj || typeof obj !== "object") return codes;
+            if (Array.isArray(obj.direction)) {
+                obj.direction.forEach(d => {
+                    if (d && d.secretCode && String(d.secretCode).trim() !== "") {
+                        codes.push(String(d.secretCode).trim());
+                    }
+                });
+            }
             const candidats = [
                 obj.secretCode,
                 obj.codeSecret,
@@ -437,10 +459,15 @@
             ];
             for (const val of candidats) {
                 if (val !== undefined && val !== null && String(val).trim() !== "") {
-                    return String(val).trim();
+                    codes.push(String(val).trim());
                 }
             }
-            return "";
+            return codes;
+        }
+
+        function extraireCodeProprietaire(obj) {
+            const codes = extraireTousLesCodes(obj);
+            return codes.length > 0 ? codes[0] : "";
         }
 
         function extraireLogoMadras(obj) {
@@ -460,8 +487,41 @@
             return "";
         }
 
+        // Recherche directe dans comico_appData (edu_comico.html)
+        function chercherDansEduComico(codeRecherche, nomRechercheUpper) {
+            try {
+                const rawEdu = localStorage.getItem(EDU_STORAGE_KEY);
+                if (!rawEdu) return null;
+                const eduParsed = JSON.parse(rawEdu);
+                if (!eduParsed || !Array.isArray(eduParsed.schools)) return null;
+
+                // 1. Correspondance par code secret (direction[i].secretCode ou school.secretCode)
+                if (codeRecherche) {
+                    const codeLower = codeRecherche.toLowerCase();
+                    const byCode = eduParsed.schools.find(s =>
+                        extraireTousLesCodes(s).some(c => c.toLowerCase() === codeLower)
+                    );
+                    if (byCode) return byCode;
+                }
+
+                // 2. Correspondance par nom du propriétaire (direction[i].name) ou nom de la Madras (school.name)
+                if (nomRechercheUpper) {
+                    const byName = eduParsed.schools.find(s => {
+                        const ownersUpper = extraireNomsProprietaires(s).map(n => n.toUpperCase());
+                        const schoolUpper = extraireNomEcoleMadras(s).toUpperCase();
+                        return ownersUpper.includes(nomRechercheUpper) || schoolUpper === nomRechercheUpper;
+                    });
+                    if (byName) return byName;
+                }
+            } catch (e) {
+                // Ignorer si JSON invalide
+            }
+            return null;
+        }
+
         function chercherParCodeOuNomDansLocalStorage(codeRecherche, nomRechercheUpper) {
             const matches = [];
+            const codeLower = codeRecherche ? codeRecherche.toLowerCase() : "";
             for (let i = 0; i < localStorage.length; i++) {
                 const cle = localStorage.key(i);
                 if (!cle) continue;
@@ -473,11 +533,11 @@
                             node.forEach(parcourir);
                             return;
                         }
-                        const codeNode = extraireCodeProprietaire(node);
-                        const nomNode = extraireNomProprietaire(node).toUpperCase();
+                        const codesNode = extraireTousLesCodes(node).map(c => c.toLowerCase());
+                        const nomsNode = extraireNomsProprietaires(node).map(n => n.toUpperCase());
                         const ecoleNode = extraireNomEcoleMadras(node).toUpperCase();
-                        const matchCode = codeRecherche && codeNode && codeNode === codeRecherche;
-                        const matchNom = nomRechercheUpper && ((nomNode && nomNode === nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper));
+                        const matchCode = codeLower && codesNode.includes(codeLower);
+                        const matchNom = nomRechercheUpper && (nomsNode.includes(nomRechercheUpper) || (ecoleNode && ecoleNode === nomRechercheUpper));
                         if (matchCode || matchNom) {
                             matches.push({ key: cle, data: node, matchCode: Boolean(matchCode) });
                         }
@@ -524,6 +584,7 @@
             const saisieNomRaw = document.getElementById("authSchoolName").value.trim();
             const saisieNom = saisieNomRaw.toUpperCase();
             const saisieSecret = document.getElementById("authSecretCode").value.trim();
+            const saisieSecretLower = saisieSecret.toLowerCase();
 
             if (!saisieNom) {
                 alert("Veuillez saisir le nom propriétaire de Madras !");
@@ -536,81 +597,120 @@
 
             chargerDonneesLocales();
 
+            // 1. Vérifier en priorité dans edu_comico.html (comico_appData)
+            const eduSchool = chercherDansEduComico(saisieSecret, saisieNom);
             const trouvaillesParCode = chercherParCodeOuNomDansLocalStorage(saisieSecret, "");
             const trouvaillesGlobales = chercherParCodeOuNomDansLocalStorage(saisieSecret, saisieNom);
 
-            let ecoleTrouvee = appData.schools.find(s => extraireCodeProprietaire(s) === saisieSecret)
-                || appData.schools.find(s =>
-                    extraireNomProprietaire(s).toUpperCase() === saisieNom ||
-                    extraireNomEcoleMadras(s).toUpperCase() === saisieNom
-                );
+            let ecoleTrouvee = appData.schools.find(s =>
+                extraireTousLesCodes(s).some(c => c.toLowerCase() === saisieSecretLower)
+            ) || appData.schools.find(s =>
+                extraireNomsProprietaires(s).some(n => n.toUpperCase() === saisieNom) ||
+                extraireNomEcoleMadras(s).toUpperCase() === saisieNom
+            );
 
-            const sourceCode = trouvaillesParCode.length > 0 ? trouvaillesParCode[0].data : null;
-
-            if (!ecoleTrouvee && (sourceCode || trouvaillesGlobales.length > 0)) {
-                const sourceExterne = sourceCode || trouvaillesGlobales[0].data;
-                const codeExterne = extraireCodeProprietaire(sourceExterne);
-                if (codeExterne && codeExterne !== saisieSecret) {
-                    alert("Code secret propriétaire Madras incorrect !");
-                    return;
-                }
-                ecoleTrouvee = {
-                    id: sourceExterne.id || ("MADRAS-" + Date.now()),
-                    ownerName: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
-                    name: extraireNomEcoleMadras(sourceExterne) || saisieNomRaw || "COMICO-RDC",
-                    secretCode: codeExterne || saisieSecret,
-                    activeYear: sourceExterne.activeYear || "2025-2026",
-                    logoUrl: extraireLogoMadras(sourceExterne) || "",
-                    savedCards: Array.isArray(sourceExterne.savedCards) ? sourceExterne.savedCards : []
-                };
-                appData.schools.push(ecoleTrouvee);
-                sauvegarderDonneesLocales();
-            } else if (!ecoleTrouvee) {
-                ecoleTrouvee = {
-                    id: "MADRAS-" + Date.now(),
-                    ownerName: saisieNomRaw,
-                    name: saisieNomRaw || "COMICO-RDC",
-                    secretCode: saisieSecret,
-                    activeYear: "2025-2026",
-                    logoUrl: "",
-                    savedCards: []
-                };
-                appData.schools.push(ecoleTrouvee);
-                sauvegarderDonneesLocales();
-            } else {
-                const codesConnus = [
-                    extraireCodeProprietaire(ecoleTrouvee),
-                    ...trouvaillesGlobales.map(m => extraireCodeProprietaire(m.data))
-                ].filter(Boolean);
-
-                if (codesConnus.length > 0 && !codesConnus.includes(saisieSecret)) {
+            // Si la Madras existe dans edu_comico.html (comico_appData), on vérifie ses codes officiels (DIR-XXXX ou MAD-XXXX)
+            if (eduSchool) {
+                const codesEdu = extraireTousLesCodes(eduSchool).map(c => c.toLowerCase());
+                if (codesEdu.length > 0 && !codesEdu.includes(saisieSecretLower)) {
                     alert("Code secret propriétaire Madras incorrect ! Accès refusé.");
                     return;
                 }
 
-                if (!ecoleTrouvee.secretCode) {
+                const logoEdu = extraireLogoMadras(eduSchool);
+                const nomMadrasEdu = extraireNomEcoleMadras(eduSchool) || saisieNomRaw;
+                const nomPropEdu = extraireNomProprietaire(eduSchool) || saisieNomRaw;
+
+                if (!ecoleTrouvee) {
+                    ecoleTrouvee = {
+                        id: eduSchool.id || ("MADRAS-" + Date.now()),
+                        ownerName: nomPropEdu,
+                        name: nomMadrasEdu,
+                        secretCode: saisieSecret,
+                        activeYear: eduSchool.activeYear || "2025-2026",
+                        logoUrl: logoEdu || "",
+                        savedCards: []
+                    };
+                    appData.schools.push(ecoleTrouvee);
+                } else {
+                    ecoleTrouvee.ownerName = nomPropEdu;
+                    ecoleTrouvee.name = nomMadrasEdu;
+                    ecoleTrouvee.schoolName = nomMadrasEdu;
                     ecoleTrouvee.secretCode = saisieSecret;
-                }
-                if (!ecoleTrouvee.ownerName) {
-                    ecoleTrouvee.ownerName = (sourceCode && extraireNomProprietaire(sourceCode)) || saisieNomRaw;
-                }
-                const nomMadrasReconnu = (sourceCode && extraireNomEcoleMadras(sourceCode))
-                    || extraireNomEcoleMadras(ecoleTrouvee)
-                    || trouvaillesGlobales.map(m => extraireNomEcoleMadras(m.data)).find(Boolean)
-                    || saisieNomRaw
-                    || "";
-                if (nomMadrasReconnu) {
-                    ecoleTrouvee.name = nomMadrasReconnu;
-                    ecoleTrouvee.schoolName = nomMadrasReconnu;
-                }
-                const logoReconnu = (sourceCode && extraireLogoMadras(sourceCode))
-                    || extraireLogoMadras(ecoleTrouvee)
-                    || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean)
-                    || "";
-                if (logoReconnu) {
-                    ecoleTrouvee.logoUrl = logoReconnu;
+                    ecoleTrouvee.activeYear = eduSchool.activeYear || ecoleTrouvee.activeYear || "2025-2026";
+                    if (logoEdu) {
+                        ecoleTrouvee.logoUrl = logoEdu;
+                    }
                 }
                 sauvegarderDonneesLocales();
+            } else {
+                const sourceCode = trouvaillesParCode.length > 0 ? trouvaillesParCode[0].data : null;
+
+                if (!ecoleTrouvee && (sourceCode || trouvaillesGlobales.length > 0)) {
+                    const sourceExterne = sourceCode || trouvaillesGlobales[0].data;
+                    const codesExternes = extraireTousLesCodes(sourceExterne).map(c => c.toLowerCase());
+                    if (codesExternes.length > 0 && !codesExternes.includes(saisieSecretLower)) {
+                        alert("Code secret propriétaire Madras incorrect !");
+                        return;
+                    }
+                    ecoleTrouvee = {
+                        id: sourceExterne.id || ("MADRAS-" + Date.now()),
+                        ownerName: extraireNomProprietaire(sourceExterne) || saisieNomRaw,
+                        name: extraireNomEcoleMadras(sourceExterne) || saisieNomRaw || "COMICO-RDC",
+                        secretCode: saisieSecret,
+                        activeYear: sourceExterne.activeYear || "2025-2026",
+                        logoUrl: extraireLogoMadras(sourceExterne) || "",
+                        savedCards: Array.isArray(sourceExterne.savedCards) ? sourceExterne.savedCards : []
+                    };
+                    appData.schools.push(ecoleTrouvee);
+                    sauvegarderDonneesLocales();
+                } else if (!ecoleTrouvee) {
+                    ecoleTrouvee = {
+                        id: "MADRAS-" + Date.now(),
+                        ownerName: saisieNomRaw,
+                        name: saisieNomRaw || "COMICO-RDC",
+                        secretCode: saisieSecret,
+                        activeYear: "2025-2026",
+                        logoUrl: "",
+                        savedCards: []
+                    };
+                    appData.schools.push(ecoleTrouvee);
+                    sauvegarderDonneesLocales();
+                } else {
+                    const codesConnus = [
+                        ...extraireTousLesCodes(ecoleTrouvee),
+                        ...trouvaillesGlobales.flatMap(m => extraireTousLesCodes(m.data))
+                    ].map(c => c.toLowerCase()).filter(Boolean);
+
+                    if (codesConnus.length > 0 && !codesConnus.includes(saisieSecretLower)) {
+                        alert("Code secret propriétaire Madras incorrect ! Accès refusé.");
+                        return;
+                    }
+
+                    if (!ecoleTrouvee.secretCode) {
+                        ecoleTrouvee.secretCode = saisieSecret;
+                    }
+                    if (!ecoleTrouvee.ownerName) {
+                        ecoleTrouvee.ownerName = (sourceCode && extraireNomProprietaire(sourceCode)) || saisieNomRaw;
+                    }
+                    const nomMadrasReconnu = (sourceCode && extraireNomEcoleMadras(sourceCode))
+                        || extraireNomEcoleMadras(ecoleTrouvee)
+                        || trouvaillesGlobales.map(m => extraireNomEcoleMadras(m.data)).find(Boolean)
+                        || saisieNomRaw
+                        || "";
+                    if (nomMadrasReconnu) {
+                        ecoleTrouvee.name = nomMadrasReconnu;
+                        ecoleTrouvee.schoolName = nomMadrasReconnu;
+                    }
+                    const logoReconnu = (sourceCode && extraireLogoMadras(sourceCode))
+                        || extraireLogoMadras(ecoleTrouvee)
+                        || trouvaillesGlobales.map(m => extraireLogoMadras(m.data)).find(Boolean)
+                        || "";
+                    if (logoReconnu) {
+                        ecoleTrouvee.logoUrl = logoReconnu;
+                    }
+                    sauvegarderDonneesLocales();
+                }
             }
 
             currentSchoolId = ecoleTrouvee.id;
