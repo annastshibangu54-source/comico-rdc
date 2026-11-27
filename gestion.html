@@ -36,8 +36,33 @@
 <body class="bg-slate-100 text-slate-900 font-sans">
   <div id="app"></div>
 
-  <script>
-    const STORAGE_KEY = 'comico_rdc_vanilla_state_v1';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, writeBatch, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD42j05X9CY6BkNKmCu3aVCZeyvn3l5JOI",
+      authDomain: "comico-rdc-cce29.firebaseapp.com",
+      projectId: "comico-rdc-cce29",
+      storageBucket: "comico-rdc-cce29.firebasestorage.app",
+      messagingSenderId: "59405008311",
+      appId: "1:59405008311:web:0eda5469402a2586e6fc32"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const FIREBASE_GESTION_DOC = doc(db, "comico_platform", "gestion_main_state");
+    const FIREBASE_SHARED_DOC = doc(db, "comico_platform", "main_state");
+    const FIREBASE_SCHOOLS_COL = collection(db, "comico_schools");
+
+    let firebaseUser = null;
+    let firebaseReady = false;
+    let isSyncingFromFirebase = false;
 
     const PROVINCES_RDC = [
       'Kinshasa', 'Nord-Kivu', 'Sud-Kivu', 'Haut-Katanga', 'Tshopo', 'Kasaï-Oriental',
@@ -57,7 +82,6 @@
       splitRules: { locale: 50, provinciale: 30, nationale: 20 },
       mosqueSearch: '',
 
-      // Point 1 : Organigramme Hiérarchique sans noms imposés remplaçables
       organs: [
         {
           id: 'ORG-NAT-01',
@@ -141,7 +165,6 @@
         effectifBureau: 9
       },
 
-      // Point 2 : Mosquées
       mosques: [
         {
           id: 'MSQ-KIN-001',
@@ -176,7 +199,6 @@
         image: ''
       },
 
-      // Point 3 : Membres
       members: [
         {
           idNational: 'RDC-COM-2026-000101',
@@ -207,7 +229,6 @@
         image: ''
       },
 
-      // Point 4 : Responsables religieux (+ photo)
       leaders: [
         {
           id: 'IMAM-RDC-001',
@@ -238,7 +259,6 @@
         photo: ''
       },
 
-      // Données complémentaires conservées & enrichies
       transactions: [
         {
           id: 'TRX-2026-8841',
@@ -408,41 +428,94 @@
       }
     };
 
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(INITIAL_STATE);
-        const parsed = JSON.parse(raw);
-        return {
-          ...structuredClone(INITIAL_STATE),
-          ...parsed,
-          splitRules: { ...INITIAL_STATE.splitRules, ...(parsed.splitRules || {}) }
-        };
-      } catch {
-        return structuredClone(INITIAL_STATE);
-      }
+    function mergeWithInitialState(parsed) {
+      if (!parsed || typeof parsed !== 'object') return structuredClone(INITIAL_STATE);
+      return {
+        ...structuredClone(INITIAL_STATE),
+        ...parsed,
+        splitRules: { ...INITIAL_STATE.splitRules, ...(parsed.splitRules || {}) }
+      };
     }
 
-    let state = loadState();
+    let state = structuredClone(INITIAL_STATE);
 
-    function saveState() {
+    function sanitizeStateForFirestore(rawState) {
+      const clean = { ...rawState, notification: null };
+      const serialized = JSON.stringify(clean);
+      if (serialized.length > 900000) {
+        throw new Error('Payload Firestore dépassant la limite recommandée');
+      }
+      return JSON.parse(serialized);
+    }
+
+    async function saveState() {
+      if (isSyncingFromFirebase) return true;
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, notification: null }));
+        if (!firebaseUser) {
+          await signInAnonymously(auth).catch(() => null);
+        }
+        const payload = sanitizeStateForFirestore(state);
+        await setDoc(FIREBASE_GESTION_DOC, {
+          payload: JSON.stringify(payload),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
         return true;
       } catch (err) {
-        state.notification = 'Attention : mémoire locale saturée (fichier trop volumineux). Supprimez d’anciens médias ou utilisez des images plus légères.';
+        state.notification = 'Synchronisation Firebase : vérifiez la taille du fichier ou votre connexion.';
         return false;
       }
     }
 
     function notify(msg) {
       state.notification = msg;
-      saveState();
       renderApp();
+      saveState();
       setTimeout(() => {
         state.notification = null;
         renderApp();
       }, 3800);
+    }
+
+    async function initFirebaseSync() {
+      onAuthStateChanged(auth, async (user) => {
+        firebaseUser = user;
+        firebaseReady = true;
+        try {
+          const snap = await getDoc(FIREBASE_GESTION_DOC);
+          if (snap.exists() && snap.data()?.payload) {
+            isSyncingFromFirebase = true;
+            const parsed = JSON.parse(snap.data().payload);
+            state = mergeWithInitialState(parsed);
+            isSyncingFromFirebase = false;
+            renderApp();
+          } else {
+            await saveState();
+          }
+        } catch (err) {
+          isSyncingFromFirebase = false;
+        }
+
+        onSnapshot(FIREBASE_GESTION_DOC, (docSnap) => {
+          if (!docSnap.exists() || !docSnap.data()?.payload || isSyncingFromFirebase) return;
+          try {
+            const remoteParsed = JSON.parse(docSnap.data().payload);
+            const currentNotification = state.notification;
+            const currentTab = state.activeTab;
+            isSyncingFromFirebase = true;
+            state = mergeWithInitialState(remoteParsed);
+            state.notification = currentNotification;
+            if (currentTab) state.activeTab = currentTab;
+            isSyncingFromFirebase = false;
+            renderApp();
+          } catch (_) {
+            isSyncingFromFirebase = false;
+          }
+        });
+      });
+
+      try {
+        await signInAnonymously(auth);
+      } catch (_) {}
     }
 
     function addAudit(module, action, details, province = 'Kinshasa') {
@@ -482,42 +555,84 @@
       URL.revokeObjectURL(url);
     }
 
-    function compressImageDataUrl(dataUrl, maxDim = 900, quality = 0.78, callback) {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        callback(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => callback(dataUrl);
-      img.src = dataUrl;
+    function compressImageBlob(file, maxDim = 900, quality = 0.78) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              resolve(blob || file);
+            }, 'image/jpeg', quality);
+          };
+          img.onerror = () => resolve(file);
+          img.src = reader.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+      });
     }
 
-    function readFileAsDataUrl(input, callback) {
+    async function compressAndConvertMediaForFirebase(file, folderPath = 'gestion_media') {
+      if (!file) return '';
+      let payloadBlob = file;
+      let ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase() : 'bin';
+
+      if (file.type && file.type.startsWith('image/')) {
+        payloadBlob = await compressImageBlob(file, 900, 0.78);
+        ext = 'jpg';
+      } else if (file.type && (file.type.startsWith('video/') || file.type.startsWith('audio/'))) {
+        const arrBuf = await file.arrayBuffer();
+        payloadBlob = new Blob([arrBuf], { type: file.type });
+      } else {
+        const arrBuf = await file.arrayBuffer();
+        payloadBlob = new Blob([arrBuf], { type: file.type || 'application/octet-stream' });
+      }
+
+      if (!firebaseUser) {
+        await signInAnonymously(auth).catch(() => null);
+      }
+
+      const cleanBase = (file.name || 'fichier')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 40);
+      const storageRef = ref(storage, `comico/${folderPath}/${Date.now()}_${cleanBase}.${ext}`);
+      const snap = await uploadBytes(storageRef, payloadBlob, {
+        contentType: payloadBlob.type || file.type || 'application/octet-stream'
+      });
+      return await getDownloadURL(snap.ref);
+    }
+
+    function readFileAsDataUrl(input, callback, folderPath = 'gestion_media') {
       const file = input.files && input.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (file.type && file.type.startsWith('image/')) {
-          compressImageDataUrl(reader.result, 900, 0.78, callback);
-        } else {
-          callback(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      state.notification = 'Compression et transfert vers Firebase Storage en cours...';
+      renderApp();
+      compressAndConvertMediaForFirebase(file, folderPath)
+        .then((downloadUrl) => {
+          state.notification = null;
+          callback(downloadUrl);
+        })
+        .catch(() => {
+          state.notification = 'Échec du transfert Firebase Storage. Vérifiez la connexion ou le fichier.';
+          renderApp();
+        });
     }
 
     function getHeaderBadgeText() {
@@ -538,7 +653,6 @@
       }
     }
 
-    // Générateur de matrice QR visuelle déterministe à partir du texte
     function buildQrSvg(text, size = 54) {
       const n = 15;
       let hash = 2166136261;
@@ -575,7 +689,6 @@
       return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="rounded border border-slate-300 bg-white shrink-0" aria-label="QR Code">${rects}</svg>`;
     }
 
-    // --- Actions Point 1 : Organigramme Hiérarchique ---
     function handleSaveOrgan(e) {
       e.preventDefault();
       const f = state.organForm;
@@ -652,13 +765,12 @@
       renderApp();
     }
 
-    // --- Actions Point 2 : Mosquées ---
     function handleMosqueImageUpload(input) {
       readFileAsDataUrl(input, (res) => {
         state.mosqueForm.image = res;
         saveState();
         renderApp();
-      });
+      }, 'mosques');
     }
 
     function handleSaveMosque(e) {
@@ -709,13 +821,12 @@
       renderApp();
     }
 
-    // --- Actions Point 3 : Membres ---
     function handleMemberImageUpload(input) {
       readFileAsDataUrl(input, (res) => {
         state.memberForm.image = res;
         saveState();
         renderApp();
-      });
+      }, 'members');
     }
 
     function generateSystemCodeSecret() {
@@ -805,7 +916,6 @@
       });
     }
 
-    // --- Actions Point 4 : Responsables Religieux ---
     function generateSystemArreteNumber() {
       return `ARR-COMICO-RDC-${new Date().getFullYear()}-${String(Math.floor(1000 + Math.random() * 9000))}`;
     }
@@ -872,7 +982,6 @@
       renderApp();
     }
 
-    // --- Actions Rubriques Complémentaires ---
     function handleSaveFinance(e) {
       e.preventDefault();
       const f = state.financeForm;
@@ -1171,7 +1280,6 @@
       `;
     }
 
-    // --- Rendu des vues ---
     function renderDashboard() {
       const natOrgan = state.organs.find((o) => o.niveau === 'National') || state.organs[0];
       const repLeader = state.leaders.find((l) => l.photo) || state.leaders[0];
@@ -1191,7 +1299,6 @@
             </p>
           </div>
 
-          <!-- Point 1 : Droit d'enregistrement réservé au chargé de l'Administration -->
           <div class="bg-amber-50 border-l-4 border-amber-600 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-amber-900">
@@ -1229,7 +1336,6 @@
             </div>
           </div>
 
-          <!-- Point 14 : Gestion Hajj & Omra RDC + Représentant légal juste au dessous -->
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -1566,8 +1672,8 @@
                   <input type="text" value="${escapeHtml(mf.imamPrincipal)}" oninput="state.mosqueForm.imamPrincipal = this.value" class="w-full px-3 py-2 text-sm border rounded-lg" />
                 </div>
                 <div>
-                  <label class="block text-xs font-semibold text-slate-700 mb-1">Ajouter Image</label>
-                  <input type="file" accept="image/*" onchange="handleMosqueImageUpload(this)" class="w-full px-3 py-1.5 text-xs border rounded-lg bg-slate-50" />
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Ajouter Image / Document</label>
+                  <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="handleMosqueImageUpload(this)" class="w-full px-3 py-1.5 text-xs border rounded-lg bg-slate-50" />
                 </div>
               </div>
 
@@ -1660,7 +1766,7 @@
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1">Image (Photo)</label>
-                  <input type="file" accept="image/*" onchange="handleMemberImageUpload(this)" class="w-full px-3 py-1.5 text-xs border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*,.pdf" onchange="handleMemberImageUpload(this)" class="w-full px-3 py-1.5 text-xs border rounded-lg bg-slate-50" />
                 </div>
               </div>
 
@@ -1808,7 +1914,7 @@
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1">Photo du Responsable</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.leaderForm.photo = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 text-xs border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.leaderForm.photo = res; saveState(); renderApp(); }, 'leaders')" class="w-full px-2 py-1.5 text-xs border rounded-lg bg-slate-50" />
                 </div>
               </div>
 
@@ -1954,7 +2060,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Image (Reçu / Justificatif)</label>
-              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.financeForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+              <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.financeForm.image = res; saveState(); renderApp(); }, 'finance')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
 
@@ -2020,7 +2126,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Image</label>
-              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.eventForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+              <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.eventForm.image = res; saveState(); renderApp(); }, 'events')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
 
@@ -2096,19 +2202,19 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block font-semibold text-slate-700 mb-1">Image — Époux</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpoux = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpoux = res; saveState(); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                   ${f.imageEpoux ? `<img src="${f.imageEpoux}" alt="Époux" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
                 </div>
                 <div>
                   <label class="block font-semibold text-slate-700 mb-1">Image — Épouse</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpouse = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpouse = res; saveState(); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                   ${f.imageEpouse ? `<img src="${f.imageEpouse}" alt="Épouse" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
                 </div>
               </div>
             ` : `
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Image — ${escapeHtml(f.type)}</label>
-                <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageUnique = res; saveState(); renderApp(); })" class="w-full max-w-md px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageUnique = res; saveState(); renderApp(); }, 'certificates')" class="w-full max-w-md px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${f.imageUnique ? `<img src="${f.imageUnique}" alt="Attestation" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
               </div>
             `}
@@ -2197,17 +2303,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Audio</label>
-                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; saveState(); renderApp(); }, 'audit_audio')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${f.audio ? `<audio controls src="${f.audio}" class="mt-2 w-full h-8"></audio>` : ''}
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Vidéo</label>
-                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; saveState(); renderApp(); }, 'audit_video')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${f.video ? `<video controls src="${f.video}" class="mt-2 max-h-32 rounded border"></video>` : ''}
               </div>
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Image</label>
-                <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <label class="block font-semibold text-slate-700 mb-1">Image / Document</label>
+                <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; saveState(); renderApp(); }, 'audit_images')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${f.image ? `<img src="${f.image}" alt="Audit Image" class="mt-2 max-h-32 w-auto object-contain rounded border" />` : ''}
               </div>
             </div>
@@ -2375,7 +2481,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Image du Candidat</label>
-              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.hajjForm.photo = res; saveState(); renderApp(); })" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.hajjForm.photo = res; saveState(); renderApp(); }, 'hajj')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
 
@@ -2534,7 +2640,61 @@
       `;
     }
 
+    Object.assign(window, {
+      state,
+      saveState,
+      notify,
+      addAudit,
+      escapeHtml,
+      downloadJson,
+      compressImageBlob,
+      compressAndConvertMediaForFirebase,
+      readFileAsDataUrl,
+      getHeaderBadgeText,
+      buildQrSvg,
+      handleSaveOrgan,
+      editOrgan,
+      deleteOrgan,
+      publishOrganigramme,
+      handleMosqueImageUpload,
+      handleSaveMosque,
+      deleteMosque,
+      handleMemberImageUpload,
+      generateSystemCodeSecret,
+      generateSystemIdNational,
+      generateMemberIdCard,
+      handleSaveMember,
+      deleteMember,
+      downloadMemberCardJson,
+      generateSystemArreteNumber,
+      signLeaderDecree,
+      handleSaveLeader,
+      deleteLeader,
+      handleSaveFinance,
+      editFinance,
+      deleteFinance,
+      handleSaveEvent,
+      editEvent,
+      deleteEvent,
+      buildCertificateNote,
+      handleSaveCertificate,
+      editCertificate,
+      deleteCertificate,
+      handleSaveAudit,
+      editAudit,
+      deleteAudit,
+      handleSaveWaqf,
+      editWaqf,
+      deleteWaqf,
+      handleSaveHajj,
+      editHajj,
+      deleteHajj,
+      renderActionButtons,
+      renderApp
+    });
+
     renderApp();
+    initFirebaseSync();
   </script>
 </body>
 </html>
