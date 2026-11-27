@@ -59,6 +59,7 @@
     const FIREBASE_GESTION_DOC = doc(db, "comico_platform", "gestion_main_state");
     const FIREBASE_SHARED_DOC = doc(db, "comico_platform", "main_state");
     const FIREBASE_SCHOOLS_COL = collection(db, "comico_schools");
+    const LOCAL_BACKUP_KEY = "comico_gestion_main_state_backup";
 
     let firebaseUser = null;
     let firebaseReady = false;
@@ -437,19 +438,37 @@
       };
     }
 
-    let state = structuredClone(INITIAL_STATE);
+    function readLocalBackup() {
+      try {
+        const raw = localStorage.getItem(LOCAL_BACKUP_KEY);
+        if (!raw) return null;
+        return mergeWithInitialState(JSON.parse(raw));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeLocalBackup(rawState) {
+      try {
+        const clean = { ...rawState, notification: null };
+        localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(clean));
+      } catch (_) {}
+    }
+
+    let state = readLocalBackup() || structuredClone(INITIAL_STATE);
 
     function sanitizeStateForFirestore(rawState) {
       const clean = { ...rawState, notification: null };
       const serialized = JSON.stringify(clean);
       if (serialized.length > 900000) {
-        throw new Error('Payload Firestore dépassant la limite recommandée');
+        throw new Error('Payload dépassant la limite recommandée');
       }
       return JSON.parse(serialized);
     }
 
     async function saveState() {
       if (isSyncingFromFirebase) return true;
+      writeLocalBackup(state);
       try {
         if (!firebaseUser) {
           await signInAnonymously(auth).catch(() => null);
@@ -461,7 +480,8 @@
         }, { merge: true });
         return true;
       } catch (err) {
-        state.notification = 'Synchronisation Firebase : vérifiez la taille du fichier ou votre connexion.';
+        state.notification = 'Enregistrement : vérifiez la taille du fichier ou votre connexion.';
+        renderApp();
         return false;
       }
     }
@@ -486,6 +506,7 @@
             isSyncingFromFirebase = true;
             const parsed = JSON.parse(snap.data().payload);
             state = mergeWithInitialState(parsed);
+            writeLocalBackup(state);
             isSyncingFromFirebase = false;
             renderApp();
           } else {
@@ -503,6 +524,7 @@
             const currentTab = state.activeTab;
             isSyncingFromFirebase = true;
             state = mergeWithInitialState(remoteParsed);
+            writeLocalBackup(state);
             state.notification = currentNotification;
             if (currentTab) state.activeTab = currentTab;
             isSyncingFromFirebase = false;
@@ -622,7 +644,7 @@
     function readFileAsDataUrl(input, callback, folderPath = 'gestion_media') {
       const file = input.files && input.files[0];
       if (!file) return;
-      state.notification = 'Compression et transfert vers Firebase Storage en cours...';
+      state.notification = 'Compression et transfert du fichier en cours...';
       renderApp();
       compressAndConvertMediaForFirebase(file, folderPath)
         .then((downloadUrl) => {
@@ -630,7 +652,7 @@
           callback(downloadUrl);
         })
         .catch(() => {
-          state.notification = 'Échec du transfert Firebase Storage. Vérifiez la connexion ou le fichier.';
+          state.notification = 'Échec du transfert du fichier. Vérifiez la connexion ou le fichier.';
           renderApp();
         });
     }
@@ -729,7 +751,6 @@
         statut: 'Actif',
         effectifBureau: 9
       };
-      saveState();
       renderApp();
     }
 
@@ -753,7 +774,6 @@
       }
       addAudit('Structure et organes', 'SUPPRESSION_ORGANE', `Suppression de l'organe ${id}`);
       notify('Organe supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -761,7 +781,6 @@
       state.organs = state.organs.map((o) => ({ ...o, publie: true }));
       addAudit('Structure et organes', 'PUBLICATION_ORGANIGRAMME', 'Publication officielle de l’organigramme hiérarchique');
       notify('Organigramme hiérarchique publié et mis à jour dans la section ci-dessous.');
-      saveState();
       renderApp();
     }
 
@@ -809,7 +828,6 @@
         imamPrincipal: '',
         image: ''
       };
-      saveState();
       renderApp();
     }
 
@@ -817,7 +835,6 @@
       state.mosques = state.mosques.filter((m) => m.id !== id);
       addAudit('Mosquées', 'SUPPRESSION_MOSQUEE', `Suppression de la mosquée ${id}`);
       notify('Mosquée supprimée du registre.');
-      saveState();
       renderApp();
     }
 
@@ -885,7 +902,6 @@
         professionCompetence: '',
         image: ''
       };
-      saveState();
       renderApp();
     }
 
@@ -896,7 +912,6 @@
       }
       addAudit('Membres', 'SUPPRESSION_MEMBRE', `Suppression du membre ${idNational}`);
       notify('Membre supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -967,7 +982,6 @@
         statut: 'En fonction',
         photo: ''
       };
-      saveState();
       renderApp();
     }
 
@@ -978,7 +992,6 @@
       }
       addAudit('Responsables religieux', 'SUPPRESSION_RESPONSABLE', `Suppression du responsable ${id}`);
       notify('Responsable religieux supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -1012,7 +1025,6 @@
         notify('Opération financière enregistrée.');
       }
       state.financeForm = { id: '', date: new Date().toISOString().split('T')[0], type: 'Entrée', categorie: 'Zakat Al-Mal', source: '', responsableMosquee: '', mode: 'M-Pesa Entreprise', reference: '', montantUSD: 1000, statut: 'Validé', image: '' };
-      saveState();
       renderApp();
     }
 
@@ -1029,7 +1041,6 @@
       state.transactions = state.transactions.filter((t) => t.id !== id);
       if (state.selectedTransactionId === id) state.selectedTransactionId = state.transactions[0]?.id || '';
       notify('Transaction supprimée.');
-      saveState();
       renderApp();
     }
 
@@ -1048,7 +1059,6 @@
         notify('Événement enregistré.');
       }
       state.eventForm = { id: '', titre: '', dateGregorien: new Date().toISOString().split('T')[0], dateHijri: '', lieu: '', province: 'Kinshasa', type: 'Institutionnel', participantsAttendus: 200, statut: 'Confirmé', image: '' };
-      saveState();
       renderApp();
     }
 
@@ -1065,7 +1075,6 @@
       state.events = state.events.filter((ev) => ev.id !== id);
       if (state.selectedEventId === id) state.selectedEventId = state.events[0]?.id || '';
       notify('Événement supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -1105,7 +1114,6 @@
         notify('Attestation religieuse enregistrée.');
       }
       state.certificateForm = { id: '', type: 'Acte de Mariage Religieux (Nikah)', beneficiaire: '', province: 'Kinshasa', mosquee: 'Grande Mosquée Centrale de Kinshasa', imamSignataire: '', dateEmission: new Date().toISOString().split('T')[0], hashVerification: '', statut: 'Authentifié', noteHierarchie: '', imageEpoux: '', imageEpouse: '', imageUnique: '' };
-      saveState();
       renderApp();
     }
 
@@ -1122,7 +1130,6 @@
       state.certificates = state.certificates.filter((c) => c.id !== id);
       if (state.selectedCertificateId === id) state.selectedCertificateId = state.certificates[0]?.id || '';
       notify('Attestation supprimée.');
-      saveState();
       renderApp();
     }
 
@@ -1156,7 +1163,6 @@
         notify('Entrée d’audit enregistrée.');
       }
       state.auditForm = { id: '', province: 'Kinshasa', module: 'Administration', action: 'VERIFICATION_REGISTRE', details: '', audio: '', video: '', image: '' };
-      saveState();
       renderApp();
     }
 
@@ -1182,7 +1188,6 @@
       state.auditLogs = state.auditLogs.filter((a) => a.id !== id);
       if (state.selectedAuditId === id) state.selectedAuditId = state.auditLogs[0]?.id || '';
       notify('Entrée d’audit supprimée.');
-      saveState();
       renderApp();
     }
 
@@ -1201,7 +1206,6 @@
         notify('Bien Waqf enregistré.');
       }
       state.waqfForm = { id: '', designation: '', province: 'Kinshasa', type: 'Bien Immobilier Locatif', revenuMensuelUSD: 1500, affectationRevenu: 'Financement Orphelinats & Bourses', statut: 'Exploité' };
-      saveState();
       renderApp();
     }
 
@@ -1218,7 +1222,6 @@
       state.waqfs = state.waqfs.filter((w) => w.id !== id);
       if (state.selectedWaqfId === id) state.selectedWaqfId = state.waqfs[0]?.id || '';
       notify('Bien Waqf supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -1237,7 +1240,6 @@
         notify('Dossier Hajj / Omra enregistré.');
       }
       state.hajjForm = { id: '', nom: '', passeport: '', province: 'Kinshasa', forfait: 'Forfait Standard RDC', paiementUSD: 4950, statutPaiement: 'Soldé', vaccinMeningite: true, photo: '' };
-      saveState();
       renderApp();
     }
 
@@ -1254,7 +1256,6 @@
       state.hajjPilgrims = state.hajjPilgrims.filter((h) => h.id !== id);
       if (state.selectedHajjId === id) state.selectedHajjId = state.hajjPilgrims[0]?.id || '';
       notify('Dossier Hajj / Omra supprimé.');
-      saveState();
       renderApp();
     }
 
@@ -2358,13 +2359,13 @@
             ${renderActionButtons({
               formId: 'admin-form',
               onModify: `notify('Paramètres d’administration prêts à être modifiés.')`,
-              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; saveState(); renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
+              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
               downloadName: 'administration-comico-rdc.json',
               downloadData: '{ splitRules: state.splitRules, provinces: PROVINCES_RDC }'
             })}
           </div>
 
-          <form id="admin-form" onsubmit="event.preventDefault(); saveState(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <form id="admin-form" onsubmit="event.preventDefault(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Locale (%)</label>
               <input type="number" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg" />
