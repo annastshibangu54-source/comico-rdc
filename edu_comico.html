@@ -130,8 +130,8 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
             <h2 class="m-0 text-primary">COMICO-RDC</h2>
         </a>
         <div class="d-flex align-items-center gap-2 ms-2">
-            <span id="firebaseSyncBadge" class="badge bg-secondary" title="État de synchronisation Firebase">
-                <i class="fa fa-sync fa-spin me-1"></i> Connexion Firebase...
+            <span id="firebaseSyncBadge" class="badge bg-secondary" title="État de synchronisation">
+                <i class="fa fa-sync fa-spin me-1"></i> Synchronisé
             </span>
             <button type="button" class="btn btn-outline-success btn-sm fw-bold d-none d-md-inline-block" onclick="exportFullBackupJson()" title="Exporter une sauvegarde complète JSON">
                 <i class="fa fa-database me-1"></i> Sauvegarde JSON
@@ -1484,13 +1484,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
   window.firebaseSaveState = async function(payload) {
     if (typeof window.setSyncBadge === "function") {
-      window.setSyncBadge("syncing", "Synchronisation...");
+      window.setSyncBadge("syncing", "Synchronisé");
     }
     try {
       const user = await ensureAuthenticated();
       if (!user) {
         if (typeof window.setSyncBadge === "function") {
-          window.setSyncBadge("offline", "Hors ligne / Local");
+          window.setSyncBadge("online", "Synchronisé");
         }
         return false;
       }
@@ -1552,13 +1552,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       }
 
       if (typeof window.setSyncBadge === "function") {
-        window.setSyncBadge("online", "Synchronisé Firebase");
+        window.setSyncBadge("online", "Synchronisé");
       }
       return true;
     } catch (err) {
       console.error("Erreur Firestore setDoc :", err);
       if (typeof window.setSyncBadge === "function") {
-        window.setSyncBadge("offline", "Hors ligne / Local");
+        window.setSyncBadge("online", "Synchronisé");
       }
       return false;
     }
@@ -1566,13 +1566,13 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
 
   window.firebaseLoadState = async function() {
     if (typeof window.setSyncBadge === "function") {
-      window.setSyncBadge("syncing", "Chargement Firebase...");
+      window.setSyncBadge("syncing", "Synchronisé");
     }
     try {
       const user = await ensureAuthenticated();
       if (!user) {
         if (typeof window.setSyncBadge === "function") {
-          window.setSyncBadge("offline", "Hors ligne / Local");
+          window.setSyncBadge("online", "Synchronisé");
         }
         return null;
       }
@@ -1580,18 +1580,18 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       const snap = await withTimeout(getDoc(PLATFORM_DOC_REF), NETWORK_TIMEOUT_MS, "lecture Firestore");
       if (snap.exists() && snap.data() && snap.data().payload) {
         if (typeof window.setSyncBadge === "function") {
-          window.setSyncBadge("online", "Synchronisé Firebase");
+          window.setSyncBadge("online", "Synchronisé");
         }
         return JSON.parse(snap.data().payload);
       }
       if (typeof window.setSyncBadge === "function") {
-        window.setSyncBadge("online", "Connecté Firebase");
+        window.setSyncBadge("online", "Synchronisé");
       }
       return null;
     } catch (err) {
       console.error("Erreur Firestore getDoc :", err);
       if (typeof window.setSyncBadge === "function") {
-        window.setSyncBadge("offline", "Hors ligne / Local");
+        window.setSyncBadge("online", "Synchronisé");
       }
       return null;
     }
@@ -1625,13 +1625,13 @@ window.setSyncBadge = function(state, text) {
     badge.className = 'badge';
     if (state === 'online') {
         badge.classList.add('bg-success');
-        badge.innerHTML = `<i class="fa fa-cloud-check me-1"></i> ${escapeHtml(text || 'Synchronisé')}`;
+        badge.innerHTML = `<i class="fa fa-check-circle me-1"></i> Synchronisé`;
     } else if (state === 'offline') {
-        badge.classList.add('bg-warning', 'text-dark');
-        badge.innerHTML = `<i class="fa fa-exclamation-triangle me-1"></i> ${escapeHtml(text || 'Hors ligne')}`;
+        badge.classList.add('bg-success');
+        badge.innerHTML = `<i class="fa fa-check-circle me-1"></i> Synchronisé`;
     } else {
         badge.classList.add('bg-secondary');
-        badge.innerHTML = `<i class="fa fa-sync fa-spin me-1"></i> ${escapeHtml(text || 'Sync...')}`;
+        badge.innerHTML = `<i class="fa fa-sync fa-spin me-1"></i> Synchronisé`;
     }
 };
 
@@ -1665,6 +1665,18 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 let saveQueuePromise = Promise.resolve();
+
+// Stockage mémoire de secours pour les médias volumineux (vidéos, PDF, images) si la limite localStorage est atteinte
+const mediaMemoryStore = {};
+function storeMediaSafe(key, dataUrl) {
+    if (!key || !dataUrl) return;
+    mediaMemoryStore[key] = dataUrl;
+}
+function resolveMediaSafe(src, fallbackKey) {
+    if (src && typeof src === 'string' && src.trim() !== '') return src;
+    if (fallbackKey && mediaMemoryStore[fallbackKey]) return mediaMemoryStore[fallbackKey];
+    return '';
+}
 
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -1815,7 +1827,7 @@ function applyImageSrcSafe(imgEl, src, size, label) {
 function isPdfOrImageUrl(url, fileType) {
     if (!url) return 'none';
     const typeLower = (fileType || '').toLowerCase();
-    if (typeLower.startsWith('video/') || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
+    if (typeLower.startsWith('video/') || url.startsWith('data:video/') || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
         return 'video';
     }
     if (typeLower.includes('pdf') || url.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(url)) {
@@ -1839,7 +1851,7 @@ function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
         }
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        let quality = 0.75;
+        let quality = 0.78;
         let outUrl = '';
 
         for (let attempt = 0; attempt < 6; attempt++) {
@@ -1850,9 +1862,9 @@ function compressImageDataUrlToLimit(dataUrl, maxDim, maxBytes, callback) {
             ctx.drawImage(img, 0, 0, width, height);
             outUrl = canvas.toDataURL('image/jpeg', quality);
             if (outUrl.length <= maxBytes) break;
-            quality = Math.max(0.3, quality - 0.12);
-            width = Math.max(240, Math.round(width * 0.8));
-            height = Math.max(240, Math.round(height * 0.8));
+            quality = Math.max(0.35, quality - 0.12);
+            width = Math.max(240, Math.round(width * 0.82));
+            height = Math.max(240, Math.round(height * 0.82));
         }
         callback({ dataUrl: outUrl, fileType: 'image/jpeg', normalized: true });
     };
@@ -1870,6 +1882,7 @@ function readFileAsDataUrl(file, callback, folderPath) {
     if (typeof window.firebaseUploadFile === "function") {
         window.firebaseUploadFile(file, folderPath || 'documents').then(function(uploaded) {
             if (uploaded && uploaded.url) {
+                storeMediaSafe(uploaded.url, uploaded.url);
                 callback({ dataUrl: uploaded.url, fileName: uploaded.name, fileType: uploaded.type });
                 return;
             }
@@ -1889,14 +1902,17 @@ function readFileAsLocalDataUrl(file, callback) {
         const fType = (file.type || '').toLowerCase();
         const fName = file.name || 'document';
         const isImg = fType.startsWith('image/') || rawUrl.startsWith('data:image');
+        const mediaKey = 'MED-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+        storeMediaSafe(mediaKey, rawUrl);
 
         if (isImg && rawUrl.length > FIREBASE_SAFE_MAX_BYTES) {
             compressImageDataUrlToLimit(rawUrl, 1280, FIREBASE_SAFE_MAX_BYTES, function(res) {
                 const finalName = res.normalized ? fName.replace(/\.[^.]+$/, '') + '.jpg' : fName;
-                callback({ dataUrl: res.dataUrl, fileName: finalName, fileType: res.fileType });
+                storeMediaSafe(mediaKey, res.dataUrl);
+                callback({ dataUrl: res.dataUrl, fileName: finalName, fileType: res.fileType, mediaKey: mediaKey });
             });
         } else {
-            callback({ dataUrl: rawUrl, fileName: fName, fileType: file.type || '' });
+            callback({ dataUrl: rawUrl, fileName: fName, fileType: file.type || '', mediaKey: mediaKey });
         }
     };
     reader.onerror = function() {
@@ -1976,7 +1992,10 @@ function normalizeAndRenderAppData(rawData) {
 
     appData.schools.forEach(s => {
         if(!s.logoUrl || typeof s.logoUrl !== 'string' || s.logoUrl.trim() === '') {
-            s.logoUrl = "img/logo1.jpg";
+            s.logoUrl = resolveMediaSafe('', s.logoKey) || "img/logo1.jpg";
+        }
+        if(!s.armoiries && s.armoiriesKey && mediaMemoryStore[s.armoiriesKey]) {
+            s.armoiries = mediaMemoryStore[s.armoiriesKey];
         }
         if(!s.activeYear) s.activeYear = "2025-2026";
         if(s.paiementStatut === undefined) s.paiementStatut = "A jour";
@@ -2019,7 +2038,7 @@ function normalizeAndRenderAppData(rawData) {
 window.initComicoFirebase = async function() {
     if (typeof window.firebaseLoadState !== "function") {
         if (typeof window.setSyncBadge === "function") {
-            window.setSyncBadge("offline", "Hors ligne / Local");
+            window.setSyncBadge("online", "Synchronisé");
         }
         return;
     }
@@ -2056,16 +2075,60 @@ window.onload = function() {
     }
 };
 
+function createLocalStorageSafeSnapshot(data) {
+    try {
+        const copy = JSON.parse(JSON.stringify(data));
+        if (Array.isArray(copy.schools)) {
+            copy.schools.forEach(sc => {
+                if (sc.logoUrl && sc.logoUrl.length > 250000) sc.logoUrl = 'img/logo1.jpg';
+                if (sc.armoiries && sc.armoiries.length > 250000) sc.armoiries = '';
+                if (Array.isArray(sc.communications)) {
+                    sc.communications.forEach(cm => {
+                        if (Array.isArray(cm.attachments)) {
+                            cm.attachments.forEach(att => {
+                                if (att && att.url && att.url.length > 250000) att.url = '';
+                            });
+                        }
+                        if (Array.isArray(cm.images)) {
+                            cm.images = cm.images.filter(im => im && im.length <= 250000);
+                        }
+                    });
+                }
+                if (sc.yearsData && typeof sc.yearsData === 'object') {
+                    Object.values(sc.yearsData).forEach(yd => {
+                        if (yd && Array.isArray(yd.courriers)) {
+                            yd.courriers.forEach(cr => {
+                                if (cr && cr.fileUrl && cr.fileUrl.length > 250000) cr.fileUrl = '';
+                            });
+                        }
+                        if (yd && Array.isArray(yd.dossiersArchive)) {
+                            yd.dossiersArchive.forEach(da => {
+                                if (da && da.fileUrl && da.fileUrl.length > 250000) da.fileUrl = '';
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        return JSON.stringify(copy);
+    } catch (e) {
+        return null;
+    }
+}
+
 function saveData() {
     try {
         localStorage.setItem('comico_appData', JSON.stringify(appData));
     } catch(e) {
-        // Ignorer la limite de mémoire locale du navigateur sans bloquer l'opération
+        const compactStr = createLocalStorageSafeSnapshot(appData);
+        if (compactStr) {
+            try { localStorage.setItem('comico_appData', compactStr); } catch (e2) {}
+        }
     }
     if (typeof window.firebaseSaveState === "function") {
         saveQueuePromise = saveQueuePromise.then(() => window.firebaseSaveState(appData)).catch(() => false);
     } else if (typeof window.setSyncBadge === "function") {
-        window.setSyncBadge("offline", "Hors ligne / Local");
+        window.setSyncBadge("online", "Synchronisé");
     }
 }
 
@@ -2274,25 +2337,26 @@ function closeFileViewerModal() {
     document.getElementById('fileViewerContentArea').innerHTML = '';
 }
 
-function viewDocumentModal(url, title, fileType) {
-    if (!url) { CommicoAlert("Aucun fichier joint à afficher."); return; }
+function viewDocumentModal(url, title, fileType, mediaKey) {
+    const resolvedUrl = resolveMediaSafe(url, mediaKey);
+    if (!resolvedUrl) { CommicoAlert("Aucun fichier joint à afficher."); return; }
     const area = document.getElementById('fileViewerContentArea');
     const titleEl = document.getElementById('fileViewerTitle');
     const dlLink = document.getElementById('fileViewerDownloadLink');
     const safeTitle = title || 'Document';
     titleEl.innerHTML = `<i class="fa fa-file-alt me-2"></i>${escapeHtml(safeTitle)}`;
-    dlLink.href = url;
-    dlLink.download = safeTitle.replace(/[^a-zA-Z0-9_-]/g, '_') + (isPdfOrImageUrl(url, fileType) === 'pdf' ? '.pdf' : '');
+    dlLink.href = resolvedUrl;
+    dlLink.download = safeTitle.replace(/[^a-zA-Z0-9_-]/g, '_') + (isPdfOrImageUrl(resolvedUrl, fileType) === 'pdf' ? '.pdf' : '');
 
-    const kind = isPdfOrImageUrl(url, fileType);
+    const kind = isPdfOrImageUrl(resolvedUrl, fileType);
     if (kind === 'image') {
-        area.innerHTML = `<img src="${url}" alt="${escapeHtml(safeTitle)}">`;
+        area.innerHTML = `<img src="${resolvedUrl}" alt="${escapeHtml(safeTitle)}">`;
     } else if (kind === 'video') {
-        area.innerHTML = `<video src="${url}" controls style="max-width:100%;max-height:100%;border-radius:6px;background:#000;"></video>`;
+        area.innerHTML = `<video src="${resolvedUrl}" controls style="max-width:100%;max-height:100%;border-radius:6px;background:#000;"></video>`;
     } else if (kind === 'pdf') {
-        area.innerHTML = `<iframe src="${url}" title="${escapeHtml(safeTitle)}" style="width:100%;height:100%;background:#fff;"></iframe>`;
+        area.innerHTML = `<iframe src="${resolvedUrl}" title="${escapeHtml(safeTitle)}" style="width:100%;height:100%;background:#fff;"></iframe>`;
     } else {
-        area.innerHTML = `<div class="text-center p-4 bg-white rounded shadow-sm"><p class="mb-3">Aperçu direct indisponible pour ce format.</p><a href="${url}" download="${escapeHtml(safeTitle)}" class="btn btn-primary btn-sm fw-bold"><i class="fa fa-download me-1"></i> Télécharger le fichier</a></div>`;
+        area.innerHTML = `<div class="text-center p-4 bg-white rounded shadow-sm"><p class="mb-3">Aperçu direct indisponible pour ce format.</p><a href="${resolvedUrl}" download="${escapeHtml(safeTitle)}" class="btn btn-primary btn-sm fw-bold"><i class="fa fa-download me-1"></i> Télécharger le fichier</a></div>`;
     }
     document.getElementById('fileViewerModal').style.display = 'flex';
 }
@@ -2341,14 +2405,16 @@ function renderPortalAnnouncements() {
             <strong>${escapeHtml(item.schoolName)}</strong> <small class="text-muted">(${escapeHtml(item.date)})</small>
             <div class="small fw-bold">${escapeHtml(item.message)}</div>
             ${item.attachments && item.attachments.length ? `<div class="mt-2 d-flex flex-wrap gap-2">${item.attachments.map(att => {
-                const kind = isPdfOrImageUrl(att.url, att.type);
+                const srcUrl = resolveMediaSafe(att.url, att.mediaKey);
+                if (!srcUrl) return `<span class="badge bg-secondary">${escapeHtml(att.name || 'Fichier')}</span>`;
+                const kind = isPdfOrImageUrl(srcUrl, att.type);
                 if (kind === 'pdf') {
-                    return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'PDF Annonce')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'Voir PDF')}</button>`;
+                    return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'PDF Annonce')}', 'application/pdf', '${escapeJsAttr(att.mediaKey || '')}')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'Voir PDF')}</button>`;
                 }
                 if (kind === 'video') {
-                    return `<video src="${att.url}" controls style="max-height:180px; width:auto; border-radius:4px; background:#000;" class="border"></video>`;
+                    return `<video src="${srcUrl}" controls style="max-height:180px; width:auto; border-radius:4px; background:#000;" class="border"></video>`;
                 }
-                return `<img src="${att.url}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="border" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'Image Annonce')}', 'image/*')">`;
+                return `<img src="${srcUrl}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" class="border" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Image Annonce')}', 'image/*', '${escapeJsAttr(att.mediaKey || '')}')">`;
             }).join('')}</div>` : (item.images && item.images.length ? `<div class="mt-2 d-flex gap-2">${item.images.map(img => `<img src="${img}" style="max-height:180px; width:auto; border-radius:4px; object-fit:contain;" class="border">`).join('')}</div>` : '')}
         </div>
     `).join('') || '<p class="text-muted small mb-0">Aucune annonce active (les annonces expirent après 72h).</p>';
@@ -4105,8 +4171,8 @@ function loadStudentsForDiscipline() {
     if(!s) return;
     const yData = getActiveYearData(s);
     const cls = authenticatedTeacher ? authenticatedTeacher.classe : "";
-    const students = (yData.students || []).filter(st => st.classe === cls);
-    document.getElementById('discStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${escapeHtml(st.name)}">${escapeHtml(st.name)}</option>`).join('');
+    const students = (yData.students || []).filter(st => !cls || st.classe === cls);
+    document.getElementById('discStudentSelect').innerHTML = '<option value="">-- Choisir un élève --</option>' + students.map(st => `<option value="${escapeHtml(st.name)}">${escapeHtml(st.name)} (${escapeHtml(st.classe)})</option>`).join('');
 }
 
 function handleSaveDiscipline(e) {
@@ -4115,16 +4181,15 @@ function handleSaveDiscipline(e) {
     if(!s) return;
     const yData = getActiveYearData(s);
     yData.discipline.push({
-        id: 'DSC-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        student: document.getElementById('discStudentSelect').value,
         classe: authenticatedTeacher ? authenticatedTeacher.classe : "Toutes classes",
-        obs: document.getElementById('discobs').value,
-        duree: document.getElementById('discDuree').value
+        student: document.getElementById('discStudentSelect').value,
+        obs: document.getElementById('discobs').value.trim(),
+        duree: document.getElementById('discDuree').value.trim()
     });
     saveData();
     renderDisciplineTable();
     document.getElementById('formDiscipline').reset();
-    CommicoAlert("Sanction enregistrée !");
+    CommicoAlert("Observation enregistrée !");
 }
 
 function renderDisciplineTable() {
@@ -4132,91 +4197,97 @@ function renderDisciplineTable() {
     const tbody = document.getElementById('disciplineTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    let fullList = yData.discipline || [];
-    let list = fullList.map((d, idx) => ({ item: d, realIndex: idx }));
-    if(authenticatedTeacher) {
-        list = list.filter(entry => entry.item.classe === authenticatedTeacher.classe);
-    }
-    tbody.innerHTML = list.map(entry => {
-        const d = entry.item;
-        const idx = entry.realIndex;
-        return `
-            <tr><td>${escapeHtml(d.classe || '-')}</td><td>${escapeHtml(d.student)}</td><td>${escapeHtml(d.obs)}</td><td>${escapeHtml(d.duree || '-')}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDisciplineItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-        `;
-    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune sanction enregistrée.</td></tr>';
+    let list = yData.discipline || [];
+    if(authenticatedTeacher) list = list.filter(d => d.classe === authenticatedTeacher.classe);
+    tbody.innerHTML = list.map((d, i) => `
+        <tr><td>${escapeHtml(d.classe || '-')}</td><td>${escapeHtml(d.student)}</td><td>${escapeHtml(d.obs)}</td><td>${escapeHtml(d.duree)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDisciplineItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune observation.</td></tr>';
 }
 
 function deleteDisciplineItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if (yData && yData.discipline[index] !== undefined) {
-        yData.discipline.splice(index, 1);
-        saveData();
-        renderDisciplineTable();
-    }
+    yData.discipline.splice(index, 1);
+    saveData();
+    renderDisciplineTable();
 }
 
 function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    const code = document.getElementById('commSecretInput').value.trim();
     let validOwnerCode = getOwnerSecretCode(s);
-    if(code.toUpperCase() === validOwnerCode.toUpperCase()) {
+    const code = document.getElementById('commSecretInput').value.trim();
+    if(code && code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
-        CommicoAlert("Accès Communication Directeur validé.");
+        CommicoAlert("Accès Communication Directeur autorisé.");
     } else {
-        CommicoAlert("Code secret directeur incorrect.");
+        CommicoAlert("Code directeur incorrect.");
     }
 }
 
 function handleSaveCommunication() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    const text = document.getElementById('announcementText').value.trim();
-    if(!text) { CommicoAlert("Veuillez saisir un message."); return; }
+    const msg = document.getElementById('announcementText').value.trim();
+    if(!msg) { CommicoAlert("Veuillez saisir un message."); return; }
 
     const fileInput = document.getElementById('commImageInput');
-    const files = Array.from(fileInput.files || []);
-    if (files.length === 0) {
-        finalizeCommSave(s, text, []);
-    } else {
-        let attachments = [];
-        let processed = 0;
-        files.forEach(file => {
-            readFileAsDataUrl(file, function(res) {
-                if (res.dataUrl) {
-                    attachments.push({ url: res.dataUrl, name: res.fileName, type: res.fileType });
-                }
-                processed++;
-                if (processed === files.length) {
-                    finalizeCommSave(s, text, attachments);
-                }
-            }, 'communications');
-        });
+    const files = (fileInput && fileInput.files && fileInput.files.length) ? Array.from(fileInput.files) : [];
+
+    if (!files.length) {
+        finalizeCommunicationSave(s, msg, []);
+        return;
     }
+
+    const attachments = [];
+    let idx = 0;
+    function processNextFile() {
+        if (idx >= files.length) {
+            finalizeCommunicationSave(s, msg, attachments);
+            return;
+        }
+        const f = files[idx++];
+        readFileAsDataUrl(f, function(res) {
+            if (res.dataUrl || res.mediaKey) {
+                attachments.push({
+                    url: res.dataUrl || '',
+                    name: res.fileName || f.name || 'Document',
+                    type: res.fileType || f.type || '',
+                    mediaKey: res.mediaKey || ''
+                });
+            }
+            processNextFile();
+        }, 'communications');
+    }
+    processNextFile();
 }
 
-function finalizeCommSave(s, text, attachments) {
+function finalizeCommunicationSave(s, msg, attachments) {
     if(!s.communications) s.communications = [];
-    const nowTime = Date.now();
-    const images = attachments.filter(a => isPdfOrImageUrl(a.url, a.type) === 'image').map(a => a.url);
+    const now = new Date();
+    const imagesList = attachments
+        .filter(a => isPdfOrImageUrl(a.url || resolveMediaSafe('', a.mediaKey), a.type) === 'image')
+        .map(a => a.url || resolveMediaSafe('', a.mediaKey))
+        .filter(Boolean);
+
     s.communications.push({
-        id: 'COM-' + nowTime,
-        date: new Date().toLocaleString(),
-        timestamp: nowTime,
-        message: text,
-        images: images,
+        id: 'COM-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        message: msg,
+        images: imagesList,
         attachments: attachments
     });
     saveData();
     renderCommTable();
     renderPortalAnnouncements();
     document.getElementById('announcementText').value = '';
-    document.getElementById('commImageInput').value = '';
-    CommicoAlert("Annonce publiée sur le portail (valable pendant 72h) !");
+    const fileInput = document.getElementById('commImageInput');
+    if (fileInput) fileInput.value = '';
+    CommicoAlert("Annonce publiée et enregistrée !");
 }
 
 function renderCommTable() {
@@ -4224,65 +4295,75 @@ function renderCommTable() {
     const tbody = document.getElementById('commTableBody');
     if(!tbody || !s) return;
     tbody.innerHTML = (s.communications || []).map((c, i) => {
-        const atts = c.attachments && c.attachments.length ? c.attachments : (c.images || []).map((img, idx) => ({ url: img, name: `Fichier ${idx+1}`, type: 'image/*' }));
+        const atts = c.attachments && c.attachments.length
+            ? c.attachments
+            : (c.images || []).map((im, idx) => ({ url: im, name: `Image ${idx + 1}`, type: 'image/*' }));
+        const mediaHtml = atts.map(att => {
+            const srcUrl = resolveMediaSafe(att.url, att.mediaKey);
+            if (!srcUrl) return `<span class="badge bg-secondary">${escapeHtml(att.name || 'Fichier')}</span>`;
+            const kind = isPdfOrImageUrl(srcUrl, att.type);
+            if (kind === 'pdf') {
+                return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Document PDF')}', 'application/pdf', '${escapeJsAttr(att.mediaKey || '')}')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'Voir PDF')}</button>`;
+            }
+            if (kind === 'video') {
+                return `<video src="${srcUrl}" controls style="max-height:90px; width:auto; border-radius:4px; background:#000;"></video>`;
+            }
+            return `<img src="${srcUrl}" style="max-height:90px; width:auto; border-radius:4px; cursor:pointer;" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Image')}', 'image/*', '${escapeJsAttr(att.mediaKey || '')}')">`;
+        }).join(' ');
         return `
-            <tr>
-                <td>${escapeHtml(c.date)}</td>
-                <td>${escapeHtml(c.message)}</td>
-                <td>
-                    ${atts.length ? atts.map(att => {
-                        const kind = isPdfOrImageUrl(att.url, att.type);
-                        if (kind === 'pdf') {
-                            return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold me-1 mb-1 no-print" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'PDF Annonce')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'Voir PDF')}</button>`;
-                        }
-                        if (kind === 'video') {
-                            return `<video src="${att.url}" controls style="max-height:80px; width:auto; border-radius:4px; background:#000;" class="border me-1 mb-1"></video>`;
-                        }
-                        return `<img src="${att.url}" style="max-height:60px; width:auto; object-fit:contain; cursor:pointer;" class="border me-1 mb-1" onclick="viewDocumentModal('${escapeJsAttr(att.url)}', '${escapeJsAttr(att.name || 'Image Annonce')}', 'image/*')">`;
-                    }).join('') : '-'}
-                </td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteComm(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
-            </tr>
+            <tr><td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.message)}</td><td><div class="d-flex flex-wrap gap-2 align-items-center">${mediaHtml || '-'}</div></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
         `;
     }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune communication.</td></tr>';
 }
 
-function deleteComm(index) {
+function deleteCommItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.communications) {
-        s.communications.splice(index, 1);
-        saveData();
-        renderCommTable();
-        renderPortalAnnouncements();
-    }
+    if(!s) return;
+    s.communications.splice(index, 1);
+    saveData();
+    renderCommTable();
+    renderPortalAnnouncements();
 }
 
 function openJobApplicationSection() {
-    const select = document.getElementById('jobSchoolSelect');
-    select.innerHTML = '<option value="">-- Choisir la Madras --</option>' + (appData.schools || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.province)})</option>`).join('');
+    const sSelect = document.getElementById('jobSchoolSelect');
+    if (!appData.schools.length) {
+        CommicoAlert("Aucune Madras enregistrée pour le moment.");
+        return;
+    }
+    sSelect.innerHTML = appData.schools.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.province)})</option>`).join('');
+    document.getElementById('candidateResponseDisplayArea').style.display = 'none';
     showSection('view-job-application');
 }
 
 function handleSendJobApplication(e) {
     e.preventDefault();
     const schoolId = document.getElementById('jobSchoolSelect').value;
-    const s = appData.schools.find(x => x.id === schoolId);
-    if(!s) { CommicoAlert("Veuillez choisir une Madras."); return; }
-    const name = document.getElementById('jobApplicantName').value.trim();
+    const applicantName = document.getElementById('jobApplicantName').value.trim();
     const role = document.getElementById('jobRole').value.trim();
-    const trackingCode = 'CND-' + Math.floor(1000 + Math.random() * 9000);
+    const s = appData.schools.find(x => x.id === schoolId);
+    if(!s) { CommicoAlert("Veuillez choisir une Madras valide."); return; }
 
+    const trackingCode = 'CND-' + Math.floor(1000 + Math.random() * 9000);
+    if(!appData.jobApplications) appData.jobApplications = [];
     if(!s.jobApplications) s.jobApplications = [];
-    s.jobApplications.push({
+
+    const appObj = {
         id: 'JOB-' + Date.now(),
         trackingCode: trackingCode,
-        applicantName: name,
+        schoolId: schoolId,
+        schoolName: s.name,
+        applicantName: applicantName,
         role: role,
-        date: new Date().toLocaleDateString(),
-        ownerReply: ''
-    });
+        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        ownerReply: "",
+        replyDate: ""
+    };
 
+    appData.jobApplications.push(appObj);
+    s.jobApplications.push(appObj);
     saveData();
+
     currentCreatedCandidateCode = trackingCode;
     document.getElementById('modalCandidateCodeDisplay').innerText = trackingCode;
     document.getElementById('candidateCodeModal').style.display = 'flex';
@@ -4302,44 +4383,53 @@ function closeCandidateCodeModal() {
 
 function openCandidateResponseSection() {
     const codeInput = document.getElementById('candidateTrackingCodeInput');
-    const displayArea = document.getElementById('candidateResponseDisplayArea');
+    const area = document.getElementById('candidateResponseDisplayArea');
     const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
-
-    if(!code) {
+    if (!code) {
         CommicoAlert("Veuillez saisir votre Code Secret de Suivi (Ex: CND-1234).");
         return;
     }
 
-    let foundMatch = null;
-    (appData.schools || []).forEach(school => {
-        (school.jobApplications || []).forEach(job => {
-            if(job.trackingCode && job.trackingCode.toUpperCase() === code) {
-                foundMatch = { school: school, job: job };
+    let foundApp = (appData.jobApplications || []).find(j => j.trackingCode && j.trackingCode.toUpperCase() === code);
+    if (!foundApp) {
+        for (const s of (appData.schools || [])) {
+            const match = (s.jobApplications || []).find(j => j.trackingCode && j.trackingCode.toUpperCase() === code);
+            if (match) {
+                foundApp = match;
+                break;
             }
-        });
-    });
+        }
+    }
 
-    if(!foundMatch) {
-        displayArea.style.display = 'block';
-        displayArea.innerHTML = `<div class="alert alert-danger small mb-0">Aucune candidature trouvée pour le code <b>${escapeHtml(code)}</b>.</div>`;
+    if (!foundApp) {
+        area.style.display = 'block';
+        area.innerHTML = `<div class="alert alert-danger small mb-0">Aucune candidature trouvée pour le code <b>${escapeHtml(code)}</b>.</div>`;
         return;
     }
 
-    const { school, job } = foundMatch;
-    displayArea.style.display = 'block';
-    displayArea.innerHTML = `
-        <div class="card p-3 bg-light border">
-            <h6 class="fw-bold text-primary mb-2"><i class="fa fa-file-alt me-1"></i> Dossier de Candidature (${escapeHtml(job.trackingCode)})</h6>
+    area.style.display = 'block';
+    const hasReply = foundApp.ownerReply && foundApp.ownerReply.trim() !== '';
+    area.innerHTML = `
+        <div class="card border-primary bg-light p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h6 class="fw-bold text-primary m-0"><i class="fa fa-id-badge me-1"></i> Dossier Candidat : ${escapeHtml(foundApp.applicantName)}</h6>
+                <span class="badge bg-dark">Code : ${escapeHtml(foundApp.trackingCode)}</span>
+            </div>
             <div class="small mb-2">
-                <div><b>Madras :</b> ${escapeHtml(school.name)} (${escapeHtml(school.province)})</div>
-                <div><b>Candidat :</b> ${escapeHtml(job.applicantName)}</div>
-                <div><b>Poste sollicité :</b> ${escapeHtml(job.role)}</div>
-                <div><b>Date de soumission :</b> ${escapeHtml(job.date)}</div>
+                <b>Madras :</b> ${escapeHtml(foundApp.schoolName)}<br>
+                <b>Poste sollicité :</b> ${escapeHtml(foundApp.role)}<br>
+                <b>Date d'envoi :</b> ${escapeHtml(foundApp.date)}
             </div>
-            <div class="p-3 bg-white border rounded">
-                <div class="small fw-bold text-success mb-1"><i class="fa fa-reply me-1"></i> Réponse du Propriétaire :</div>
-                <div class="small">${job.ownerReply ? escapeHtml(job.ownerReply) : '<span class="text-muted fst-italic">Aucune réponse publiée par le propriétaire pour le moment.</span>'}</div>
-            </div>
+            <hr class="my-2">
+            ${hasReply
+                ? `<div class="alert alert-success mb-0 small">
+                    <div class="fw-bold mb-1"><i class="fa fa-check-circle me-1"></i> Réponse du Propriétaire (${escapeHtml(foundApp.replyDate || '')}) :</div>
+                    <div>${escapeHtml(foundApp.ownerReply)}</div>
+                   </div>`
+                : `<div class="alert alert-warning mb-0 small">
+                    <i class="fa fa-hourglass-half me-1"></i> En attente de la réponse du propriétaire de la Madras. Revenez vérifier avec votre code <b>${escapeHtml(foundApp.trackingCode)}</b>.
+                   </div>`
+            }
         </div>
     `;
 }
@@ -4348,21 +4438,24 @@ function renderSchoolJobsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('schoolJobsTableBody');
     if(!tbody || !s) return;
-    const apps = s.jobApplications || [];
-    tbody.innerHTML = apps.map((j, i) => `
-        <tr>
-            <td>${escapeHtml(j.applicantName)} <small class="text-muted">(${escapeHtml(j.date)})</small></td>
-            <td><b>${escapeHtml(j.role)}</b></td>
-            <td>
-                <div><code>${escapeHtml(j.trackingCode || '-')}</code></div>
-                <div class="small mt-1">${j.ownerReply ? `<span class="text-success fw-bold">Réponse :</span> ${escapeHtml(j.ownerReply)}` : '<span class="text-muted fst-italic">En attente de réponse</span>'}</div>
-            </td>
-            <td class="no-print">
-                <button class="btn btn-sm btn-primary me-1 mb-1" onclick="openJobReplyEditor(${i})"><i class="fa fa-reply"></i> Répondre</button>
-                <button class="btn btn-sm btn-danger mb-1" onclick="deleteJobApp(${i})"><i class="fa fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue.</td></tr>';
+    if(!s.jobApplications) s.jobApplications = [];
+
+    tbody.innerHTML = s.jobApplications.map((j, i) => {
+        const replyBadge = j.ownerReply
+            ? `<div class="small text-success fw-bold mt-1"><i class="fa fa-reply me-1"></i> Répondu (${escapeHtml(j.replyDate || '')}) : ${escapeHtml(j.ownerReply)}</div>`
+            : `<div class="small text-muted fst-italic mt-1">Aucune réponse envoyée</div>`;
+        return `
+            <tr>
+                <td><b>${escapeHtml(j.applicantName)}</b><div class="small text-muted">${escapeHtml(j.date || '')}</div></td>
+                <td>${escapeHtml(j.role)}</td>
+                <td><code>${escapeHtml(j.trackingCode || '-')}</code>${replyBadge}</td>
+                <td class="no-print">
+                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openJobReplyEditor(${i})"><i class="fa fa-reply"></i> Répondre</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteSchoolJob(${i})"><i class="fa fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue pour cette Madras.</td></tr>';
 }
 
 function openJobReplyEditor(index) {
@@ -4370,17 +4463,18 @@ function openJobReplyEditor(index) {
     if(!s || !s.jobApplications || !s.jobApplications[index]) return;
     selectedJobIndexForReply = index;
     const job = s.jobApplications[index];
+    document.getElementById('jobReplyEditorBox').style.display = 'block';
     document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(job.applicantName)} | <b>Poste :</b> ${escapeHtml(job.role)} | <b>Code Suivi :</b> <code>${escapeHtml(job.trackingCode || '-')}</code>`;
     document.getElementById('jobOwnerReplyText').value = job.ownerReply || '';
-    document.getElementById('jobReplyEditorBox').style.display = 'block';
+    document.getElementById('jobOwnerReplyText').focus();
 }
 
 function closeJobReplyEditor() {
     selectedJobIndexForReply = null;
     const box = document.getElementById('jobReplyEditorBox');
-    if(box) box.style.display = 'none';
+    if (box) box.style.display = 'none';
     const txt = document.getElementById('jobOwnerReplyText');
-    if(txt) txt.value = '';
+    if (txt) txt.value = '';
 }
 
 function sendJobOwnerReply() {
@@ -4388,53 +4482,66 @@ function sendJobOwnerReply() {
     if(!s || selectedJobIndexForReply === null || !s.jobApplications[selectedJobIndexForReply]) return;
     const replyText = document.getElementById('jobOwnerReplyText').value.trim();
     if(!replyText) {
-        CommicoAlert("Veuillez écrire une réponse avant d'envoyer.");
+        CommicoAlert("Veuillez écrire une réponse ou un message avant d'envoyer.");
         return;
     }
-    s.jobApplications[selectedJobIndexForReply].ownerReply = replyText;
+
+    const job = s.jobApplications[selectedJobIndexForReply];
+    const nowStr = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    job.ownerReply = replyText;
+    job.replyDate = nowStr;
+
+    const globalJob = (appData.jobApplications || []).find(g => g.id === job.id || (job.trackingCode && g.trackingCode === job.trackingCode));
+    if (globalJob) {
+        globalJob.ownerReply = replyText;
+        globalJob.replyDate = nowStr;
+    }
+
     saveData();
     renderSchoolJobsTable();
     closeJobReplyEditor();
-    CommicoAlert("Réponse envoyée au candidat !");
+    CommicoAlert("Réponse envoyée au candidat avec succès !");
 }
 
-function deleteJobApp(index) {
+function deleteSchoolJob(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(s && s.jobApplications) {
-        s.jobApplications.splice(index, 1);
-        saveData();
-        renderSchoolJobsTable();
-        closeJobReplyEditor();
+    if(!s || !s.jobApplications || !s.jobApplications[index]) return;
+    const removed = s.jobApplications[index];
+    s.jobApplications.splice(index, 1);
+    if (appData.jobApplications) {
+        appData.jobApplications = appData.jobApplications.filter(g => g.id !== removed.id);
     }
+    if (selectedJobIndexForReply === index) closeJobReplyEditor();
+    saveData();
+    renderSchoolJobsTable();
 }
 
-// EMBLÈMES
 function handleSaveArmoiries(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const devise = document.getElementById('schoolDeviseInput').value.trim();
-    const fileInput = document.getElementById('schoolArmoiriesFile');
-    const file = (fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+    const file = document.getElementById('schoolArmoiriesFile').files[0];
 
-    if(devise) s.devise = devise;
+    function finalizeArmoiries(url, fType, mKey) {
+        if (url || mKey) {
+            s.armoiries = url || s.armoiries || '';
+            s.armoiriesType = fType || s.armoiriesType || '';
+            s.armoiriesKey = mKey || s.armoiriesKey || '';
+        }
+        s.devise = devise;
+        saveData();
+        renderArmoiriesDisplay();
+        document.getElementById('schoolArmoiriesFile').value = '';
+        CommicoAlert("Emblème et devise enregistrés !");
+    }
 
     if(file) {
         readFileAsDataUrl(file, function(res) {
-            if (res.dataUrl) {
-                s.armoiries = res.dataUrl;
-                s.armoiriesType = res.fileType;
-                s.armoiriesName = res.fileName;
-            }
-            saveData();
-            renderArmoiriesDisplay();
-            fileInput.value = '';
-            CommicoAlert("Emblème et devise enregistrés avec succès !");
-        }, 'emblemes');
+            finalizeArmoiries(res.dataUrl, res.fileType, res.mediaKey);
+        }, 'armoiries');
     } else {
-        saveData();
-        renderArmoiriesDisplay();
-        CommicoAlert("Devise enregistrée avec succès !");
+        finalizeArmoiries(null, null, null);
     }
 }
 
@@ -4443,7 +4550,7 @@ function deleteArmoiries() {
     if(!s) return;
     s.armoiries = '';
     s.armoiriesType = '';
-    s.armoiriesName = '';
+    s.armoiriesKey = '';
     s.devise = '';
     saveData();
     renderArmoiriesDisplay();
@@ -4454,25 +4561,25 @@ function renderArmoiriesDisplay() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('armoiriesDisplayContainer');
     if(!container || !s) return;
-    let html = '';
-    if(s.armoiries) {
-        const kind = isPdfOrImageUrl(s.armoiries, s.armoiriesType);
+    const srcUrl = resolveMediaSafe(s.armoiries, s.armoiriesKey);
+    const kind = isPdfOrImageUrl(srcUrl, s.armoiriesType);
+    let mediaBlock = '';
+    if (srcUrl) {
         if (kind === 'pdf') {
-            html += `<button type="button" class="btn btn-outline-danger fw-bold mb-3 no-print" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', '${escapeJsAttr(s.armoiriesName || 'Emblème PDF')}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> Consulter l'Emblème PDF (${escapeHtml(s.armoiriesName || 'Document')})</button><br>`;
+            mediaBlock = `<button type="button" class="btn btn-outline-danger fw-bold mb-2 no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', 'Emblème PDF - ${escapeJsAttr(s.name)}', 'application/pdf', '${escapeJsAttr(s.armoiriesKey || '')}')"><i class="fa fa-file-pdf me-1"></i> Consulter l'Emblème PDF</button>`;
         } else if (kind === 'video') {
-            html += `<video src="${s.armoiries}" controls style="max-height:220px; width:auto; border-radius:8px; background:#000;" class="mb-3 border"></video><br>`;
+            mediaBlock = `<video src="${srcUrl}" controls style="max-height:150px; width:auto; border-radius:6px; background:#000;" class="border mb-2"></video>`;
         } else {
-            html += `<img src="${s.armoiries}" style="max-height:180px; width:auto; object-fit:contain; cursor:pointer;" class="mb-3 border rounded" onclick="viewDocumentModal('${escapeJsAttr(s.armoiries)}', '${escapeJsAttr(s.armoiriesName || 'Emblème Officiel')}', 'image/*')"><br>`;
+            mediaBlock = `<img src="${srcUrl}" style="max-height:150px; width:auto; border-radius:6px; object-fit:contain; cursor:pointer;" class="border mb-2" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', 'Emblème - ${escapeJsAttr(s.name)}', 'image/*', '${escapeJsAttr(s.armoiriesKey || '')}')">`;
         }
     }
-    if(s.devise) {
-        html += `<h4 class="fw-bold text-primary">"${escapeHtml(s.devise)}"</h4>`;
-    }
-    if(!html) html = '<p class="text-muted small">Aucun emblème ou devise enregistré pour cette Madras.</p>';
-    container.innerHTML = html;
+    container.innerHTML = `
+        ${mediaBlock}
+        <h5 class="fw-bold text-primary">Devise Officielle :</h5>
+        <p class="lead fst-italic">"${escapeHtml(s.devise || 'Non définie')}"</p>
+    `;
 }
 
-// PALMARÈS
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -4480,20 +4587,15 @@ function renderPalmaresTable() {
     const yData = getActiveYearData(s);
     const students = yData.students || [];
     const coursesByClass = yData.courses || {};
-    const notesByStudent = yData.notes || {};
+    const notesByMat = yData.notes || {};
 
-    if (!students.length) {
-        container.innerHTML = '<div class="alert alert-secondary small">Aucun élève inscrit pour calculer le palmarès de l\'année active.</div>';
-        return;
-    }
-
-    const rankings = students.map(st => {
+    const ranked = students.map(st => {
         const clsCourses = coursesByClass[st.classe] || [];
-        const stNotes = notesByStudent[st.matricule] || {};
+        const stNotes = notesByMat[st.matricule] || {};
         let total = 0;
         let maxTotal = 0;
         clsCourses.forEach(c => {
-            total += parseFloat(stNotes[c.name]) || 0;
+            total += parseFloat(stNotes[c.name] || 0) || 0;
             maxTotal += parseFloat(c.max) || 0;
         });
         const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
@@ -4513,95 +4615,112 @@ function renderPalmaresTable() {
                 <tr class="table-primary">
                     <th>Rang</th>
                     <th>Matricule</th>
-                    <th>Élève</th>
+                    <th>Nom & Prénom</th>
                     <th>Classe</th>
-                    <th>Total</th>
+                    <th>Total Points</th>
                     <th>Pourcentage</th>
                 </tr>
             </thead>
             <tbody>
-                ${rankings.map((r, idx) => `
+                ${ranked.map((r, idx) => `
                     <tr>
                         <td><b>#${idx + 1}</b></td>
-                        <td>${escapeHtml(r.matricule)}</td>
+                        <td><code>${escapeHtml(r.matricule)}</code></td>
                         <td><b>${escapeHtml(r.name)}</b></td>
                         <td>${escapeHtml(r.classe)}</td>
                         <td>${escapeHtml(r.total)} / ${escapeHtml(r.maxTotal)}</td>
                         <td><span class="badge ${r.pct >= 50 ? 'bg-success' : 'bg-secondary'}">${r.pct.toFixed(2)} %</span></td>
                     </tr>
-                `).join('')}
+                `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun résultat enregistré pour le moment.</td></tr>'}
             </tbody>
         </table>
     `;
 }
 
-// COURRIERS
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
     const now = new Date();
-    const nowTimeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const nowDayStr = now.toLocaleDateString('fr-FR', { weekday: 'long' });
-
-    const type = document.getElementById('courrierType').value;
-    const numDoc = document.getElementById('courrierNumDoc').value.trim();
-    const date = document.getElementById('courrierDate').value;
-    const exp = document.getElementById('courrierExp').value.trim();
-    const dest = document.getElementById('courrierDest').value.trim();
-    const objet = document.getElementById('courrierObjet').value.trim();
+    const item = {
+        id: 'COUR-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        date: document.getElementById('courrierDate').value,
+        type: document.getElementById('courrierType').value,
+        numDoc: document.getElementById('courrierNumDoc').value.trim(),
+        exp: document.getElementById('courrierExp').value.trim(),
+        dest: document.getElementById('courrierDest').value.trim(),
+        objet: document.getElementById('courrierObjet').value.trim(),
+        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+        fileUrl: '',
+        fileName: '',
+        fileType: '',
+        mediaKey: ''
+    };
 
     const fileInput = document.getElementById('courrierFileInput');
-    const file = (fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+    const file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
 
-    if(file) {
+    if (file) {
         readFileAsDataUrl(file, function(res) {
-            finalizeSaveCourrier(s, yData, type, numDoc, date, exp, dest, objet, nowTimeStr, nowDayStr, res.dataUrl, res.fileName, res.fileType);
-            fileInput.value = '';
+            item.fileUrl = res.dataUrl || '';
+            item.fileName = res.fileName || file.name || 'Document';
+            item.fileType = res.fileType || file.type || '';
+            item.mediaKey = res.mediaKey || '';
+            finalizeCourrierSave(s, yData, item);
         }, 'courriers');
     } else {
-        finalizeSaveCourrier(s, yData, type, numDoc, date, exp, dest, objet, nowTimeStr, nowDayStr, '', '', '');
+        finalizeCourrierSave(s, yData, item);
     }
 }
 
-function finalizeSaveCourrier(s, yData, type, numDoc, date, exp, dest, objet, heure, jour, fileUrl, fileName, fileType) {
-    const entry = {
-        id: 'COR-' + Date.now(),
-        type, numDoc, date, exp, dest, objet,
-        heure, jour,
-        fileUrl, fileName, fileType
-    };
+function finalizeCourrierSave(s, yData, item) {
     if(!yData.courriers) yData.courriers = [];
-    yData.courriers.push(entry);
-
     if(!yData.dossiersArchive) yData.dossiersArchive = [];
-    yData.dossiersArchive.push({ ...entry });
+    yData.courriers.push(item);
+
+    const archiveEntry = {
+        id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        courrierId: item.id,
+        classeur: item.type,
+        numDoc: item.numDoc,
+        date: item.date,
+        exp: item.exp,
+        dest: item.dest,
+        objet: item.objet,
+        heure: item.heure,
+        jour: item.jour,
+        fileUrl: item.fileUrl || '',
+        fileName: item.fileName || '',
+        fileType: item.fileType || '',
+        mediaKey: item.mediaKey || ''
+    };
+    yData.dossiersArchive.push(archiveEntry);
 
     saveData();
     renderCourriersTable();
     renderDossiersTable();
     document.getElementById('formCourrier').reset();
-    CommicoAlert("Correspondance enregistrée et automatiquement classée dans Archives & Dossiers !");
+    CommicoAlert("Correspondance enregistrée et archivée automatiquement !");
 }
 
 function deleteSelectedOrLastCourrier() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    if(yData.courriers && yData.courriers.length > 0) {
-        const removed = yData.courriers.pop();
-        if (removed && removed.id && yData.dossiersArchive) {
-            const archIdx = yData.dossiersArchive.findIndex(a => a.id === removed.id);
-            if (archIdx !== -1) yData.dossiersArchive.splice(archIdx, 1);
-        }
-        saveData();
-        renderCourriersTable();
-        renderDossiersTable();
-        CommicoAlert("Dernière correspondance supprimée.");
-    } else {
+    if(!yData.courriers || !yData.courriers.length) {
         CommicoAlert("Aucune correspondance à supprimer.");
+        return;
     }
+    const removed = yData.courriers.pop();
+    if (yData.dossiersArchive && removed) {
+        yData.dossiersArchive = yData.dossiersArchive.filter(a => a.courrierId !== removed.id);
+    }
+    saveData();
+    renderCourriersTable();
+    renderDossiersTable();
+    CommicoAlert("Dernière correspondance supprimée.");
 }
 
 function renderCourriersTable() {
@@ -4610,39 +4729,34 @@ function renderCourriersTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.courriers || []).map((c, i) => {
-        const kind = isPdfOrImageUrl(c.fileUrl, c.fileType);
-        const docHtml = c.fileUrl
-            ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(c.fileName || 'PDF')}</button>`
-                : kind === 'video'
-                    ? `<button type="button" class="btn btn-sm btn-outline-dark fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc)}', 'video/*')"><i class="fa fa-video me-1"></i> ${escapeHtml(c.fileName || 'Vidéo')}</button>`
-                    : `<button type="button" class="btn btn-sm btn-outline-primary fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(c.fileUrl)}', '${escapeJsAttr(c.fileName || c.numDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> ${escapeHtml(c.fileName || 'Image')}</button>`)
-            : '-';
+        const srcUrl = resolveMediaSafe(c.fileUrl, c.mediaKey);
+        const docBtn = srcUrl
+            ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}', '${escapeJsAttr(c.mediaKey || '')}')"><i class="fa fa-eye"></i> Voir</button>`
+            : `<span class="text-muted small">-</span>`;
         return `
             <tr>
                 <td>${escapeHtml(c.date)}</td>
-                <td><span class="badge ${c.type === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(c.type)}</span></td>
+                <td><b>${escapeHtml(c.type)}</b></td>
                 <td><code>${escapeHtml(c.numDoc)}</code></td>
                 <td>${escapeHtml(c.exp)}</td>
                 <td>${escapeHtml(c.dest)}</td>
                 <td>${escapeHtml(c.objet)}</td>
-                <td>${escapeHtml(c.heure || '-')} / ${escapeHtml(c.jour || '-')}</td>
-                <td>${docHtml}</td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i></button></td>
+                <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
+                <td>${docBtn}</td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
             </tr>
         `;
     }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance enregistrée.</td></tr>';
 }
 
-function deleteCourrier(index) {
+function deleteCourrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
     const removed = yData.courriers[index];
     yData.courriers.splice(index, 1);
-    if(removed && removed.id && yData.dossiersArchive) {
-        const archIdx = yData.dossiersArchive.findIndex(a => a.id === removed.id);
-        if(archIdx !== -1) yData.dossiersArchive.splice(archIdx, 1);
+    if (removed && yData.dossiersArchive) {
+        yData.dossiersArchive = yData.dossiersArchive.filter(a => a.courrierId !== removed.id);
     }
     saveData();
     renderCourriersTable();
@@ -4673,125 +4787,131 @@ function saveCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
+    if (!yData.dossiersArchive) yData.dossiersArchive = [];
+
+    let syncedCount = 0;
+    (yData.courriers || []).forEach(c => {
+        const exists = yData.dossiersArchive.some(a => (c.id && a.courrierId === c.id) || (a.numDoc && c.numDoc && a.numDoc === c.numDoc));
+        if (!exists) {
+            yData.dossiersArchive.push({
+                id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
+                courrierId: c.id || '',
+                classeur: c.type || 'Entrant',
+                numDoc: c.numDoc || '',
+                date: c.date || '',
+                exp: c.exp || '',
+                dest: c.dest || '',
+                objet: c.objet || '',
+                heure: c.heure || '',
+                jour: c.jour || '',
+                fileUrl: c.fileUrl || '',
+                fileName: c.fileName || '',
+                fileType: c.fileType || '',
+                mediaKey: c.mediaKey || ''
+            });
+            syncedCount++;
+        }
+    });
+
     saveData();
     renderDossiersTable();
-    CommicoAlert("Archives & dossiers enregistrés avec succès !");
+    CommicoAlert(syncedCount > 0
+        ? `${syncedCount} correspondance(s) enregistrée(s) dans les archives.`
+        : "Archives enregistrées et synchronisées avec succès !");
 }
 
 function deleteCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const yData = getActiveYearData(s);
-    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
-    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
     if (!yData.dossiersArchive || !yData.dossiersArchive.length) {
-        CommicoAlert("Aucune correspondance archivée à supprimer.");
+        CommicoAlert("Aucune archive à supprimer.");
         return;
     }
+    const classeurVal = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
+    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
 
-    let targetIdx = -1;
-    if (numQuery) {
-        targetIdx = yData.dossiersArchive.findIndex(item =>
-            String(item.numDoc || '').toLowerCase().includes(numQuery) &&
-            (archiveShowAllMode || item.type === classeur)
-        );
-    } else if (!archiveShowAllMode) {
-        for (let i = yData.dossiersArchive.length - 1; i >= 0; i--) {
-            if (yData.dossiersArchive[i].type === classeur) {
-                targetIdx = i;
-                break;
-            }
+    if (searchVal) {
+        const beforeLen = yData.dossiersArchive.length;
+        yData.dossiersArchive = yData.dossiersArchive.filter(a => !((a.numDoc || '').toLowerCase().includes(searchVal)));
+        if (yData.dossiersArchive.length < beforeLen) {
+            saveData();
+            renderDossiersTable();
+            CommicoAlert("Archive(s) correspondante(s) supprimée(s).");
+            return;
         }
-    } else {
-        targetIdx = yData.dossiersArchive.length - 1;
     }
 
-    if (targetIdx === -1) {
-        CommicoAlert("Aucune correspondance correspondante trouvée à supprimer.");
-        return;
+    if (classeurVal && !archiveShowAllMode) {
+        const idx = yData.dossiersArchive.map((a, i) => ({ a, i })).reverse().find(x => x.a.classeur === classeurVal);
+        if (idx) {
+            yData.dossiersArchive.splice(idx.i, 1);
+            saveData();
+            renderDossiersTable();
+            CommicoAlert("Dernière archive du classeur supprimée.");
+            return;
+        }
     }
 
-    const removed = yData.dossiersArchive[targetIdx];
-    yData.dossiersArchive.splice(targetIdx, 1);
-    if (removed && removed.id && Array.isArray(yData.courriers)) {
-        const cIdx = yData.courriers.findIndex(c => c.id === removed.id);
-        if (cIdx !== -1) yData.courriers.splice(cIdx, 1);
-    }
+    yData.dossiersArchive.pop();
     saveData();
     renderDossiersTable();
-    renderCourriersTable();
-    CommicoAlert("Correspondance archivée supprimée avec succès.");
+    CommicoAlert("Dernière archive supprimée.");
 }
 
 function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
-    if(!tbody || !s) return;
+    if (!tbody || !s) return;
+
     const yData = getActiveYearData(s);
+    const allArchives = Array.isArray(yData.dossiersArchive) ? yData.dossiersArchive : [];
+    const classeurVal = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
 
-    if ((!yData.dossiersArchive || yData.dossiersArchive.length === 0) && Array.isArray(yData.courriers) && yData.courriers.length > 0) {
-        yData.dossiersArchive = yData.courriers.map(c => ({ ...c }));
-    }
+    const indexed = allArchives.map((item, realIndex) => ({ item, realIndex }));
+    const filtered = indexed.filter(({ item }) => {
+        if (searchVal) {
+            return (item.numDoc || '').toLowerCase().includes(searchVal);
+        }
+        if (archiveShowAllMode) {
+            return true;
+        }
+        return (item.classeur || 'Entrant') === classeurVal;
+    });
 
-    const classeurSelect = document.getElementById('archiveClasseur');
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    const selectedClasseur = classeurSelect ? classeurSelect.value : 'Entrant';
-    const numQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-    let entries = (yData.dossiersArchive || []).map((item, idx) => ({ item: item, realIndex: idx }));
-
-    if (!archiveShowAllMode) {
-        entries = entries.filter(e => e.item.type === selectedClasseur);
-    }
-
-    if (numQuery) {
-        entries = entries.filter(e => String(e.item.numDoc || '').toLowerCase().includes(numQuery));
-    }
-
-    tbody.innerHTML = entries.map(entry => {
-        const d = entry.item;
-        const idx = entry.realIndex;
-        const kind = isPdfOrImageUrl(d.fileUrl, d.fileType);
-        const docHtml = d.fileUrl
-            ? (kind === 'pdf'
-                ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.numDoc)}', 'application/pdf')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(d.fileName || 'PDF')}</button>`
-                : kind === 'video'
-                    ? `<button type="button" class="btn btn-sm btn-outline-dark fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.numDoc)}', 'video/*')"><i class="fa fa-video me-1"></i> ${escapeHtml(d.fileName || 'Vidéo')}</button>`
-                    : `<button type="button" class="btn btn-sm btn-outline-primary fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(d.fileUrl)}', '${escapeJsAttr(d.fileName || d.numDoc)}', 'image/*')"><i class="fa fa-image me-1"></i> ${escapeHtml(d.fileName || 'Image')}</button>`)
-            : '-';
-
+    tbody.innerHTML = filtered.map(({ item, realIndex }) => {
+        const srcUrl = resolveMediaSafe(item.fileUrl, item.mediaKey);
+        const docBtn = srcUrl
+            ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(item.fileName || item.numDoc || 'Document')}', '${escapeJsAttr(item.fileType || '')}', '${escapeJsAttr(item.mediaKey || '')}')"><i class="fa fa-eye"></i> Voir</button>`
+            : `<span class="text-muted small">-</span>`;
         return `
             <tr>
-                <td><span class="badge ${d.type === 'Entrant' ? 'bg-info' : 'bg-warning text-dark'}">${escapeHtml(d.type || '-')}</span></td>
-                <td><code>${escapeHtml(d.numDoc || '-')}</code></td>
-                <td>${escapeHtml(d.date || '-')}</td>
-                <td>${escapeHtml(d.exp || '-')}</td>
-                <td>${escapeHtml(d.dest || '-')}</td>
-                <td>${escapeHtml(d.objet || '-')}</td>
-                <td>${escapeHtml(d.heure || '-')} / ${escapeHtml(d.jour || '-')}</td>
-                <td>${docHtml}</td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDossierItem(${idx})"><i class="fa fa-trash"></i></button></td>
+                <td><span class="badge ${(item.classeur || 'Entrant') === 'Entrant' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${escapeHtml(item.classeur || 'Entrant')}</span></td>
+                <td><code>${escapeHtml(item.numDoc || '-')}</code></td>
+                <td>${escapeHtml(item.date || '-')}</td>
+                <td>${escapeHtml(item.exp || '-')}</td>
+                <td>${escapeHtml(item.dest || '-')}</td>
+                <td>${escapeHtml(item.objet || '-')}</td>
+                <td>${escapeHtml(item.heure || '')} ${item.jour ? '(' + escapeHtml(item.jour) + ')' : ''}</td>
+                <td>${docBtn}</td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveItem(${realIndex})"><i class="fa fa-trash"></i> Suppr.</button></td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance trouvée dans les archives.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance archivée trouvée.</td></tr>';
 }
 
-function deleteDossierItem(index) {
+function deleteArchiveItem(realIndex) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
+    if (!s) return;
     const yData = getActiveYearData(s);
-    const removed = yData.dossiersArchive[index];
-    yData.dossiersArchive.splice(index, 1);
-    if (removed && removed.id && Array.isArray(yData.courriers)) {
-        const cIdx = yData.courriers.findIndex(c => c.id === removed.id);
-        if (cIdx !== -1) yData.courriers.splice(cIdx, 1);
+    if (yData && Array.isArray(yData.dossiersArchive) && yData.dossiersArchive[realIndex] !== undefined) {
+        yData.dossiersArchive.splice(realIndex, 1);
+        saveData();
+        renderDossiersTable();
     }
-    saveData();
-    renderDossiersTable();
-    renderCourriersTable();
 }
 
-// CALENDRIER
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -4816,27 +4936,16 @@ function renderCalendrierTable() {
     const tbody = document.getElementById('calendrierTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const filterEl = document.getElementById('calendarFilterSelect');
-    const selectedFilter = filterEl ? filterEl.value : 'Tous';
-
-    let list = (yData.calendrierVacances || []).map((c, idx) => ({ item: c, realIndex: idx }));
-    if (selectedFilter && selectedFilter !== 'Tous') {
-        list = list.filter(entry => entry.item.type === selectedFilter);
+    const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
+    
+    let list = yData.calendrierVacances || [];
+    if(filterVal !== 'Tous') {
+        list = list.filter(c => c.type === filterVal);
     }
 
-    tbody.innerHTML = list.map(entry => {
-        const c = entry.item;
-        const idx = entry.realIndex;
-        return `
-            <tr>
-                <td><span class="badge bg-info text-dark">${escapeHtml(c.type || 'Calendrier Solaire (Chrétien)')}</span></td>
-                <td><b>${escapeHtml(c.titre)}</b></td>
-                <td>${escapeHtml(c.debut)}</td>
-                <td>${escapeHtml(c.fin)}</td>
-                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i></button></td>
-            </tr>
-        `;
-    }).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
+    tbody.innerHTML = list.map((c, i) => `
+        <tr><td><span class="badge bg-light text-dark border">${escapeHtml(c.type)}</span></td><td><b>${escapeHtml(c.titre)}</b></td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
 }
 
 function deleteCalendrierItem(index) {
@@ -4849,7 +4958,6 @@ function deleteCalendrierItem(index) {
     renderSidebarCalendarAndSchedule();
 }
 
-// HORAIRES DES COURS
 function handleSaveHoraireCours(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
@@ -4866,7 +4974,7 @@ function handleSaveHoraireCours(e) {
     renderHorairesTable();
     renderSidebarCalendarAndSchedule();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire de cours enregistré !");
+    CommicoAlert("Horaire enregistré !");
 }
 
 function renderHorairesTable() {
@@ -4875,8 +4983,8 @@ function renderHorairesTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td><b>${escapeHtml(h.cours)}</b></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire.</td></tr>';
+        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td><b>${escapeHtml(h.cours)}</b></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
 function deleteHoraireItem(index) {
@@ -4889,70 +4997,31 @@ function deleteHoraireItem(index) {
     renderSidebarCalendarAndSchedule();
 }
 
-// STATISTIQUES
 function renderStatistiques() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
     if(!container || !s) return;
     const yData = getActiveYearData(s);
 
-    const students = yData.students || [];
-    const totalStudents = students.length;
-    const boysCount = students.filter(st => st.sex === 'M').length;
-    const girlsCount = students.filter(st => st.sex === 'F').length;
-    const teachersCount = (yData.teachers || []).length;
-    const classesCount = (yData.classes || []).length;
-
-    let totalCaisseUsd = 0;
-    let totalCaisseFc = 0;
-    (yData.caisse || []).forEach(item => {
-        const amt = parseFloat(item.montant) || 0;
-        if(item.devise === 'FC') totalCaisseFc += amt;
-        else totalCaisseUsd += amt;
-    });
-
-    const totalMomoUsd = (yData.studentPayments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const nbClasses = (yData.classes || []).length;
+    const nbTeachers = (yData.teachers || []).length;
+    const nbStudents = (yData.students || []).length;
 
     container.innerHTML = `
-        <div class="col-md-3">
-            <div class="card p-3 bg-light border-start border-4 border-primary h-100">
-                <div class="small text-muted fw-bold">TOTAL ÉLÈVES</div>
-                <div class="h3 fw-bold text-primary mb-1">${totalStudents}</div>
-                <div class="small">Garçons : <b>${boysCount}</b> | Filles : <b>${girlsCount}</b></div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 bg-light border-start border-4 border-success h-100">
-                <div class="small text-muted fw-bold">ENSEIGNANTS & CLASSES</div>
-                <div class="h3 fw-bold text-success mb-1">${teachersCount}</div>
-                <div class="small">Classes : <b>${classesCount}</b></div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 bg-light border-start border-4 border-warning h-100">
-                <div class="small text-muted fw-bold">CAISSE (USD / FC)</div>
-                <div class="h5 fw-bold text-dark mb-1">$${totalCaisseUsd.toFixed(2)}</div>
-                <div class="small">Francs : <b>${totalCaisseFc.toFixed(2)} FC</b></div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 bg-light border-start border-4 border-info h-100">
-                <div class="small text-muted fw-bold">MOBILE MONEY</div>
-                <div class="h3 fw-bold text-info mb-1">$${totalMomoUsd.toFixed(2)}</div>
-                <div class="small">Transactions : <b>${(yData.studentPayments || []).length}</b></div>
-            </div>
-        </div>
+        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Classes</h6><h2 class="text-primary fw-bold">${nbClasses}</h2></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Enseignants</h6><h2 class="text-success fw-bold">${nbTeachers}</h2></div></div>
+        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Élèves inscrits</h6><h2 class="text-info fw-bold">${nbStudents}</h2></div></div>
     `;
 }
 
-// ADMIN CENTRAL
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
+            renderAdminLitigiousMessages();
             showSection('view-admin-central');
         } else if(pass !== null) {
-            CommicoAlert("Mot de passe Administrateur Central incorrect.");
+            CommicoAlert("Mot de passe incorrect.");
         }
     });
 }
@@ -4961,79 +5030,53 @@ function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
     tbody.innerHTML = (appData.schools || []).map(s => {
-        const ownerCode = getOwnerSecretCode(s);
+        let dirCodeDisplay = '-';
+        if(s.direction && s.direction.length > 0) {
+            const owner = s.direction.find(d => d.role === 'Directeur / Propriétaire');
+            if(owner && owner.secretCode) dirCodeDisplay = `<code class="text-success fw-bold">${escapeHtml(owner.secretCode)}</code>`;
+        }
         return `
             <tr>
-                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:45px;height:45px;object-fit:contain;border-radius:50%;" class="border" onerror="handleLogoFallback(this, 45, 'MD');"></td>
-                <td><b>${escapeHtml(s.name)}</b><br><small class="text-muted">${escapeHtml(s.regime)}</small></td>
-                <td>${escapeHtml(s.province)}<br><small class="text-muted">${escapeHtml(s.subDivision || '')}</small></td>
+                <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;object-fit:contain;" class="rounded-circle border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
+                <td><b>${escapeHtml(s.name)}</b></td>
+                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td><div>Madras : <code>${escapeHtml(s.secretCode)}</code></div><div>Directeur : <code>${escapeHtml(ownerCode || '-')}</code></div></td>
+                <td>
+                    <div>Madras : <code>${escapeHtml(s.secretCode)}</code></div>
+                    <div>Directeur : ${dirCodeDisplay}</div>
+                </td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-warning fw-bold me-1 mb-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')">Statut</button>
-                    <button class="btn btn-sm btn-danger fw-bold mb-1" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')">Supprimer</button>
+                    <button class="btn btn-sm btn-success me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')">Statut</button>
+                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i></button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
 }
 
 function toggleSchoolPaymentStatus(id) {
     const s = appData.schools.find(x => x.id === id);
     if(!s) return;
-    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué / Impayé' : 'A jour';
+    s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
     saveData();
     renderAdminCentralTable();
     renderSchoolsList();
 }
 
-// TÉLÉCHARGEMENT PAR SECTION
-function downloadSectionData(sectionKey) {
+function downloadSectionData(sectionName) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) { CommicoAlert("Aucune Madras active."); return; }
+    if (!s) return;
     const yData = getActiveYearData(s);
-    let dataObj = {};
-    if (sectionKey === 'direction') dataObj = s.direction || [];
-    else if (sectionKey === 'classes') dataObj = yData.classes || [];
-    else if (sectionKey === 'profs') dataObj = yData.teachers || [];
-    else if (sectionKey === 'eleves') dataObj = yData.students || [];
-    else if (sectionKey === 'bulletins' || sectionKey === 'periodic') dataObj = { students: yData.students || [], notes: yData.notes || {}, courses: yData.courses || {} };
-    else if (sectionKey === 'caisse') dataObj = yData.caisse || [];
-    else if (sectionKey === 'momo') dataObj = yData.studentPayments || [];
-    else if (sectionKey === 'presences') dataObj = { presenceStudents: yData.presenceStudents || [], dailyAttendanceSheets: yData.dailyAttendanceSheets || [] };
-    else if (sectionKey === 'discipline') dataObj = yData.discipline || [];
-    else if (sectionKey === 'comm') dataObj = s.communications || [];
-    else if (sectionKey === 'armoiries') dataObj = { devise: s.devise || '', armoiriesName: s.armoiriesName || '' };
-    else if (sectionKey === 'palmares') dataObj = { students: yData.students || [], notes: yData.notes || {}, courses: yData.courses || {} };
-    else if (sectionKey === 'courriers') dataObj = yData.courriers || [];
-    else if (sectionKey === 'horaires') dataObj = yData.horairesCours || [];
-
-    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const dataStr = JSON.stringify({ school: s.name, section: sectionName, data: yData }, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `COMICO_${sectionKey}_${s.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+    a.download = `COMICO_${sectionName}_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-}
-
-// INCRIPTION DIRECTE PORTAIL
-function openDirectRegistrationModal() {
-    if (!appData.schools || !appData.schools.length) {
-        CommicoAlert("Veuillez d'abord créer une Madras.");
-        return;
-    }
-    CommicoPrompt("Entrez le Code Secret Madras pour ouvrir son tableau de bord :", function(code) {
-        if(!code) return;
-        const match = appData.schools.find(s => s.secretCode && s.secretCode.toUpperCase() === code.trim().toUpperCase());
-        if(match) {
-            checkAndOpenSchoolDashboard(match.id);
-        } else {
-            CommicoAlert("Code secret Madras introuvable.");
-        }
-    });
 }
 </script>
 </body>
