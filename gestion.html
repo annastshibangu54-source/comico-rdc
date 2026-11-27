@@ -64,6 +64,8 @@
     let firebaseUser = null;
     let firebaseReady = false;
     let isSyncingFromFirebase = false;
+    let isSavingToFirebase = false;
+    let notifyTimeout = null;
 
     const PROVINCES_RDC = [
       'Kinshasa', 'Nord-Kivu', 'Sud-Kivu', 'Haut-Katanga', 'Tshopo', 'Kasaï-Oriental',
@@ -431,11 +433,15 @@
 
     function mergeWithInitialState(parsed) {
       if (!parsed || typeof parsed !== 'object') return structuredClone(INITIAL_STATE);
-      return {
+      const merged = {
         ...structuredClone(INITIAL_STATE),
         ...parsed,
         splitRules: { ...INITIAL_STATE.splitRules, ...(parsed.splitRules || {}) }
       };
+      if (!merged.activeTab) merged.activeTab = 'dashboard';
+      if (typeof merged.mobileMenuOpen !== 'boolean') merged.mobileMenuOpen = false;
+      if (typeof merged.topNavOpen !== 'boolean') merged.topNavOpen = false;
+      return merged;
     }
 
     function readLocalBackup() {
@@ -458,7 +464,7 @@
     let state = readLocalBackup() || structuredClone(INITIAL_STATE);
 
     function sanitizeStateForFirestore(rawState) {
-      const clean = { ...rawState, notification: null };
+      const clean = { ...rawState, notification: null, mobileMenuOpen: false, topNavOpen: false };
       const serialized = JSON.stringify(clean);
       if (serialized.length > 900000) {
         throw new Error('Payload dépassant la limite recommandée');
@@ -467,8 +473,9 @@
     }
 
     async function saveState() {
-      if (isSyncingFromFirebase) return true;
       writeLocalBackup(state);
+      if (isSyncingFromFirebase || isSavingToFirebase) return true;
+      isSavingToFirebase = true;
       try {
         if (!firebaseUser) {
           await signInAnonymously(auth).catch(() => null);
@@ -483,6 +490,8 @@
         state.notification = 'Enregistrement : vérifiez la taille du fichier ou votre connexion.';
         renderApp();
         return false;
+      } finally {
+        isSavingToFirebase = false;
       }
     }
 
@@ -490,10 +499,21 @@
       state.notification = msg;
       renderApp();
       saveState();
-      setTimeout(() => {
+      if (notifyTimeout) clearTimeout(notifyTimeout);
+      notifyTimeout = setTimeout(() => {
         state.notification = null;
         renderApp();
       }, 3800);
+    }
+
+    function toggleMobileMenu(forceValue) {
+      state.mobileMenuOpen = typeof forceValue === 'boolean' ? forceValue : !state.mobileMenuOpen;
+      renderApp();
+    }
+
+    function toggleTopNav(forceValue) {
+      state.topNavOpen = typeof forceValue === 'boolean' ? forceValue : !state.topNavOpen;
+      renderApp();
     }
 
     async function initFirebaseSync() {
@@ -502,14 +522,20 @@
         firebaseReady = true;
         try {
           const snap = await getDoc(FIREBASE_GESTION_DOC);
-          if (snap.exists() && snap.data()?.payload) {
+          if (snap.exists() && snap.data()?.payload && !isSavingToFirebase) {
             isSyncingFromFirebase = true;
             const parsed = JSON.parse(snap.data().payload);
+            const currentTab = state.activeTab;
+            const currentMobileOpen = state.mobileMenuOpen;
+            const currentTopOpen = state.topNavOpen;
             state = mergeWithInitialState(parsed);
+            state.activeTab = currentTab || state.activeTab || 'dashboard';
+            state.mobileMenuOpen = currentMobileOpen;
+            state.topNavOpen = currentTopOpen;
             writeLocalBackup(state);
             isSyncingFromFirebase = false;
             renderApp();
-          } else {
+          } else if (!snap.exists()) {
             await saveState();
           }
         } catch (err) {
@@ -517,16 +543,20 @@
         }
 
         onSnapshot(FIREBASE_GESTION_DOC, (docSnap) => {
-          if (!docSnap.exists() || !docSnap.data()?.payload || isSyncingFromFirebase) return;
+          if (!docSnap.exists() || !docSnap.data()?.payload || isSyncingFromFirebase || isSavingToFirebase) return;
           try {
             const remoteParsed = JSON.parse(docSnap.data().payload);
             const currentNotification = state.notification;
             const currentTab = state.activeTab;
+            const currentMobileOpen = state.mobileMenuOpen;
+            const currentTopOpen = state.topNavOpen;
             isSyncingFromFirebase = true;
             state = mergeWithInitialState(remoteParsed);
             writeLocalBackup(state);
             state.notification = currentNotification;
             if (currentTab) state.activeTab = currentTab;
+            state.mobileMenuOpen = currentMobileOpen;
+            state.topNavOpen = currentTopOpen;
             isSyncingFromFirebase = false;
             renderApp();
           } catch (_) {
@@ -2559,12 +2589,19 @@
         }
       ];
 
-      document.getElementById('app').innerHTML = `
+      const appEl = document.getElementById('app');
+      if (!appEl) return;
+
+      appEl.innerHTML = `
         <div class="min-h-screen bg-slate-100 text-slate-900 flex flex-col lg:flex-row font-sans">
           ${state.notification ? `
             <div class="fixed bottom-5 right-5 z-50 bg-emerald-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-amber-400/50 text-sm max-w-md no-print">
               ${escapeHtml(state.notification)}
             </div>
+          ` : ''}
+
+          ${state.mobileMenuOpen ? `
+            <div onclick="toggleMobileMenu(false)" class="fixed inset-0 z-30 bg-slate-950/50 lg:hidden no-print"></div>
           ` : ''}
 
           <aside class="fixed inset-y-0 left-0 z-40 w-72 bg-emerald-950 text-emerald-50 flex flex-col transition-transform duration-200 lg:static lg:translate-x-0 ${state.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}">
@@ -2573,7 +2610,7 @@
                 <h1 class="font-extrabold text-base tracking-tight text-white">COMICO • RDC</h1>
                 <p class="text-[11px] text-amber-300 font-medium">Administration Islamique</p>
               </div>
-              <button type="button" onclick="state.mobileMenuOpen = false; renderApp();" class="lg:hidden text-emerald-300 text-sm font-bold">✕</button>
+              <button type="button" onclick="toggleMobileMenu(false)" class="lg:hidden text-emerald-300 text-sm font-bold px-2 py-1 rounded hover:bg-emerald-900">✕</button>
             </div>
             <div class="flex-1 overflow-y-auto p-3 space-y-5">
               ${navSections.map((sec) => `
@@ -2607,7 +2644,7 @@
                     COMICO<span class="text-emerald-700">RDC</span>
                   </span>
                 </a>
-                <button type="button" onclick="state.topNavOpen = !state.topNavOpen; renderApp();" class="lg:hidden px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold">
+                <button type="button" onclick="toggleTopNav()" class="lg:hidden px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold">
                   Menu
                 </button>
                 <div class="${state.topNavOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-4 w-full lg:w-auto text-xs font-semibold text-slate-700">
@@ -2625,7 +2662,7 @@
 
             <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-30">
               <div class="flex items-center gap-3">
-                <button type="button" onclick="state.mobileMenuOpen = true; renderApp();" class="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold">☰</button>
+                <button type="button" onclick="toggleMobileMenu(true)" class="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold">☰</button>
                 <span class="text-xs text-slate-500 font-medium">Système d’Information Unifié • Communauté Islamique en RDC</span>
               </div>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
@@ -2645,6 +2682,8 @@
       state,
       saveState,
       notify,
+      toggleMobileMenu,
+      toggleTopNav,
       addAudit,
       escapeHtml,
       downloadJson,
