@@ -1370,7 +1370,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
   };
 
   const FIRESTORE_DOC_BYTE_LIMIT = 850000;
-  const NETWORK_TIMEOUT_MS = 12000;
+  const NETWORK_TIMEOUT_MS = 2500;
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -1473,7 +1473,7 @@ body { background:#f3f4f6; font-family: 'Nunito', sans-serif; color:#1f2937; }
       if (!user) return null;
       const cleanName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const storageRef = ref(storage, `comico/${folderPath || 'uploads'}/${cleanName}`);
-      const snap = await withTimeout(uploadBytes(storageRef, file), 60000, "upload Storage");
+      const snap = await withTimeout(uploadBytes(storageRef, file), 6000, "upload Storage");
       const url = await getDownloadURL(snap.ref);
       return { url, name: file.name, type: file.type || 'application/octet-stream', viaStorage: true };
     } catch (err) {
@@ -1665,6 +1665,7 @@ let teachersUnlocked = false;
 let authenticatedTeacher = null;
 let currentActiveStudentClass = null;
 let saveQueuePromise = Promise.resolve();
+let saveDebounceTimer = null;
 
 // Stockage mémoire de secours pour les médias volumineux (vidéos, PDF, images) si la limite localStorage est atteinte
 const mediaMemoryStore = {};
@@ -1879,19 +1880,65 @@ function readFileAsDataUrl(file, callback, folderPath) {
         callback({ dataUrl: '', fileName: '', fileType: '' });
         return;
     }
-    if (typeof window.firebaseUploadFile === "function") {
-        window.firebaseUploadFile(file, folderPath || 'documents').then(function(uploaded) {
-            if (uploaded && uploaded.url) {
-                storeMediaSafe(uploaded.url, uploaded.url);
-                callback({ dataUrl: uploaded.url, fileName: uploaded.name, fileType: uploaded.type });
-                return;
-            }
-            readFileAsLocalDataUrl(file, callback);
-        }).catch(function() {
-            readFileAsLocalDataUrl(file, callback);
-        });
-    } else {
-        readFileAsLocalDataUrl(file, callback);
+    readFileAsLocalDataUrl(file, function(localRes) {
+        callback(localRes);
+        if (typeof window.firebaseUploadFile === "function") {
+            window.firebaseUploadFile(file, folderPath || 'documents').then(function(uploaded) {
+                if (uploaded && uploaded.url) {
+                    storeMediaSafe(uploaded.url, uploaded.url);
+                    if (localRes.mediaKey) {
+                        storeMediaSafe(localRes.mediaKey, uploaded.url);
+                    }
+                    syncMediaUrlAcrossAppData(localRes.mediaKey, uploaded.url);
+                }
+            }).catch(function() {});
+        }
+    });
+}
+
+function syncMediaUrlAcrossAppData(mediaKey, remoteUrl) {
+    if (!mediaKey || !remoteUrl) return;
+    let changed = false;
+    (appData.schools || []).forEach(sc => {
+        if (sc.armoiriesKey === mediaKey) {
+            sc.armoiries = remoteUrl;
+            changed = true;
+        }
+        if (Array.isArray(sc.communications)) {
+            sc.communications.forEach(cm => {
+                if (Array.isArray(cm.attachments)) {
+                    cm.attachments.forEach(att => {
+                        if (att && att.mediaKey === mediaKey) {
+                            att.url = remoteUrl;
+                            changed = true;
+                        }
+                    });
+                }
+            });
+        }
+        if (sc.yearsData && typeof sc.yearsData === 'object') {
+            Object.values(sc.yearsData).forEach(yd => {
+                if (yd && Array.isArray(yd.courriers)) {
+                    yd.courriers.forEach(cr => {
+                        if (cr && cr.mediaKey === mediaKey) {
+                            cr.fileUrl = remoteUrl;
+                            changed = true;
+                        }
+                    });
+                }
+                if (yd && Array.isArray(yd.dossiersArchive)) {
+                    yd.dossiersArchive.forEach(da => {
+                        if (da && da.mediaKey === mediaKey) {
+                            da.fileUrl = remoteUrl;
+                            changed = true;
+                        }
+                    });
+                }
+            });
+        }
+    });
+    if (changed) {
+        scheduleCloudSync();
     }
 }
 
@@ -1949,7 +1996,7 @@ function CommicoPrompt(msg, callback) {
         callback(val);
     };
     modal.style.display = 'flex';
-    setTimeout(() => inputField.focus(), 100);
+    setTimeout(() => inputField.focus(), 50);
 }
 
 function closeCommicoModalCancel() {
@@ -2052,7 +2099,7 @@ window.initComicoFirebase = async function() {
             try {
                 const parsed = JSON.parse(localFallback);
                 normalizeAndRenderAppData(parsed);
-                await window.firebaseSaveState(appData);
+                scheduleCloudSync();
             } catch(e) {
                 normalizeAndRenderAppData({ schools: [], adminRequests: [], jobApplications: [] });
             }
@@ -2116,6 +2163,17 @@ function createLocalStorageSafeSnapshot(data) {
     }
 }
 
+function scheduleCloudSync() {
+    if (typeof window.firebaseSaveState !== "function") return;
+    if (saveDebounceTimer !== null) {
+        clearTimeout(saveDebounceTimer);
+    }
+    saveDebounceTimer = setTimeout(function() {
+        saveDebounceTimer = null;
+        saveQueuePromise = saveQueuePromise.then(() => window.firebaseSaveState(appData)).catch(() => false);
+    }, 150);
+}
+
 function saveData() {
     try {
         localStorage.setItem('comico_appData', JSON.stringify(appData));
@@ -2125,11 +2183,10 @@ function saveData() {
             try { localStorage.setItem('comico_appData', compactStr); } catch (e2) {}
         }
     }
-    if (typeof window.firebaseSaveState === "function") {
-        saveQueuePromise = saveQueuePromise.then(() => window.firebaseSaveState(appData)).catch(() => false);
-    } else if (typeof window.setSyncBadge === "function") {
+    if (typeof window.setSyncBadge === "function") {
         window.setSyncBadge("online", "Synchronisé");
     }
+    scheduleCloudSync();
 }
 
 function showSection(id) {
@@ -2154,19 +2211,20 @@ function compressAndResizeImage(file, callback) {
         callback("img/logo1.jpg");
         return;
     }
-    if (typeof window.firebaseUploadFile === "function") {
-        window.firebaseUploadFile(file, "logos").then(function(uploaded) {
-            if (uploaded && uploaded.url) {
-                callback(uploaded.url);
-                return;
-            }
-            compressLocalLogo(file, callback);
-        }).catch(function() {
-            compressLocalLogo(file, callback);
-        });
-    } else {
-        compressLocalLogo(file, callback);
-    }
+    compressLocalLogo(file, function(localLogo) {
+        callback(localLogo);
+        if (typeof window.firebaseUploadFile === "function") {
+            window.firebaseUploadFile(file, "logos").then(function(uploaded) {
+                if (uploaded && uploaded.url) {
+                    const latestSchool = appData.schools.find(sc => sc.logoUrl === localLogo);
+                    if (latestSchool) {
+                        latestSchool.logoUrl = uploaded.url;
+                        scheduleCloudSync();
+                    }
+                }
+            }).catch(function() {});
+        }
+    });
 }
 
 function compressLocalLogo(file, callback) {
@@ -2359,6 +2417,22 @@ function viewDocumentModal(url, title, fileType, mediaKey) {
         area.innerHTML = `<div class="text-center p-4 bg-white rounded shadow-sm"><p class="mb-3">Aperçu direct indisponible pour ce format.</p><a href="${resolvedUrl}" download="${escapeHtml(safeTitle)}" class="btn btn-primary btn-sm fw-bold"><i class="fa fa-download me-1"></i> Télécharger le fichier</a></div>`;
     }
     document.getElementById('fileViewerModal').style.display = 'flex';
+}
+
+function openDocumentFromRow(kind, index, archiveRealIndex) {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if (!s) { CommicoAlert("Aucune Madras active."); return; }
+    const yData = getActiveYearData(s);
+    let item = null;
+    if (kind === 'courrier') {
+        item = (yData.courriers || [])[index];
+    } else if (kind === 'archive') {
+        item = (yData.dossiersArchive || [])[archiveRealIndex];
+    }
+    if (!item) { CommicoAlert("Document introuvable."); return; }
+    const srcUrl = resolveMediaSafe(item.fileUrl, item.mediaKey);
+    if (!srcUrl) { CommicoAlert("Aucun fichier joint à afficher."); return; }
+    viewDocumentModal(srcUrl, item.fileName || item.numDoc || 'Document', item.fileType || '', item.mediaKey || '');
 }
 
 function renderSchoolsList() {
@@ -4122,44 +4196,39 @@ function deleteDailyAttendanceSheet() {
 
     const beforeLen = yData.dailyAttendanceSheets.length;
     yData.dailyAttendanceSheets = yData.dailyAttendanceSheets.filter(sh => !(sh.classe === cls && (!dateVal || sh.date === dateVal)));
-    if (yData.dailyAttendanceSheets.length === beforeLen) {
+    if (yData.dailyAttendanceSheets.length < beforeLen) {
+        saveData();
+        renderDailyAttendanceSheet();
+        CommicoAlert("Liste de présence journalière supprimée.");
+    } else {
         CommicoAlert("Aucune fiche trouvée pour cette classe et cette date.");
-        return;
     }
-
-    saveData();
-    renderDailyAttendanceSheet();
-    CommicoAlert("Liste de présence journalière supprimée avec succès.");
 }
 
 function downloadDailyAttendanceSheet() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if (!s) return;
     const cls = document.getElementById('dailyAttendanceClassSelect').value || 'Classe';
-    const dateVal = document.getElementById('dailyAttendanceDate').value || '';
+    const dateVal = document.getElementById('dailyAttendanceDate').value || new Date().toISOString().slice(0, 10);
     const dayVal = document.getElementById('dailyAttendanceDay').value || '';
     const timeVal = document.getElementById('dailyAttendanceTime').value || '';
     const sigVal = document.getElementById('dailyAttendanceTeacherSignature').value || '';
 
     const trs = document.querySelectorAll('#dailyAttendanceTableBody tr[data-matricule]');
-    const lines = [
-        `Madras: ${s.name}`,
-        `Classe: ${cls} | Date: ${dateVal} | Jour: ${dayVal} | Heure: ${timeVal}`,
-        `Mat Eleve;Nom Postnom Prenom;Date;Jour;Heure;Presence`
-    ];
+    let text = `LISTE DE PRÉSENCE JOURNALIÈRE - ${s.name}\nClasse : ${cls} | Date : ${dateVal} | Jour : ${dayVal} | Heure : ${timeVal}\n--------------------------------------------------\n`;
     trs.forEach(tr => {
-        const mat = tr.getAttribute('data-matricule') || '';
-        const name = tr.getAttribute('data-name') || '';
-        const pres = tr.querySelector('.daily-presence-select') ? tr.querySelector('.daily-presence-select').value : '';
-        lines.push(`${mat};${name};${dateVal};${dayVal};${timeVal};${pres}`);
+        const mat = tr.getAttribute('data-matricule');
+        const nom = tr.getAttribute('data-name');
+        const pres = tr.querySelector('.daily-presence-select') ? tr.querySelector('.daily-presence-select').value : 'Présent';
+        text += `${mat} | ${nom} | ${dateVal} | ${dayVal} | ${timeVal} | ${pres}\n`;
     });
-    lines.push(`Signature de l'enseignant: ${sigVal}`);
+    text += `--------------------------------------------------\nEnseignant / Signature : ${sigVal}\n`;
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Presence_Journaliere_${cls.replace(/[^a-zA-Z0-9_-]/g, '_')}_${dateVal || 'liste'}.csv`;
+    a.download = `Presence_Journaliere_${cls.replace(/\s+/g, '_')}_${dateVal}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -4189,7 +4258,7 @@ function handleSaveDiscipline(e) {
     saveData();
     renderDisciplineTable();
     document.getElementById('formDiscipline').reset();
-    CommicoAlert("Observation enregistrée !");
+    CommicoAlert("Sanction enregistrée !");
 }
 
 function renderDisciplineTable() {
@@ -4198,10 +4267,12 @@ function renderDisciplineTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     let list = yData.discipline || [];
-    if(authenticatedTeacher) list = list.filter(d => d.classe === authenticatedTeacher.classe);
+    if(authenticatedTeacher) {
+        list = list.filter(d => d.classe === authenticatedTeacher.classe);
+    }
     tbody.innerHTML = list.map((d, i) => `
-        <tr><td>${escapeHtml(d.classe || '-')}</td><td>${escapeHtml(d.student)}</td><td>${escapeHtml(d.obs)}</td><td>${escapeHtml(d.duree)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDisciplineItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune observation.</td></tr>';
+        <tr><td>${escapeHtml(d.classe)}</td><td>${escapeHtml(d.student)}</td><td>${escapeHtml(d.obs)}</td><td>${escapeHtml(d.duree)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteDisciplineItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucune sanction.</td></tr>';
 }
 
 function deleteDisciplineItem(index) {
@@ -4213,81 +4284,93 @@ function deleteDisciplineItem(index) {
     renderDisciplineTable();
 }
 
+// COMMUNICATION
 function verifyCommAccess() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
-    let validOwnerCode = getOwnerSecretCode(s);
     const code = document.getElementById('commSecretInput').value.trim();
+    let validOwnerCode = getOwnerSecretCode(s);
     if(code && code.toUpperCase() === validOwnerCode.toUpperCase()) {
         document.getElementById('commWorkspace').style.display = 'block';
         document.getElementById('commAuthArea').style.display = 'none';
         renderCommTable();
-        CommicoAlert("Accès Communication Directeur autorisé.");
+        CommicoAlert("Accès Communication Directeur validé.");
     } else {
-        CommicoAlert("Code directeur incorrect.");
+        CommicoAlert("Code secret directeur incorrect.");
     }
 }
 
 function handleSaveCommunication() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const msg = document.getElementById('announcementText').value.trim();
-    if(!msg) { CommicoAlert("Veuillez saisir un message."); return; }
-
+    if(!s) {
+        CommicoAlert("Veuillez d'abord ouvrir une Madras.");
+        return;
+    }
+    const text = document.getElementById('announcementText').value.trim();
     const fileInput = document.getElementById('commImageInput');
-    const files = (fileInput && fileInput.files && fileInput.files.length) ? Array.from(fileInput.files) : [];
+    const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
 
-    if (!files.length) {
-        finalizeCommunicationSave(s, msg, []);
+    if(!text && files.length === 0) {
+        CommicoAlert("Veuillez saisir un message ou joindre un fichier.");
         return;
     }
 
-    const attachments = [];
-    let idx = 0;
-    function processNextFile() {
-        if (idx >= files.length) {
-            finalizeCommunicationSave(s, msg, attachments);
-            return;
-        }
-        const f = files[idx++];
-        readFileAsDataUrl(f, function(res) {
-            if (res.dataUrl || res.mediaKey) {
-                attachments.push({
-                    url: res.dataUrl || '',
-                    name: res.fileName || f.name || 'Document',
-                    type: res.fileType || f.type || '',
-                    mediaKey: res.mediaKey || ''
-                });
-            }
-            processNextFile();
-        }, 'communications');
-    }
-    processNextFile();
-}
-
-function finalizeCommunicationSave(s, msg, attachments) {
     if(!s.communications) s.communications = [];
     const now = new Date();
-    const imagesList = attachments
-        .filter(a => isPdfOrImageUrl(a.url || resolveMediaSafe('', a.mediaKey), a.type) === 'image')
-        .map(a => a.url || resolveMediaSafe('', a.mediaKey))
-        .filter(Boolean);
+    const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const ts = now.getTime();
+    const msgContent = text || "Publication officielle de document/média";
 
-    s.communications.push({
-        id: 'COM-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: Date.now(),
-        message: msg,
-        images: imagesList,
-        attachments: attachments
-    });
-    saveData();
-    renderCommTable();
-    renderPortalAnnouncements();
-    document.getElementById('announcementText').value = '';
-    const fileInput = document.getElementById('commImageInput');
-    if (fileInput) fileInput.value = '';
-    CommicoAlert("Annonce publiée et enregistrée !");
+    if(files.length > 0) {
+        let processed = 0;
+        let attachmentsList = [];
+        let imagesList = [];
+        files.forEach(file => {
+            readFileAsDataUrl(file, function(res) {
+                if(res.dataUrl) {
+                    attachmentsList.push({
+                        url: res.dataUrl,
+                        name: res.fileName || file.name,
+                        type: res.fileType || file.type || '',
+                        mediaKey: res.mediaKey || ''
+                    });
+                    if (isPdfOrImageUrl(res.dataUrl, res.fileType || file.type) === 'image') {
+                        imagesList.push(res.dataUrl);
+                    }
+                }
+                processed++;
+                if(processed === files.length) {
+                    s.communications.unshift({
+                        date: dateStr,
+                        timestamp: ts,
+                        message: msgContent,
+                        images: imagesList,
+                        attachments: attachmentsList
+                    });
+                    saveData();
+                    renderCommTable();
+                    renderPortalAnnouncements();
+                    document.getElementById('announcementText').value = '';
+                    if(fileInput) fileInput.value = '';
+                    CommicoAlert("Communication publiée avec succès (Valide pendant 72 heures) !");
+                }
+            }, 'communications');
+        });
+    } else {
+        s.communications.unshift({
+            date: dateStr,
+            timestamp: ts,
+            message: msgContent,
+            images: [],
+            attachments: []
+        });
+        saveData();
+        renderCommTable();
+        renderPortalAnnouncements();
+        document.getElementById('announcementText').value = '';
+        if(fileInput) fileInput.value = '';
+        CommicoAlert("Communication publiée avec succès (Valide pendant 72 heures) !");
+    }
 }
 
 function renderCommTable() {
@@ -4295,43 +4378,44 @@ function renderCommTable() {
     const tbody = document.getElementById('commTableBody');
     if(!tbody || !s) return;
     tbody.innerHTML = (s.communications || []).map((c, i) => {
-        const atts = c.attachments && c.attachments.length
-            ? c.attachments
-            : (c.images || []).map((im, idx) => ({ url: im, name: `Image ${idx + 1}`, type: 'image/*' }));
+        const atts = c.attachments && c.attachments.length ? c.attachments : ((c.images || []).map((im, idx) => ({ url: im, name: `Image ${idx + 1}`, type: 'image/*' })));
         const mediaHtml = atts.map(att => {
             const srcUrl = resolveMediaSafe(att.url, att.mediaKey);
             if (!srcUrl) return `<span class="badge bg-secondary">${escapeHtml(att.name || 'Fichier')}</span>`;
             const kind = isPdfOrImageUrl(srcUrl, att.type);
             if (kind === 'pdf') {
-                return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Document PDF')}', 'application/pdf', '${escapeJsAttr(att.mediaKey || '')}')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'Voir PDF')}</button>`;
+                return `<button type="button" class="btn btn-sm btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'PDF')}', 'application/pdf', '${escapeJsAttr(att.mediaKey || '')}')"><i class="fa fa-file-pdf me-1"></i> ${escapeHtml(att.name || 'PDF')}</button>`;
             }
             if (kind === 'video') {
-                return `<video src="${srcUrl}" controls style="max-height:90px; width:auto; border-radius:4px; background:#000;"></video>`;
+                return `<video src="${srcUrl}" controls style="max-height:140px; width:auto; border-radius:4px; background:#000;"></video>`;
             }
-            return `<img src="${srcUrl}" style="max-height:90px; width:auto; border-radius:4px; cursor:pointer;" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Image')}', 'image/*', '${escapeJsAttr(att.mediaKey || '')}')">`;
+            return `<img src="${srcUrl}" style="max-height:140px; width:auto; border-radius:4px; object-fit:contain; cursor:pointer;" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(att.name || 'Image')}', 'image/*', '${escapeJsAttr(att.mediaKey || '')}')">`;
         }).join(' ');
         return `
-            <tr><td>${escapeHtml(c.date)}</td><td>${escapeHtml(c.message)}</td><td><div class="d-flex flex-wrap gap-2 align-items-center">${mediaHtml || '-'}</div></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCommItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td></tr>
+            <tr>
+                <td>${escapeHtml(c.date)}</td>
+                <td>${escapeHtml(c.message)}</td>
+                <td><div class="d-flex flex-wrap gap-2 align-items-center">${mediaHtml || '-'}</div></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteComm(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+            </tr>
         `;
     }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune communication.</td></tr>';
 }
 
-function deleteCommItem(index) {
+function deleteComm(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    s.communications.splice(index, 1);
-    saveData();
-    renderCommTable();
-    renderPortalAnnouncements();
+    if(s && s.communications) {
+        s.communications.splice(index, 1);
+        saveData();
+        renderCommTable();
+        renderPortalAnnouncements();
+    }
 }
 
+// CANDIDATURES / DEMANDES REÇUES
 function openJobApplicationSection() {
-    const sSelect = document.getElementById('jobSchoolSelect');
-    if (!appData.schools.length) {
-        CommicoAlert("Aucune Madras enregistrée pour le moment.");
-        return;
-    }
-    sSelect.innerHTML = appData.schools.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.province)})</option>`).join('');
+    const sel = document.getElementById('jobSchoolSelect');
+    sel.innerHTML = '<option value="">-- Choisir une Madras --</option>' + (appData.schools || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.province)})</option>`).join('');
     document.getElementById('candidateResponseDisplayArea').style.display = 'none';
     showSection('view-job-application');
 }
@@ -4341,29 +4425,27 @@ function handleSendJobApplication(e) {
     const schoolId = document.getElementById('jobSchoolSelect').value;
     const applicantName = document.getElementById('jobApplicantName').value.trim();
     const role = document.getElementById('jobRole').value.trim();
-    const s = appData.schools.find(x => x.id === schoolId);
-    if(!s) { CommicoAlert("Veuillez choisir une Madras valide."); return; }
+    const school = appData.schools.find(s => s.id === schoolId);
+    if(!school) { CommicoAlert("Veuillez sélectionner une Madras."); return; }
 
     const trackingCode = 'CND-' + Math.floor(1000 + Math.random() * 9000);
-    if(!appData.jobApplications) appData.jobApplications = [];
-    if(!s.jobApplications) s.jobApplications = [];
-
-    const appObj = {
+    const applicationObj = {
         id: 'JOB-' + Date.now(),
         trackingCode: trackingCode,
-        schoolId: schoolId,
-        schoolName: s.name,
+        schoolId: school.id,
+        schoolName: school.name,
         applicantName: applicantName,
         role: role,
-        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        ownerReply: "",
-        replyDate: ""
+        date: new Date().toLocaleDateString(),
+        ownerReply: ""
     };
 
-    appData.jobApplications.push(appObj);
-    s.jobApplications.push(appObj);
-    saveData();
+    if(!school.jobApplications) school.jobApplications = [];
+    school.jobApplications.push(applicationObj);
+    if(!appData.jobApplications) appData.jobApplications = [];
+    appData.jobApplications.push(applicationObj);
 
+    saveData();
     currentCreatedCandidateCode = trackingCode;
     document.getElementById('modalCandidateCodeDisplay').innerText = trackingCode;
     document.getElementById('candidateCodeModal').style.display = 'flex';
@@ -4371,7 +4453,7 @@ function handleSendJobApplication(e) {
 }
 
 function copyCandidateTrackingCode() {
-    if (navigator.clipboard && currentCreatedCandidateCode) {
+    if (navigator.clipboard) {
         navigator.clipboard.writeText(currentCreatedCandidateCode);
     }
     CommicoAlert("Code Secret de Suivi copié !");
@@ -4382,54 +4464,41 @@ function closeCandidateCodeModal() {
 }
 
 function openCandidateResponseSection() {
-    const codeInput = document.getElementById('candidateTrackingCodeInput');
-    const area = document.getElementById('candidateResponseDisplayArea');
-    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
-    if (!code) {
+    const code = document.getElementById('candidateTrackingCodeInput').value.trim().toUpperCase();
+    const displayArea = document.getElementById('candidateResponseDisplayArea');
+    if(!code) {
         CommicoAlert("Veuillez saisir votre Code Secret de Suivi (Ex: CND-1234).");
         return;
     }
 
-    let foundApp = (appData.jobApplications || []).find(j => j.trackingCode && j.trackingCode.toUpperCase() === code);
-    if (!foundApp) {
-        for (const s of (appData.schools || [])) {
-            const match = (s.jobApplications || []).find(j => j.trackingCode && j.trackingCode.toUpperCase() === code);
-            if (match) {
-                foundApp = match;
-                break;
-            }
+    let foundApp = null;
+    (appData.schools || []).forEach(s => {
+        if(!foundApp && s.jobApplications) {
+            const match = s.jobApplications.find(a => a.trackingCode && a.trackingCode.toUpperCase() === code);
+            if(match) foundApp = { ...match, schoolName: match.schoolName || s.name };
         }
+    });
+    if(!foundApp && appData.jobApplications) {
+        const matchGlobal = appData.jobApplications.find(a => a.trackingCode && a.trackingCode.toUpperCase() === code);
+        if(matchGlobal) foundApp = matchGlobal;
     }
 
-    if (!foundApp) {
-        area.style.display = 'block';
-        area.innerHTML = `<div class="alert alert-danger small mb-0">Aucune candidature trouvée pour le code <b>${escapeHtml(code)}</b>.</div>`;
+    if(!foundApp) {
+        displayArea.style.display = 'block';
+        displayArea.innerHTML = `<div class="alert alert-danger mb-0">Aucune candidature trouvée avec le code <b>${escapeHtml(code)}</b>.</div>`;
         return;
     }
 
-    area.style.display = 'block';
-    const hasReply = foundApp.ownerReply && foundApp.ownerReply.trim() !== '';
-    area.innerHTML = `
-        <div class="card border-primary bg-light p-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                <h6 class="fw-bold text-primary m-0"><i class="fa fa-id-badge me-1"></i> Dossier Candidat : ${escapeHtml(foundApp.applicantName)}</h6>
-                <span class="badge bg-dark">Code : ${escapeHtml(foundApp.trackingCode)}</span>
-            </div>
-            <div class="small mb-2">
-                <b>Madras :</b> ${escapeHtml(foundApp.schoolName)}<br>
-                <b>Poste sollicité :</b> ${escapeHtml(foundApp.role)}<br>
-                <b>Date d'envoi :</b> ${escapeHtml(foundApp.date)}
-            </div>
-            <hr class="my-2">
-            ${hasReply
-                ? `<div class="alert alert-success mb-0 small">
-                    <div class="fw-bold mb-1"><i class="fa fa-check-circle me-1"></i> Réponse du Propriétaire (${escapeHtml(foundApp.replyDate || '')}) :</div>
-                    <div>${escapeHtml(foundApp.ownerReply)}</div>
-                   </div>`
-                : `<div class="alert alert-warning mb-0 small">
-                    <i class="fa fa-hourglass-half me-1"></i> En attente de la réponse du propriétaire de la Madras. Revenez vérifier avec votre code <b>${escapeHtml(foundApp.trackingCode)}</b>.
-                   </div>`
-            }
+    const replyHtml = foundApp.ownerReply
+        ? `<div class="alert alert-success mt-2 mb-0"><b>Réponse du Propriétaire (${escapeHtml(foundApp.schoolName)}) :</b><br>${escapeHtml(foundApp.ownerReply)}</div>`
+        : `<div class="alert alert-warning mt-2 mb-0">En attente de réponse du propriétaire de <b>${escapeHtml(foundApp.schoolName)}</b>.</div>`;
+
+    displayArea.style.display = 'block';
+    displayArea.innerHTML = `
+        <div class="card p-3 bg-light border">
+            <div><b>Candidat :</b> ${escapeHtml(foundApp.applicantName)} | <b>Poste :</b> ${escapeHtml(foundApp.role)} | <b>Code :</b> <code>${escapeHtml(foundApp.trackingCode)}</code></div>
+            <div class="small text-muted">Madras : ${escapeHtml(foundApp.schoolName)} (${escapeHtml(foundApp.date || '')})</div>
+            ${replyHtml}
         </div>
     `;
 }
@@ -4438,110 +4507,108 @@ function renderSchoolJobsTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('schoolJobsTableBody');
     if(!tbody || !s) return;
-    if(!s.jobApplications) s.jobApplications = [];
-
-    tbody.innerHTML = s.jobApplications.map((j, i) => {
-        const replyBadge = j.ownerReply
-            ? `<div class="small text-success fw-bold mt-1"><i class="fa fa-reply me-1"></i> Répondu (${escapeHtml(j.replyDate || '')}) : ${escapeHtml(j.ownerReply)}</div>`
-            : `<div class="small text-muted fst-italic mt-1">Aucune réponse envoyée</div>`;
-        return `
-            <tr>
-                <td><b>${escapeHtml(j.applicantName)}</b><div class="small text-muted">${escapeHtml(j.date || '')}</div></td>
-                <td>${escapeHtml(j.role)}</td>
-                <td><code>${escapeHtml(j.trackingCode || '-')}</code>${replyBadge}</td>
-                <td class="no-print">
-                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openJobReplyEditor(${i})"><i class="fa fa-reply"></i> Répondre</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteSchoolJob(${i})"><i class="fa fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-    }).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue pour cette Madras.</td></tr>';
+    const apps = s.jobApplications || [];
+    tbody.innerHTML = apps.map((app, i) => `
+        <tr>
+            <td><b>${escapeHtml(app.applicantName)}</b><br><small class="text-muted">${escapeHtml(app.date || '')}</small></td>
+            <td>${escapeHtml(app.role)}</td>
+            <td>
+                <div>Code : <code>${escapeHtml(app.trackingCode || '-')}</code></div>
+                <div class="small mt-1">${app.ownerReply ? `<span class="badge bg-success">Répondu</span> ${escapeHtml(app.ownerReply)}` : '<span class="text-muted">Aucune réponse envoyée</span>'}</div>
+            </td>
+            <td class="no-print">
+                <button type="button" class="btn btn-sm btn-primary mb-1" onclick="selectJobForReply(${i})"><i class="fa fa-reply"></i> Répondre</button>
+                <button type="button" class="btn btn-sm btn-danger mb-1" onclick="deleteJobApp(${i})"><i class="fa fa-trash"></i> Supprimer</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Aucune demande reçue.</td></tr>';
 }
 
-function openJobReplyEditor(index) {
+function selectJobForReply(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s || !s.jobApplications || !s.jobApplications[index]) return;
     selectedJobIndexForReply = index;
-    const job = s.jobApplications[index];
+    const app = s.jobApplications[index];
     document.getElementById('jobReplyEditorBox').style.display = 'block';
-    document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(job.applicantName)} | <b>Poste :</b> ${escapeHtml(job.role)} | <b>Code Suivi :</b> <code>${escapeHtml(job.trackingCode || '-')}</code>`;
-    document.getElementById('jobOwnerReplyText').value = job.ownerReply || '';
-    document.getElementById('jobOwnerReplyText').focus();
+    document.getElementById('selectedJobSummary').innerHTML = `<b>Candidat :</b> ${escapeHtml(app.applicantName)} — <b>Poste :</b> ${escapeHtml(app.role)} (Code : <code>${escapeHtml(app.trackingCode || '-')}</code>)`;
+    document.getElementById('jobOwnerReplyText').value = app.ownerReply || '';
 }
 
 function closeJobReplyEditor() {
     selectedJobIndexForReply = null;
     const box = document.getElementById('jobReplyEditorBox');
-    if (box) box.style.display = 'none';
+    if(box) box.style.display = 'none';
     const txt = document.getElementById('jobOwnerReplyText');
-    if (txt) txt.value = '';
+    if(txt) txt.value = '';
 }
 
 function sendJobOwnerReply() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s || selectedJobIndexForReply === null || !s.jobApplications[selectedJobIndexForReply]) return;
-    const replyText = document.getElementById('jobOwnerReplyText').value.trim();
-    if(!replyText) {
-        CommicoAlert("Veuillez écrire une réponse ou un message avant d'envoyer.");
+    if(!s || selectedJobIndexForReply === null || !s.jobApplications || !s.jobApplications[selectedJobIndexForReply]) {
+        CommicoAlert("Veuillez d'abord sélectionner une candidature.");
+        return;
+    }
+    const reply = document.getElementById('jobOwnerReplyText').value.trim();
+    if(!reply) {
+        CommicoAlert("Veuillez écrire une réponse avant d'envoyer.");
         return;
     }
 
-    const job = s.jobApplications[selectedJobIndexForReply];
-    const nowStr = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    job.ownerReply = replyText;
-    job.replyDate = nowStr;
+    const app = s.jobApplications[selectedJobIndexForReply];
+    app.ownerReply = reply;
 
-    const globalJob = (appData.jobApplications || []).find(g => g.id === job.id || (job.trackingCode && g.trackingCode === job.trackingCode));
-    if (globalJob) {
-        globalJob.ownerReply = replyText;
-        globalJob.replyDate = nowStr;
+    if(app.trackingCode && appData.jobApplications) {
+        appData.jobApplications.forEach(globalApp => {
+            if(globalApp.trackingCode === app.trackingCode) {
+                globalApp.ownerReply = reply;
+            }
+        });
     }
 
     saveData();
     renderSchoolJobsTable();
     closeJobReplyEditor();
-    CommicoAlert("Réponse envoyée au candidat avec succès !");
+    CommicoAlert("Réponse envoyée et enregistrée avec succès !");
 }
 
-function deleteSchoolJob(index) {
+function deleteJobApp(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s || !s.jobApplications || !s.jobApplications[index]) return;
+    if(!s || !s.jobApplications) return;
     const removed = s.jobApplications[index];
     s.jobApplications.splice(index, 1);
-    if (appData.jobApplications) {
-        appData.jobApplications = appData.jobApplications.filter(g => g.id !== removed.id);
+    if(removed && removed.trackingCode && appData.jobApplications) {
+        appData.jobApplications = appData.jobApplications.filter(a => a.trackingCode !== removed.trackingCode);
     }
-    if (selectedJobIndexForReply === index) closeJobReplyEditor();
     saveData();
     renderSchoolJobsTable();
+    closeJobReplyEditor();
 }
 
+// EMBLÈMES
 function handleSaveArmoiries(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
+    const fileInput = document.getElementById('schoolArmoiriesFile');
     const devise = document.getElementById('schoolDeviseInput').value.trim();
-    const file = document.getElementById('schoolArmoiriesFile').files[0];
+    const file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
 
-    function finalizeArmoiries(url, fType, mKey) {
-        if (url || mKey) {
-            s.armoiries = url || s.armoiries || '';
-            s.armoiriesType = fType || s.armoiriesType || '';
-            s.armoiriesKey = mKey || s.armoiriesKey || '';
-        }
-        s.devise = devise;
-        saveData();
-        renderArmoiriesDisplay();
-        document.getElementById('schoolArmoiriesFile').value = '';
-        CommicoAlert("Emblème et devise enregistrés !");
-    }
-
+    if(devise) s.devise = devise;
     if(file) {
         readFileAsDataUrl(file, function(res) {
-            finalizeArmoiries(res.dataUrl, res.fileType, res.mediaKey);
+            if(res.dataUrl) {
+                s.armoiries = res.dataUrl;
+                s.armoiriesType = res.fileType || file.type || '';
+                s.armoiriesKey = res.mediaKey || '';
+                saveData();
+                renderArmoiriesDisplay();
+                CommicoAlert("Emblème / Symbole et devise enregistrés avec succès !");
+            }
         }, 'armoiries');
     } else {
-        finalizeArmoiries(null, null, null);
+        saveData();
+        renderArmoiriesDisplay();
+        CommicoAlert("Devise enregistrée avec succès !");
     }
 }
 
@@ -4561,25 +4628,27 @@ function renderArmoiriesDisplay() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('armoiriesDisplayContainer');
     if(!container || !s) return;
-    const srcUrl = resolveMediaSafe(s.armoiries, s.armoiriesKey);
-    const kind = isPdfOrImageUrl(srcUrl, s.armoiriesType);
-    let mediaBlock = '';
-    if (srcUrl) {
-        if (kind === 'pdf') {
-            mediaBlock = `<button type="button" class="btn btn-outline-danger fw-bold mb-2 no-print" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', 'Emblème PDF - ${escapeJsAttr(s.name)}', 'application/pdf', '${escapeJsAttr(s.armoiriesKey || '')}')"><i class="fa fa-file-pdf me-1"></i> Consulter l'Emblème PDF</button>`;
-        } else if (kind === 'video') {
-            mediaBlock = `<video src="${srcUrl}" controls style="max-height:150px; width:auto; border-radius:6px; background:#000;" class="border mb-2"></video>`;
+    const src = resolveMediaSafe(s.armoiries, s.armoiriesKey);
+    const deviseHtml = s.devise ? `<h4 class="fw-bold text-primary mt-3">"${escapeHtml(s.devise)}"</h4>` : '';
+    if(!src && !s.devise) {
+        container.innerHTML = '<p class="text-muted small mb-0">Aucun emblème ou devise enregistré pour cette Madras.</p>';
+        return;
+    }
+    const kind = isPdfOrImageUrl(src, s.armoiriesType);
+    let mediaHtml = '';
+    if(src) {
+        if(kind === 'pdf') {
+            mediaHtml = `<button type="button" class="btn btn-outline-danger fw-bold no-print" onclick="viewDocumentModal('${escapeJsAttr(src)}', 'Emblème / Document Officiel', 'application/pdf', '${escapeJsAttr(s.armoiriesKey || '')}')"><i class="fa fa-file-pdf me-1"></i> Voir le PDF Officiel</button>`;
+        } else if(kind === 'video') {
+            mediaHtml = `<video src="${src}" controls style="max-height:220px; width:auto; border-radius:8px; background:#000;"></video>`;
         } else {
-            mediaBlock = `<img src="${srcUrl}" style="max-height:150px; width:auto; border-radius:6px; object-fit:contain; cursor:pointer;" class="border mb-2" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', 'Emblème - ${escapeJsAttr(s.name)}', 'image/*', '${escapeJsAttr(s.armoiriesKey || '')}')">`;
+            mediaHtml = `<img src="${src}" alt="Emblème" style="max-height:220px; width:auto; border-radius:8px; object-fit:contain; cursor:pointer;" onclick="viewDocumentModal('${escapeJsAttr(src)}', 'Emblème Officiel', 'image/*', '${escapeJsAttr(s.armoiriesKey || '')}')">`;
         }
     }
-    container.innerHTML = `
-        ${mediaBlock}
-        <h5 class="fw-bold text-primary">Devise Officielle :</h5>
-        <p class="lead fst-italic">"${escapeHtml(s.devise || 'Non définie')}"</p>
-    `;
+    container.innerHTML = `<div>${mediaHtml}${deviseHtml}</div>`;
 }
 
+// PALMARÈS
 function renderPalmaresTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('palmaresTableContainer');
@@ -4590,137 +4659,84 @@ function renderPalmaresTable() {
     const notesByMat = yData.notes || {};
 
     const ranked = students.map(st => {
-        const clsCourses = coursesByClass[st.classe] || [];
-        const stNotes = notesByMat[st.matricule] || {};
-        let total = 0;
-        let maxTotal = 0;
-        clsCourses.forEach(c => {
-            total += parseFloat(stNotes[c.name] || 0) || 0;
-            maxTotal += parseFloat(c.max) || 0;
+        const courses = coursesByClass[st.classe] || [];
+        const nObj = notesByMat[st.matricule] || {};
+        let total = 0, maxTotal = 0;
+        courses.forEach(c => {
+            total += parseFloat(nObj[c.name] || 0);
+            maxTotal += parseFloat(c.max || 0);
         });
         const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-        return {
-            matricule: st.matricule,
-            name: st.name,
-            classe: st.classe,
-            total: total,
-            maxTotal: maxTotal,
-            pct: pct
-        };
+        return { ...st, total, maxTotal, pct };
     }).sort((a, b) => b.pct - a.pct);
 
     container.innerHTML = `
         <table class="table table-bordered table-sm align-middle">
-            <thead>
-                <tr class="table-primary">
-                    <th>Rang</th>
-                    <th>Matricule</th>
-                    <th>Nom & Prénom</th>
-                    <th>Classe</th>
-                    <th>Total Points</th>
-                    <th>Pourcentage</th>
-                </tr>
-            </thead>
+            <thead><tr class="table-primary"><th>Rang</th><th>Matricule</th><th>Élève</th><th>Classe</th><th>Total</th><th>Pourcentage</th></tr></thead>
             <tbody>
                 ${ranked.map((r, idx) => `
                     <tr>
                         <td><b>#${idx + 1}</b></td>
-                        <td><code>${escapeHtml(r.matricule)}</code></td>
-                        <td><b>${escapeHtml(r.name)}</b></td>
+                        <td>${escapeHtml(r.matricule)}</td>
+                        <td>${escapeHtml(r.name)}</td>
                         <td>${escapeHtml(r.classe)}</td>
                         <td>${escapeHtml(r.total)} / ${escapeHtml(r.maxTotal)}</td>
-                        <td><span class="badge ${r.pct >= 50 ? 'bg-success' : 'bg-secondary'}">${r.pct.toFixed(2)} %</span></td>
+                        <td><b>${r.pct.toFixed(2)} %</b></td>
                     </tr>
-                `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucun résultat enregistré pour le moment.</td></tr>'}
+                `).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune donnée disponible pour le palmarès.</td></tr>'}
             </tbody>
         </table>
     `;
 }
 
+// COURRIERS / CORRESPONDANCES
 function handleSaveCourrier(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const now = new Date();
-    const item = {
-        id: 'COUR-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        date: document.getElementById('courrierDate').value,
-        type: document.getElementById('courrierType').value,
-        numDoc: document.getElementById('courrierNumDoc').value.trim(),
-        exp: document.getElementById('courrierExp').value.trim(),
-        dest: document.getElementById('courrierDest').value.trim(),
-        objet: document.getElementById('courrierObjet').value.trim(),
-        heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
-        fileUrl: '',
-        fileName: '',
-        fileType: '',
-        mediaKey: ''
-    };
-
+    const type = document.getElementById('courrierType').value;
+    const numDoc = document.getElementById('courrierNumDoc').value.trim();
+    const date = document.getElementById('courrierDate').value;
+    const exp = document.getElementById('courrierExp').value.trim();
+    const dest = document.getElementById('courrierDest').value.trim();
+    const objet = document.getElementById('courrierObjet').value.trim();
     const fileInput = document.getElementById('courrierFileInput');
     const file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+    const now = new Date();
+    const heure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const jour = now.toLocaleDateString('fr-FR', { weekday: 'long' });
 
-    if (file) {
+    const finalizeCourrier = function(fileUrl, fileName, fileType, mediaKey) {
+        if(!yData.courriers) yData.courriers = [];
+        const entry = {
+            id: 'CRR-' + Date.now(),
+            type, numDoc, date, exp, dest, objet,
+            heure, jour,
+            fileUrl: fileUrl || '',
+            fileName: fileName || '',
+            fileType: fileType || '',
+            mediaKey: mediaKey || ''
+        };
+        yData.courriers.push(entry);
+
+        if(!yData.dossiersArchive) yData.dossiersArchive = [];
+        yData.dossiersArchive.push({ ...entry });
+
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
+        document.getElementById('formCourrier').reset();
+        CommicoAlert("Correspondance enregistrée et classée dans les Archives !");
+    };
+
+    if(file) {
         readFileAsDataUrl(file, function(res) {
-            item.fileUrl = res.dataUrl || '';
-            item.fileName = res.fileName || file.name || 'Document';
-            item.fileType = res.fileType || file.type || '';
-            item.mediaKey = res.mediaKey || '';
-            finalizeCourrierSave(s, yData, item);
+            finalizeCourrier(res.dataUrl, res.fileName || file.name, res.fileType || file.type || '', res.mediaKey || '');
         }, 'courriers');
     } else {
-        finalizeCourrierSave(s, yData, item);
+        finalizeCourrier('', '', '', '');
     }
-}
-
-function finalizeCourrierSave(s, yData, item) {
-    if(!yData.courriers) yData.courriers = [];
-    if(!yData.dossiersArchive) yData.dossiersArchive = [];
-    yData.courriers.push(item);
-
-    const archiveEntry = {
-        id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        courrierId: item.id,
-        classeur: item.type,
-        numDoc: item.numDoc,
-        date: item.date,
-        exp: item.exp,
-        dest: item.dest,
-        objet: item.objet,
-        heure: item.heure,
-        jour: item.jour,
-        fileUrl: item.fileUrl || '',
-        fileName: item.fileName || '',
-        fileType: item.fileType || '',
-        mediaKey: item.mediaKey || ''
-    };
-    yData.dossiersArchive.push(archiveEntry);
-
-    saveData();
-    renderCourriersTable();
-    renderDossiersTable();
-    document.getElementById('formCourrier').reset();
-    CommicoAlert("Correspondance enregistrée et archivée automatiquement !");
-}
-
-function deleteSelectedOrLastCourrier() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
-    if(!s) return;
-    const yData = getActiveYearData(s);
-    if(!yData.courriers || !yData.courriers.length) {
-        CommicoAlert("Aucune correspondance à supprimer.");
-        return;
-    }
-    const removed = yData.courriers.pop();
-    if (yData.dossiersArchive && removed) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(a => a.courrierId !== removed.id);
-    }
-    saveData();
-    renderCourriersTable();
-    renderDossiersTable();
-    CommicoAlert("Dernière correspondance supprimée.");
 }
 
 function renderCourriersTable() {
@@ -4728,207 +4744,206 @@ function renderCourriersTable() {
     const tbody = document.getElementById('courriersTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    tbody.innerHTML = (yData.courriers || []).map((c, i) => {
-        const srcUrl = resolveMediaSafe(c.fileUrl, c.mediaKey);
-        const docBtn = srcUrl
-            ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(c.fileName || c.numDoc || 'Document')}', '${escapeJsAttr(c.fileType || '')}', '${escapeJsAttr(c.mediaKey || '')}')"><i class="fa fa-eye"></i> Voir</button>`
-            : `<span class="text-muted small">-</span>`;
+    const list = yData.courriers || [];
+    tbody.innerHTML = list.map((c, i) => {
+        const hasDoc = Boolean(resolveMediaSafe(c.fileUrl, c.mediaKey));
+        const docBtn = hasDoc
+            ? `<button type="button" class="btn btn-sm btn-info text-white fw-bold" onclick="openDocumentFromRow('courrier', ${i}, -1)"><i class="fa fa-eye"></i> Voir</button>`
+            : '<span class="text-muted small">-</span>';
         return `
             <tr>
                 <td>${escapeHtml(c.date)}</td>
-                <td><b>${escapeHtml(c.type)}</b></td>
-                <td><code>${escapeHtml(c.numDoc)}</code></td>
+                <td><span class="badge ${c.type === 'Entrant' ? 'bg-primary' : 'bg-secondary'}">${escapeHtml(c.type)}</span></td>
+                <td><b>${escapeHtml(c.numDoc)}</b></td>
                 <td>${escapeHtml(c.exp)}</td>
                 <td>${escapeHtml(c.dest)}</td>
                 <td>${escapeHtml(c.objet)}</td>
-                <td>${escapeHtml(c.heure || '')} (${escapeHtml(c.jour || '')})</td>
+                <td>${escapeHtml(c.heure || '')} / ${escapeHtml(c.jour || '')}</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCourrier(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
             </tr>
         `;
     }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance enregistrée.</td></tr>';
 }
 
-function deleteCourrierItem(index) {
+function deleteCourrier(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    const removed = yData.courriers[index];
-    yData.courriers.splice(index, 1);
-    if (removed && yData.dossiersArchive) {
-        yData.dossiersArchive = yData.dossiersArchive.filter(a => a.courrierId !== removed.id);
+    if(yData.courriers && yData.courriers[index]) {
+        const removed = yData.courriers[index];
+        yData.courriers.splice(index, 1);
+        if(yData.dossiersArchive && removed.id) {
+            yData.dossiersArchive = yData.dossiersArchive.filter(a => a.id !== removed.id);
+        }
+        saveData();
+        renderCourriersTable();
+        renderDossiersTable();
     }
-    saveData();
-    renderCourriersTable();
-    renderDossiersTable();
+}
+
+function deleteSelectedOrLastCourrier() {
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    if(!s) return;
+    const yData = getActiveYearData(s);
+    if(yData.courriers && yData.courriers.length > 0) {
+        deleteCourrier(yData.courriers.length - 1);
+        CommicoAlert("Dernière correspondance supprimée.");
+    } else {
+        CommicoAlert("Aucune correspondance à supprimer.");
+    }
 }
 
 // ARCHIVES & DOSSIERS
-let archiveShowAllMode = false;
+let archiveFilterMode = 'all';
 
 function onArchiveClasseurOrSearchChange() {
-    archiveShowAllMode = false;
+    const numInput = document.getElementById('searchArchiveNumInput');
+    if (numInput && numInput.value.trim() !== '') {
+        archiveFilterMode = 'search';
+    } else {
+        archiveFilterMode = 'classeur';
+    }
     renderDossiersTable();
 }
 
 function searchArchiveByNumDoc() {
-    archiveShowAllMode = false;
+    archiveFilterMode = 'search';
     renderDossiersTable();
 }
 
 function showAllArchiveCorrespondances() {
-    archiveShowAllMode = true;
-    const searchInput = document.getElementById('searchArchiveNumInput');
-    if (searchInput) searchInput.value = '';
+    const numInput = document.getElementById('searchArchiveNumInput');
+    if (numInput) numInput.value = '';
+    archiveFilterMode = 'all';
     renderDossiersTable();
 }
 
 function saveCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
+    if(!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.dossiersArchive) yData.dossiersArchive = [];
-
-    let syncedCount = 0;
-    (yData.courriers || []).forEach(c => {
-        const exists = yData.dossiersArchive.some(a => (c.id && a.courrierId === c.id) || (a.numDoc && c.numDoc && a.numDoc === c.numDoc));
-        if (!exists) {
-            yData.dossiersArchive.push({
-                id: 'ARC-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
-                courrierId: c.id || '',
-                classeur: c.type || 'Entrant',
-                numDoc: c.numDoc || '',
-                date: c.date || '',
-                exp: c.exp || '',
-                dest: c.dest || '',
-                objet: c.objet || '',
-                heure: c.heure || '',
-                jour: c.jour || '',
-                fileUrl: c.fileUrl || '',
-                fileName: c.fileName || '',
-                fileType: c.fileType || '',
-                mediaKey: c.mediaKey || ''
-            });
-            syncedCount++;
-        }
-    });
-
-    saveData();
-    renderDossiersTable();
-    CommicoAlert(syncedCount > 0
-        ? `${syncedCount} correspondance(s) enregistrée(s) dans les archives.`
-        : "Archives enregistrées et synchronisées avec succès !");
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const numDoc = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
+    if(!numDoc) {
+        CommicoAlert("Veuillez saisir un N° de Document (NumDoc) pour classer ou enregistrer dans les archives.");
+        return;
+    }
+    const existing = (yData.dossiersArchive || []).find(a => a.numDoc && a.numDoc.toLowerCase() === numDoc.toLowerCase());
+    if(existing) {
+        existing.type = classeur;
+        saveData();
+        renderDossiersTable();
+        CommicoAlert("Document classé dans le classeur " + classeur + " !");
+    } else {
+        const now = new Date();
+        yData.dossiersArchive.push({
+            id: 'ARC-' + Date.now(),
+            type: classeur,
+            numDoc: numDoc,
+            date: now.toLocaleDateString(),
+            exp: '-',
+            dest: '-',
+            objet: 'Archive classée',
+            heure: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            jour: now.toLocaleDateString('fr-FR', { weekday: 'long' }),
+            fileUrl: '',
+            fileName: '',
+            fileType: '',
+            mediaKey: ''
+        });
+        saveData();
+        renderDossiersTable();
+        CommicoAlert("Nouvelle archive enregistrée avec succès !");
+    }
 }
 
 function deleteCurrentArchiveCorrespondence() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
+    if(!s) return;
     const yData = getActiveYearData(s);
-    if (!yData.dossiersArchive || !yData.dossiersArchive.length) {
+    const numDoc = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim() : '';
+    if(!yData.dossiersArchive || !yData.dossiersArchive.length) {
         CommicoAlert("Aucune archive à supprimer.");
         return;
     }
-    const classeurVal = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : '';
-    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
-
-    if (searchVal) {
-        const beforeLen = yData.dossiersArchive.length;
-        yData.dossiersArchive = yData.dossiersArchive.filter(a => !((a.numDoc || '').toLowerCase().includes(searchVal)));
-        if (yData.dossiersArchive.length < beforeLen) {
-            saveData();
-            renderDossiersTable();
-            CommicoAlert("Archive(s) correspondante(s) supprimée(s).");
-            return;
-        }
+    if(numDoc) {
+        yData.dossiersArchive = yData.dossiersArchive.filter(a => !(a.numDoc && a.numDoc.toLowerCase() === numDoc.toLowerCase()));
+    } else {
+        yData.dossiersArchive.pop();
     }
-
-    if (classeurVal && !archiveShowAllMode) {
-        const idx = yData.dossiersArchive.map((a, i) => ({ a, i })).reverse().find(x => x.a.classeur === classeurVal);
-        if (idx) {
-            yData.dossiersArchive.splice(idx.i, 1);
-            saveData();
-            renderDossiersTable();
-            CommicoAlert("Dernière archive du classeur supprimée.");
-            return;
-        }
-    }
-
-    yData.dossiersArchive.pop();
     saveData();
     renderDossiersTable();
-    CommicoAlert("Dernière archive supprimée.");
+    CommicoAlert("Archive supprimée.");
 }
 
 function renderDossiersTable() {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     const tbody = document.getElementById('dossiersStorageTableBody');
-    if (!tbody || !s) return;
-
+    if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    const allArchives = Array.isArray(yData.dossiersArchive) ? yData.dossiersArchive : [];
-    const classeurVal = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
-    const searchVal = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
+    const allItems = yData.dossiersArchive || [];
+    const classeur = document.getElementById('archiveClasseur') ? document.getElementById('archiveClasseur').value : 'Entrant';
+    const numQuery = document.getElementById('searchArchiveNumInput') ? document.getElementById('searchArchiveNumInput').value.trim().toLowerCase() : '';
 
-    const indexed = allArchives.map((item, realIndex) => ({ item, realIndex }));
-    const filtered = indexed.filter(({ item }) => {
-        if (searchVal) {
-            return (item.numDoc || '').toLowerCase().includes(searchVal);
+    let indexed = allItems.map((item, idx) => ({ item, realIndex: idx }));
+    if (archiveFilterMode === 'search') {
+        if (numQuery) {
+            indexed = indexed.filter(x => x.item.numDoc && String(x.item.numDoc).toLowerCase().includes(numQuery));
         }
-        if (archiveShowAllMode) {
-            return true;
-        }
-        return (item.classeur || 'Entrant') === classeurVal;
-    });
+    } else if (archiveFilterMode === 'classeur') {
+        indexed = indexed.filter(x => (x.item.type || 'Entrant') === classeur);
+    }
 
-    tbody.innerHTML = filtered.map(({ item, realIndex }) => {
-        const srcUrl = resolveMediaSafe(item.fileUrl, item.mediaKey);
-        const docBtn = srcUrl
-            ? `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocumentModal('${escapeJsAttr(srcUrl)}', '${escapeJsAttr(item.fileName || item.numDoc || 'Document')}', '${escapeJsAttr(item.fileType || '')}', '${escapeJsAttr(item.mediaKey || '')}')"><i class="fa fa-eye"></i> Voir</button>`
-            : `<span class="text-muted small">-</span>`;
+    tbody.innerHTML = indexed.map(({ item, realIndex }) => {
+        const hasDoc = Boolean(resolveMediaSafe(item.fileUrl, item.mediaKey));
+        const docBtn = hasDoc
+            ? `<button type="button" class="btn btn-sm btn-info text-white fw-bold" onclick="openDocumentFromRow('archive', -1, ${realIndex})"><i class="fa fa-eye"></i> Voir</button>`
+            : '<span class="text-muted small">-</span>';
         return `
             <tr>
-                <td><span class="badge ${(item.classeur || 'Entrant') === 'Entrant' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${escapeHtml(item.classeur || 'Entrant')}</span></td>
-                <td><code>${escapeHtml(item.numDoc || '-')}</code></td>
-                <td>${escapeHtml(item.date || '-')}</td>
+                <td><span class="badge ${item.type === 'Entrant' ? 'bg-primary' : 'bg-secondary'}">${escapeHtml(item.type || 'Entrant')}</span></td>
+                <td><b>${escapeHtml(item.numDoc)}</b></td>
+                <td>${escapeHtml(item.date)}</td>
                 <td>${escapeHtml(item.exp || '-')}</td>
                 <td>${escapeHtml(item.dest || '-')}</td>
                 <td>${escapeHtml(item.objet || '-')}</td>
-                <td>${escapeHtml(item.heure || '')} ${item.jour ? '(' + escapeHtml(item.jour) + ')' : ''}</td>
+                <td>${escapeHtml(item.heure || '')} / ${escapeHtml(item.jour || '')}</td>
                 <td>${docBtn}</td>
-                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveItem(${realIndex})"><i class="fa fa-trash"></i> Suppr.</button></td>
+                <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteArchiveByIndex(${realIndex})"><i class="fa fa-trash"></i> Suppr.</button></td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucune correspondance archivée trouvée.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="text-center text-muted">Aucun document archivé correspondant.</td></tr>';
 }
 
-function deleteArchiveItem(realIndex) {
+function deleteArchiveByIndex(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
+    if(!s) return;
     const yData = getActiveYearData(s);
-    if (yData && Array.isArray(yData.dossiersArchive) && yData.dossiersArchive[realIndex] !== undefined) {
-        yData.dossiersArchive.splice(realIndex, 1);
+    if(yData.dossiersArchive && yData.dossiersArchive[index] !== undefined) {
+        yData.dossiersArchive.splice(index, 1);
         saveData();
         renderDossiersTable();
     }
 }
 
+// CALENDRIER SCOLAIRE
 function handleSaveCalendrierScolaire(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    const type = document.getElementById('calType').value;
+    const titre = document.getElementById('calTitre').value.trim();
+    const debut = document.getElementById('calDebut').value.trim();
+    const fin = document.getElementById('calFin').value.trim();
     if(!yData.calendrierVacances) yData.calendrierVacances = [];
-    yData.calendrierVacances.push({
-        type: document.getElementById('calType').value,
-        titre: document.getElementById('calTitre').value.trim(),
-        debut: document.getElementById('calDebut').value.trim(),
-        fin: document.getElementById('calFin').value.trim()
-    });
+    yData.calendrierVacances.push({ type, titre, debut, fin });
     saveData();
     renderCalendrierTable();
     renderSidebarCalendarAndSchedule();
     document.getElementById('formCalendrierScolaire').reset();
-    CommicoAlert("Événement enregistré dans le calendrier scolaire !");
+    CommicoAlert("Événement du calendrier scolaire enregistré avec succès !");
 }
 
 function renderCalendrierTable() {
@@ -4937,14 +4952,18 @@ function renderCalendrierTable() {
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
     const filterVal = document.getElementById('calendarFilterSelect') ? document.getElementById('calendarFilterSelect').value : 'Tous';
-    
-    let list = yData.calendrierVacances || [];
-    if(filterVal !== 'Tous') {
-        list = list.filter(c => c.type === filterVal);
+    let list = (yData.calendrierVacances || []).map((c, idx) => ({ c, idx }));
+    if(filterVal && filterVal !== 'Tous') {
+        list = list.filter(x => x.c.type === filterVal);
     }
-
-    tbody.innerHTML = list.map((c, i) => `
-        <tr><td><span class="badge bg-light text-dark border">${escapeHtml(c.type)}</span></td><td><b>${escapeHtml(c.titre)}</b></td><td>${escapeHtml(c.debut)}</td><td>${escapeHtml(c.fin)}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    tbody.innerHTML = list.map(({ c, idx }) => `
+        <tr>
+            <td><span class="badge bg-info text-dark">${escapeHtml(c.type)}</span></td>
+            <td><b>${escapeHtml(c.titre)}</b></td>
+            <td>${escapeHtml(c.debut)}</td>
+            <td>${escapeHtml(c.fin)}</td>
+            <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteCalendrierItem(${idx})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun événement enregistré.</td></tr>';
 }
 
@@ -4952,29 +4971,32 @@ function deleteCalendrierItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.calendrierVacances.splice(index, 1);
-    saveData();
-    renderCalendrierTable();
-    renderSidebarCalendarAndSchedule();
+    if(yData.calendrierVacances && yData.calendrierVacances[index] !== undefined) {
+        yData.calendrierVacances.splice(index, 1);
+        saveData();
+        renderCalendrierTable();
+        renderSidebarCalendarAndSchedule();
+    }
 }
 
+// HORAIRES DES COURS
 function handleSaveHoraireCours(e) {
     e.preventDefault();
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
+    const classe = document.getElementById('horaireClassSelect').value;
+    const jour = document.getElementById('horaireJour').value;
+    const plage = document.getElementById('horairePlage').value.trim();
+    const cours = document.getElementById('horaireCoursNom').value.trim();
+    if(!classe) { CommicoAlert("Veuillez choisir une classe."); return; }
     if(!yData.horairesCours) yData.horairesCours = [];
-    yData.horairesCours.push({
-        classe: document.getElementById('horaireClassSelect').value,
-        jour: document.getElementById('horaireJour').value,
-        plage: document.getElementById('horairePlage').value.trim(),
-        cours: document.getElementById('horaireCoursNom').value.trim()
-    });
+    yData.horairesCours.push({ classe, jour, plage, cours });
     saveData();
     renderHorairesTable();
     renderSidebarCalendarAndSchedule();
     document.getElementById('formHoraireCours').reset();
-    CommicoAlert("Horaire enregistré !");
+    CommicoAlert("Horaire des cours enregistré avec succès !");
 }
 
 function renderHorairesTable() {
@@ -4982,8 +5004,15 @@ function renderHorairesTable() {
     const tbody = document.getElementById('horairesTableBody');
     if(!tbody || !s) return;
     const yData = getActiveYearData(s);
-    tbody.innerHTML = (yData.horairesCours || []).map((h, i) => `
-        <tr><td>${escapeHtml(h.classe)}</td><td>${escapeHtml(h.jour)}</td><td>${escapeHtml(h.plage)}</td><td><b>${escapeHtml(h.cours)}</b></td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Suppr.</button></td></tr>
+    const list = yData.horairesCours || [];
+    tbody.innerHTML = list.map((h, i) => `
+        <tr>
+            <td><b>${escapeHtml(h.classe)}</b></td>
+            <td>${escapeHtml(h.jour)}</td>
+            <td>${escapeHtml(h.plage)}</td>
+            <td>${escapeHtml(h.cours)}</td>
+            <td class="no-print"><button type="button" class="btn btn-sm btn-danger" onclick="deleteHoraireItem(${i})"><i class="fa fa-trash"></i> Supprimer</button></td>
+        </tr>
     `).join('') || '<tr><td colspan="5" class="text-center text-muted">Aucun horaire enregistré.</td></tr>';
 }
 
@@ -4991,34 +5020,38 @@ function deleteHoraireItem(index) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
     if(!s) return;
     const yData = getActiveYearData(s);
-    yData.horairesCours.splice(index, 1);
-    saveData();
-    renderHorairesTable();
-    renderSidebarCalendarAndSchedule();
+    if(yData.horairesCours && yData.horairesCours[index] !== undefined) {
+        yData.horairesCours.splice(index, 1);
+        saveData();
+        renderHorairesTable();
+        renderSidebarCalendarAndSchedule();
+    }
 }
 
+// STATISTIQUES
 function renderStatistiques() {
-    const s = appData.schools.find(x => x.id === activeSchoolId);
     const container = document.getElementById('statsContainer');
-    if(!container || !s) return;
-    const yData = getActiveYearData(s);
-
-    const nbClasses = (yData.classes || []).length;
-    const nbTeachers = (yData.teachers || []).length;
-    const nbStudents = (yData.students || []).length;
+    if(!container) return;
+    const s = appData.schools.find(x => x.id === activeSchoolId);
+    const yData = s ? getActiveYearData(s) : null;
+    const totalSchools = (appData.schools || []).length;
+    const totalStudents = yData ? (yData.students || []).length : 0;
+    const totalTeachers = yData ? (yData.teachers || []).length : 0;
+    const totalClasses = yData ? (yData.classes || []).length : 0;
 
     container.innerHTML = `
-        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Classes</h6><h2 class="text-primary fw-bold">${nbClasses}</h2></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Enseignants</h6><h2 class="text-success fw-bold">${nbTeachers}</h2></div></div>
-        <div class="col-md-4"><div class="card p-3 bg-light text-center border-0 shadow-sm"><h6 class="text-muted">Élèves inscrits</h6><h2 class="text-info fw-bold">${nbStudents}</h2></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-primary text-center"><div class="small text-muted">Madras Enregistrées</div><h3 class="fw-bold text-primary m-0">${totalSchools}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-success text-center"><div class="small text-muted">Élèves / Étudiants</div><h3 class="fw-bold text-success m-0">${totalStudents}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-info text-center"><div class="small text-muted">Enseignants</div><h3 class="fw-bold text-info m-0">${totalTeachers}</h3></div></div>
+        <div class="col-md-3"><div class="card p-3 bg-light border-start border-4 border-warning text-center"><div class="small text-muted">Classes / Niveaux</div><h3 class="fw-bold text-warning m-0">${totalClasses}</h3></div></div>
     `;
 }
 
+// ADMIN CENTRAL
 function openAdminCentralPanel() {
     CommicoPrompt("Entrez le mot de passe Administrateur Central :", function(pass) {
-        if (pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
+        if(pass && pass.trim() === ADMIN_MASTER_PASSWORD) {
             renderAdminCentralTable();
-            renderAdminLitigiousMessages();
             showSection('view-admin-central');
         } else if(pass !== null) {
             CommicoAlert("Mot de passe incorrect.");
@@ -5029,33 +5062,26 @@ function openAdminCentralPanel() {
 function renderAdminCentralTable() {
     const tbody = document.getElementById('adminSchoolsTableBody');
     if(!tbody) return;
-    tbody.innerHTML = (appData.schools || []).map(s => {
-        let dirCodeDisplay = '-';
-        if(s.direction && s.direction.length > 0) {
-            const owner = s.direction.find(d => d.role === 'Directeur / Propriétaire');
-            if(owner && owner.secretCode) dirCodeDisplay = `<code class="text-success fw-bold">${escapeHtml(owner.secretCode)}</code>`;
-        }
+    tbody.innerHTML = (appData.schools || []).map((s, i) => {
+        const ownerCode = getOwnerSecretCode(s);
         return `
             <tr>
                 <td><img src="${s.logoUrl || 'img/logo1.jpg'}" style="width:40px;height:40px;object-fit:contain;" class="rounded-circle border" onerror="handleLogoFallback(this, 40, 'MD');"></td>
                 <td><b>${escapeHtml(s.name)}</b></td>
-                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision)}</td>
+                <td>${escapeHtml(s.province)} / ${escapeHtml(s.subDivision || '-')}</td>
                 <td><span class="badge ${s.paiementStatut === 'A jour' ? 'bg-success' : 'bg-danger'}">${escapeHtml(s.paiementStatut || 'A jour')}</span></td>
-                <td>
-                    <div>Madras : <code>${escapeHtml(s.secretCode)}</code></div>
-                    <div>Directeur : ${dirCodeDisplay}</div>
-                </td>
+                <td><div>Madras : <code>${escapeHtml(s.secretCode)}</code></div><div>Directeur : <code>${escapeHtml(ownerCode || '-')}</code></div></td>
                 <td class="no-print">
-                    <button class="btn btn-sm btn-success me-1" onclick="toggleSchoolPaymentStatus('${escapeJsAttr(s.id)}')">Statut</button>
-                    <button class="btn btn-sm btn-danger" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')"><i class="fa fa-trash"></i></button>
+                    <button type="button" class="btn btn-sm btn-warning fw-bold mb-1" onclick="toggleSchoolPaymentStatus(${i})">Basculer Statut</button>
+                    <button type="button" class="btn btn-sm btn-danger fw-bold mb-1" onclick="promptCentralDeleteSchool('${escapeJsAttr(s.id)}')">Supprimer</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras.</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted">Aucune Madras enregistrée.</td></tr>';
 }
 
-function toggleSchoolPaymentStatus(id) {
-    const s = appData.schools.find(x => x.id === id);
+function toggleSchoolPaymentStatus(index) {
+    const s = appData.schools[index];
     if(!s) return;
     s.paiementStatut = (s.paiementStatut === 'A jour') ? 'Bloqué' : 'A jour';
     saveData();
@@ -5063,16 +5089,14 @@ function toggleSchoolPaymentStatus(id) {
     renderSchoolsList();
 }
 
-function downloadSectionData(sectionName) {
+function downloadSectionData(sectionKey) {
     const s = appData.schools.find(x => x.id === activeSchoolId);
-    if (!s) return;
-    const yData = getActiveYearData(s);
-    const dataStr = JSON.stringify({ school: s.name, section: sectionName, data: yData }, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' });
+    const dataToExport = { section: sectionKey, school: s ? s.name : 'COMICO', exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `COMICO_${sectionName}_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `COMICO_${sectionKey}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
