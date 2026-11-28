@@ -90,6 +90,9 @@
     }
 
     const LOCAL_BACKUP_KEY = "comico_gestion_main_state_backup";
+    const AUDIT_IDB_NAME = "comico_audit_media_db";
+    const AUDIT_IDB_STORE = "audit_media_store";
+    const AUDIT_IDB_KEY = "audit_logs_cache";
 
     let firebaseUser = null;
     const syncingFromFirebase = new Set();
@@ -99,6 +102,7 @@
     const lastSerializedBySection = {};
     const pendingRemoteBySection = {};
     let cloudStatus = "Local";
+    let auditIdbPromise = null;
 
     // Suivi des uploads audio/vidéo/image en cours pour les rattacher à l'entrée d'audit
     const pendingAuditMediaUploads = {
@@ -106,6 +110,82 @@
       video: null,
       image: null
     };
+
+    function openAuditIdb() {
+      if (auditIdbPromise) return auditIdbPromise;
+      auditIdbPromise = new Promise((resolve) => {
+        try {
+          if (typeof indexedDB === 'undefined') return resolve(null);
+          const req = indexedDB.open(AUDIT_IDB_NAME, 1);
+          req.onupgradeneeded = () => {
+            const dbIdb = req.result;
+            if (!dbIdb.objectStoreNames.contains(AUDIT_IDB_STORE)) {
+              dbIdb.createObjectStore(AUDIT_IDB_STORE);
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+      return auditIdbPromise;
+    }
+
+    async function writeAuditLocalCache(logs, formData) {
+      try {
+        const dbIdb = await openAuditIdb();
+        if (!dbIdb) return;
+        const tx = dbIdb.transaction(AUDIT_IDB_STORE, 'readwrite');
+        const store = tx.objectStore(AUDIT_IDB_STORE);
+        store.put({
+          auditLogs: deepClone(logs || []),
+          auditForm: deepClone(formData || {}),
+          updatedAt: Date.now()
+        }, AUDIT_IDB_KEY);
+      } catch (_) {}
+    }
+
+    async function readAuditLocalCache() {
+      try {
+        const dbIdb = await openAuditIdb();
+        if (!dbIdb) return null;
+        return await new Promise((resolve) => {
+          const tx = dbIdb.transaction(AUDIT_IDB_STORE, 'readonly');
+          const store = tx.objectStore(AUDIT_IDB_STORE);
+          const req = store.get(AUDIT_IDB_KEY);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function mergeAuditLogsWithCache(cachedLogs) {
+      if (!Array.isArray(cachedLogs) || !cachedLogs.length) return;
+      const cacheById = new Map(cachedLogs.map((item) => [item.id, item]));
+      const currentIds = new Set((state.auditLogs || []).map((item) => item.id));
+
+      const mergedExisting = (state.auditLogs || []).map((item) => {
+        const cached = cacheById.get(item.id);
+        if (!cached) return item;
+        const pickMedia = (curVal, cacheVal) => {
+          if (typeof curVal === 'string' && curVal.startsWith('http')) return curVal;
+          if (typeof cacheVal === 'string' && cacheVal.startsWith('http')) return cacheVal;
+          return curVal || cacheVal || '';
+        };
+        return {
+          ...item,
+          audio: pickMedia(item.audio, cached.audio),
+          video: pickMedia(item.video, cached.video),
+          image: pickMedia(item.image, cached.image)
+        };
+      });
+
+      const missingFromState = cachedLogs.filter((item) => !currentIds.has(item.id));
+      state.auditLogs = [...missingFromState, ...mergedExisting];
+    }
 
     const PROVINCES_RDC = [
       'Kinshasa', 'Nord-Kivu', 'Sud-Kivu', 'Haut-Katanga', 'Tshopo', 'Kasaï-Oriental',
@@ -577,6 +657,21 @@
 
     let state = readLocalBackup() || deepClone(INITIAL_STATE);
 
+    readAuditLocalCache().then((cached) => {
+      if (!cached) return;
+      mergeAuditLogsWithCache(cached.auditLogs);
+      if (cached.auditForm && typeof cached.auditForm === 'object') {
+        state.auditForm = {
+          ...state.auditForm,
+          ...cached.auditForm,
+          audio: cached.auditForm.audio || state.auditForm.audio || '',
+          video: cached.auditForm.video || state.auditForm.video || '',
+          image: cached.auditForm.image || state.auditForm.image || ''
+        };
+      }
+      renderApp();
+    }).catch(() => {});
+
     function isPersistentAuditMedia(val) {
       if (typeof val !== 'string' || !val) return false;
       if (val.startsWith('blob:')) return false;
@@ -658,7 +753,8 @@
         case 'audit':
           if (Array.isArray(data.items)) {
             const localById = new Map((state.auditLogs || []).map((item) => [item.id, item]));
-            state.auditLogs = data.items.map((remoteItem) => {
+            const remoteIds = new Set(data.items.map((item) => item.id));
+            const mergedRemote = data.items.map((remoteItem) => {
               const localItem = localById.get(remoteItem.id);
               if (!localItem) return remoteItem;
               const pickBestMedia = (remoteVal, localVal) => {
@@ -673,6 +769,9 @@
                 image: pickBestMedia(remoteItem.image, localItem.image)
               };
             });
+            const unsyncedLocal = (state.auditLogs || []).filter((item) => !remoteIds.has(item.id));
+            state.auditLogs = [...unsyncedLocal, ...mergedRemote];
+            writeAuditLocalCache(state.auditLogs, state.auditForm);
           }
           if (typeof data.selectedId === 'string') state.selectedAuditId = data.selectedId;
           break;
@@ -752,12 +851,17 @@
         ? sectionsToSync
         : Object.keys(RUBRIQUE_DOCS);
 
+      if (keys.includes('audit')) {
+        writeAuditLocalCache(state.auditLogs, state.auditForm);
+      }
+
       for (const key of keys) {
         if (!docRefs[key]) continue;
         if (firestoreTimers[key]) clearTimeout(firestoreTimers[key]);
+        const delay = key === 'audit' ? 50 : 350;
         firestoreTimers[key] = setTimeout(() => {
           pushSectionToFirestore(key).catch(() => {});
-        }, 350);
+        }, delay);
       }
       return true;
     }
@@ -937,6 +1041,7 @@
         video: '',
         image: ''
       });
+      writeAuditLocalCache(state.auditLogs, state.auditForm);
     }
 
     function escapeHtml(str) {
@@ -1059,45 +1164,11 @@
 
     async function convertLargeMediaStream(file, contentType, ext) {
       const sizeMo = (file.size / (1024 * 1024)).toFixed(1);
-      notify(`Préparation et conversion du fichier (${sizeMo} Mo)...`);
-
-      const chunkSize = 8 * 1024 * 1024;
-      if (typeof file.stream === 'function' && typeof ReadableStream === 'function') {
-        try {
-          const reader = file.stream().getReader();
-          const stream = new ReadableStream({
-            async pull(controller) {
-              const { done, value } = await reader.read();
-              if (done) {
-                controller.close();
-                return;
-              }
-              controller.enqueue(value);
-            },
-            cancel(reason) {
-              reader.cancel(reason).catch(() => {});
-            }
-          });
-          const resp = new Response(stream, {
-            headers: { 'Content-Type': contentType }
-          });
-          const streamedBlob = await resp.blob();
-          return {
-            blob: streamedBlob,
-            contentType,
-            ext: contentType === 'video/webm' && ext !== 'webm' ? 'webm' : ext
-          };
-        } catch (_) {}
-      }
-
-      const parts = [];
-      for (let offset = 0; offset < file.size; offset += chunkSize) {
-        parts.push(file.slice(offset, Math.min(offset + chunkSize, file.size), contentType));
-      }
+      notify(`Préparation du flux (${sizeMo} Mo)...`);
       return {
-        blob: new Blob(parts, { type: contentType }),
+        blob: file,
         contentType,
-        ext: contentType === 'video/webm' && ext !== 'webm' ? 'webm' : ext
+        ext
       };
     }
 
@@ -1229,19 +1300,72 @@
         .catch(() => {});
     }
 
+    function ensureAuditEntryForMedia(kind, url) {
+      let targetId = state.auditForm.id || '';
+      if (!targetId) {
+        const now = new Date();
+        const ts = `${now.toISOString().split('T')[0]} ${now.toTimeString().split(' ')[0]} WAT`;
+        targetId = `AUD-${Math.floor(10000 + Math.random() * 90000)}`;
+        state.auditForm.id = targetId;
+        state.selectedAuditId = targetId;
+        state.auditLogs.unshift({
+          id: targetId,
+          timestamp: ts,
+          acteur: 'Chargé de l’Administration',
+          role: 'Chargé de l’Administration',
+          province: state.auditForm.province || 'Kinshasa',
+          module: state.auditForm.module || 'Administration',
+          action: state.auditForm.action || 'VERIFICATION_REGISTRE',
+          details: (state.auditForm.details && state.auditForm.details.trim())
+            ? state.auditForm.details.trim()
+            : `Pièce jointe ${kind} enregistrée`,
+          ip: '197.242.118.42',
+          audio: kind === 'audio' ? url : '',
+          video: kind === 'video' ? url : '',
+          image: kind === 'image' ? url : ''
+        });
+      } else {
+        const exists = state.auditLogs.some((a) => a.id === targetId);
+        if (exists) {
+          state.auditLogs = state.auditLogs.map((a) =>
+            a.id === targetId ? { ...a, [kind]: url } : a
+          );
+        } else {
+          const now = new Date();
+          const ts = `${now.toISOString().split('T')[0]} ${now.toTimeString().split(' ')[0]} WAT`;
+          state.auditLogs.unshift({
+            id: targetId,
+            timestamp: ts,
+            acteur: 'Chargé de l’Administration',
+            role: 'Chargé de l’Administration',
+            province: state.auditForm.province || 'Kinshasa',
+            module: state.auditForm.module || 'Administration',
+            action: state.auditForm.action || 'VERIFICATION_REGISTRE',
+            details: (state.auditForm.details && state.auditForm.details.trim())
+              ? state.auditForm.details.trim()
+              : `Pièce jointe ${kind} enregistrée`,
+            ip: '197.242.118.42',
+            audio: kind === 'audio' ? url : '',
+            video: kind === 'video' ? url : '',
+            image: kind === 'image' ? url : ''
+          });
+        }
+      }
+      return targetId;
+    }
+
     function attachAuditMediaUrlToTarget(kind, url, targetAuditId = '') {
       if (!url) return;
       state.auditForm[kind] = url;
-      const idToUpdate = targetAuditId || state.auditForm.id || '';
-      if (idToUpdate) {
-        state.auditLogs = state.auditLogs.map((a) =>
-          a.id === idToUpdate ? { ...a, [kind]: url } : a
-        );
-      }
+      const idToUpdate = targetAuditId || ensureAuditEntryForMedia(kind, url);
+      state.auditLogs = state.auditLogs.map((a) =>
+        a.id === idToUpdate ? { ...a, [kind]: url } : a
+      );
       writeLocalBackup(state);
+      writeAuditLocalCache(state.auditLogs, state.auditForm);
       renderApp();
-      if (idToUpdate) {
-        saveState(['audit']);
+      if (url.startsWith('http') || (url.startsWith('data:') && url.length <= 850000)) {
+        pushSectionToFirestore('audit').catch(() => {});
       }
     }
 
@@ -1260,19 +1384,23 @@
         typedBlob = file;
       }
 
+      const initialAuditId = ensureAuditEntryForMedia(kind, '');
+      writeLocalBackup(state);
+      writeAuditLocalCache(state.auditLogs, state.auditForm);
+
       let uploadedRemoteUrl = '';
       if (typedBlob.size <= 850000) {
         blobToDataUrl(typedBlob)
           .then((dataUrl) => {
             if (!uploadedRemoteUrl && dataUrl) {
-              attachAuditMediaUrlToTarget(kind, dataUrl);
+              attachAuditMediaUrlToTarget(kind, dataUrl, initialAuditId);
             }
           })
           .catch(() => {});
       } else {
         try {
           const blobUrl = URL.createObjectURL(typedBlob);
-          if (blobUrl) attachAuditMediaUrlToTarget(kind, blobUrl);
+          if (blobUrl) attachAuditMediaUrlToTarget(kind, blobUrl, initialAuditId);
         } catch (_) {}
       }
 
@@ -1280,7 +1408,7 @@
         .then((finalUrl) => {
           if (finalUrl) {
             uploadedRemoteUrl = finalUrl;
-            const boundId = pendingAuditMediaUploads[kind]?.boundAuditId || state.auditForm.id || '';
+            const boundId = pendingAuditMediaUploads[kind]?.boundAuditId || initialAuditId || state.auditForm.id || '';
             attachAuditMediaUrlToTarget(kind, finalUrl, boundId);
           }
           return finalUrl || '';
@@ -1294,7 +1422,7 @@
 
       pendingAuditMediaUploads[kind] = {
         promise: uploadPromise,
-        boundAuditId: state.auditForm.id || ''
+        boundAuditId: initialAuditId
       };
     }
 
@@ -1985,6 +2113,7 @@
 
       resetAuditForm();
       saveState(['audit']);
+      pushSectionToFirestore('audit').catch(() => {});
       renderApp();
     }
 
@@ -3201,21 +3330,21 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Module</label>
-                <input type="text" value="${escapeHtml(f.module)}" oninput="state.auditForm.module = this.value; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
+                <input type="text" value="${escapeHtml(f.module)}" oninput="state.auditForm.module = this.value; writeLocalBackup(state); writeAuditLocalCache(state.auditLogs, state.auditForm);" class="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Action</label>
-                <input type="text" value="${escapeHtml(f.action)}" oninput="state.auditForm.action = this.value; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
+                <input type="text" value="${escapeHtml(f.action)}" oninput="state.auditForm.action = this.value; writeLocalBackup(state); writeAuditLocalCache(state.auditLogs, state.auditForm);" class="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Province</label>
-                <select onchange="state.auditForm.province = this.value; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg">
+                <select onchange="state.auditForm.province = this.value; writeLocalBackup(state); writeAuditLocalCache(state.auditLogs, state.auditForm);" class="w-full px-3 py-2 border rounded-lg">
                   ${PROVINCES_RDC.map(p => `<option value="${escapeHtml(p)}" ${f.province === p ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('')}
                 </select>
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Détails *</label>
-                <input required type="text" value="${escapeHtml(f.details)}" oninput="state.auditForm.details = this.value; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
+                <input required type="text" value="${escapeHtml(f.details)}" oninput="state.auditForm.details = this.value; writeLocalBackup(state); writeAuditLocalCache(state.auditLogs, state.auditForm);" class="w-full px-3 py-2 border rounded-lg" />
               </div>
             </div>
 
@@ -3601,6 +3730,8 @@
       INITIAL_STATE,
       deepClone,
       writeLocalBackup,
+      writeAuditLocalCache,
+      readAuditLocalCache,
       saveState,
       pushSectionToFirestore,
       pushAllSectionsToFirestore,
