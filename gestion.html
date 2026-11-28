@@ -51,18 +51,40 @@
       appId: "1:59405008311:web:0eda5469402a2586e6fc32"
     };
 
+    const FIRESTORE_COLLECTION = "comico_platform";
+    const LEGACY_DOC_ID = "gestion_main_state";
+
+    // Un document dédié par rubrique / domaine métier
+    const RUBRIQUE_DOCS = {
+      organs: "organs",
+      mosques: "mosques",
+      members: "members",
+      leaders: "leaders",
+      finance: "finance",
+      events: "events",
+      certificates: "certificates",
+      audit: "audit_logs",
+      waqf: "waqf",
+      hajj: "hajj",
+      admin: "admin_settings"
+    };
+
     let app = null;
     let auth = null;
     let db = null;
     let storage = null;
-    let FIREBASE_GESTION_DOC = null;
+    let docRefs = {};
+    let legacyDocRef = null;
 
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
       db = getFirestore(app);
       storage = getStorage(app);
-      FIREBASE_GESTION_DOC = doc(db, "comico_platform", "gestion_main_state");
+      legacyDocRef = doc(db, FIRESTORE_COLLECTION, LEGACY_DOC_ID);
+      for (const [key, docId] of Object.entries(RUBRIQUE_DOCS)) {
+        docRefs[key] = doc(db, FIRESTORE_COLLECTION, docId);
+      }
     } catch (err) {
       console.warn("Firebase init warning:", err);
     }
@@ -70,12 +92,13 @@
     const LOCAL_BACKUP_KEY = "comico_gestion_main_state_backup";
 
     let firebaseUser = null;
-    let isSyncingFromFirebase = false;
-    let isSavingToFirebase = false;
+    const syncingFromFirebase = new Set();
+    const savingToFirebase = new Set();
     let notifyTimeout = null;
-    let firestoreSyncTimer = null;
-    let lastSerializedPayload = "";
-    let pendingRemotePayload = null;
+    const firestoreTimers = {};
+    const lastSerializedBySection = {};
+    const pendingRemoteBySection = {};
+    let cloudStatus = "Local";
 
     const PROVINCES_RDC = [
       'Kinshasa', 'Nord-Kivu', 'Sud-Kivu', 'Haut-Katanga', 'Tshopo', 'Kasaï-Oriental',
@@ -547,84 +570,182 @@
 
     let state = readLocalBackup() || deepClone(INITIAL_STATE);
 
-    function sanitizeStateForFirestore(rawState) {
-      let light = stripHeavyMediaForStorage(rawState, 350000);
-      let serialized = JSON.stringify(light);
-      if (serialized.length > 900000) {
-        light = stripHeavyMediaForStorage(rawState, 20000);
+    function buildSectionData(sectionKey, rawState) {
+      const clean = stripHeavyMediaForStorage(rawState, 350000);
+      switch (sectionKey) {
+        case 'organs':
+          return { items: clean.organs || [], selectedId: clean.selectedOrganId || '' };
+        case 'mosques':
+          return { items: clean.mosques || [], search: clean.mosqueSearch || '' };
+        case 'members':
+          return { items: clean.members || [], selectedId: clean.selectedMemberId || '' };
+        case 'leaders':
+          return { items: clean.leaders || [], selectedId: clean.selectedLeaderId || '' };
+        case 'finance':
+          return { items: clean.transactions || [], selectedId: clean.selectedTransactionId || '' };
+        case 'events':
+          return { items: clean.events || [], selectedId: clean.selectedEventId || '' };
+        case 'certificates':
+          return { items: clean.certificates || [], selectedId: clean.selectedCertificateId || '' };
+        case 'audit':
+          return { items: clean.auditLogs || [], selectedId: clean.selectedAuditId || '' };
+        case 'waqf':
+          return { items: clean.waqfs || [], selectedId: clean.selectedWaqfId || '' };
+        case 'hajj':
+          return { items: clean.hajjPilgrims || [], selectedId: clean.selectedHajjId || '' };
+        case 'admin':
+          return { splitRules: clean.splitRules || { locale: 50, provinciale: 30, nationale: 20 } };
+        default:
+          return null;
       }
-      return light;
     }
 
-    async function pushToFirestoreNow() {
-      if (!FIREBASE_GESTION_DOC || !auth) return false;
-      if (isSyncingFromFirebase || isSavingToFirebase) return true;
-      isSavingToFirebase = true;
+    function applySectionData(sectionKey, data) {
+      if (!data || typeof data !== 'object') return;
+      switch (sectionKey) {
+        case 'organs':
+          if (Array.isArray(data.items) && data.items.length) state.organs = data.items;
+          if (typeof data.selectedId === 'string') state.selectedOrganId = data.selectedId;
+          break;
+        case 'mosques':
+          if (Array.isArray(data.items)) state.mosques = data.items;
+          if (typeof data.search === 'string') state.mosqueSearch = data.search;
+          break;
+        case 'members':
+          if (Array.isArray(data.items)) state.members = data.items;
+          if (typeof data.selectedId === 'string') state.selectedMemberId = data.selectedId;
+          break;
+        case 'leaders':
+          if (Array.isArray(data.items)) state.leaders = data.items;
+          if (typeof data.selectedId === 'string') state.selectedLeaderId = data.selectedId;
+          break;
+        case 'finance':
+          if (Array.isArray(data.items)) state.transactions = data.items;
+          if (typeof data.selectedId === 'string') state.selectedTransactionId = data.selectedId;
+          break;
+        case 'events':
+          if (Array.isArray(data.items)) state.events = data.items;
+          if (typeof data.selectedId === 'string') state.selectedEventId = data.selectedId;
+          break;
+        case 'certificates':
+          if (Array.isArray(data.items)) state.certificates = data.items;
+          if (typeof data.selectedId === 'string') state.selectedCertificateId = data.selectedId;
+          break;
+        case 'audit':
+          if (Array.isArray(data.items)) state.auditLogs = data.items;
+          if (typeof data.selectedId === 'string') state.selectedAuditId = data.selectedId;
+          break;
+        case 'waqf':
+          if (Array.isArray(data.items)) state.waqfs = data.items;
+          if (typeof data.selectedId === 'string') state.selectedWaqfId = data.selectedId;
+          break;
+        case 'hajj':
+          if (Array.isArray(data.items)) state.hajjPilgrims = data.items;
+          if (typeof data.selectedId === 'string') state.selectedHajjId = data.selectedId;
+          break;
+        case 'admin':
+          if (data.splitRules && typeof data.splitRules === 'object') {
+            state.splitRules = { ...state.splitRules, ...data.splitRules };
+          }
+          break;
+      }
+    }
+
+    async function pushSectionToFirestore(sectionKey) {
+      const refDoc = docRefs[sectionKey];
+      if (!refDoc || !auth) return false;
+      if (syncingFromFirebase.has(sectionKey) || savingToFirebase.has(sectionKey)) return true;
+
+      savingToFirebase.add(sectionKey);
       try {
         if (!firebaseUser) {
-          await signInAnonymously(auth).catch(() => null);
+          await signInAnonymously(auth);
         }
-        const payload = sanitizeStateForFirestore(state);
-        const serializedPayload = JSON.stringify(payload);
-        if (serializedPayload.length > 980000) {
-          notify("Attention : volume de données proche de la limite Firestore, certaines pièces jointes lourdes ne sont pas synchronisées dans le document cloud.");
+        let sectionData = buildSectionData(sectionKey, state);
+        let serialized = JSON.stringify(sectionData);
+        if (serialized.length > 920000) {
+          const compactState = stripHeavyMediaForStorage(state, 20000);
+          sectionData = buildSectionData(sectionKey, compactState);
+          serialized = JSON.stringify(sectionData);
+        }
+        if (serialized.length > 980000) {
+          notify(`Document "${RUBRIQUE_DOCS[sectionKey]}" trop volumineux (>980 Ko) : réduisez les pièces jointes.`);
           return false;
         }
-        if (serializedPayload === lastSerializedPayload) return true;
-        await setDoc(FIREBASE_GESTION_DOC, {
-          payload: serializedPayload,
+        if (serialized === lastSerializedBySection[sectionKey]) {
+          cloudStatus = "Synchronisé";
+          return true;
+        }
+
+        await setDoc(refDoc, {
+          rubrique: sectionKey,
+          data: sectionData,
           updatedAt: new Date().toISOString()
         }, { merge: true });
-        lastSerializedPayload = serializedPayload;
+
+        lastSerializedBySection[sectionKey] = serialized;
+        cloudStatus = "Synchronisé";
         return true;
-      } catch (_) {
+      } catch (err) {
+        console.error(`Firestore write error (${sectionKey}):`, err);
+        cloudStatus = "Erreur cloud";
+        notify(`Échec synchro Firestore (${RUBRIQUE_DOCS[sectionKey]}) : ${err?.code || err?.message || 'vérifiez les règles Firestore'}`);
         return false;
       } finally {
-        isSavingToFirebase = false;
+        savingToFirebase.delete(sectionKey);
       }
     }
 
-    function saveState() {
+    async function pushAllSectionsToFirestore() {
+      for (const sectionKey of Object.keys(RUBRIQUE_DOCS)) {
+        await pushSectionToFirestore(sectionKey);
+      }
+    }
+
+    function saveState(sectionsToSync = null) {
       try {
         writeLocalBackup(state);
       } catch (_) {}
-      if (firestoreSyncTimer) clearTimeout(firestoreSyncTimer);
-      firestoreSyncTimer = setTimeout(() => {
-        pushToFirestoreNow().catch(() => {});
-      }, 600);
+
+      const keys = Array.isArray(sectionsToSync) && sectionsToSync.length
+        ? sectionsToSync
+        : Object.keys(RUBRIQUE_DOCS);
+
+      for (const key of keys) {
+        if (!docRefs[key]) continue;
+        if (firestoreTimers[key]) clearTimeout(firestoreTimers[key]);
+        firestoreTimers[key] = setTimeout(() => {
+          pushSectionToFirestore(key).catch(() => {});
+        }, 350);
+      }
       return true;
     }
 
-    function applyRemotePayload(remoteRaw) {
+    function applyRemoteSectionData(sectionKey, remoteDataObj) {
+      const serialized = JSON.stringify(remoteDataObj || {});
+      syncingFromFirebase.add(sectionKey);
       try {
-        const remoteParsed = JSON.parse(remoteRaw);
-        const currentNotification = state.notification;
-        const currentTab = state.activeTab;
-        const currentMobileOpen = state.mobileMenuOpen;
-        const currentTopOpen = state.topNavOpen;
-        isSyncingFromFirebase = true;
-        state = mergeWithInitialState(remoteParsed);
-        lastSerializedPayload = remoteRaw;
-        pendingRemotePayload = null;
+        applySectionData(sectionKey, remoteDataObj);
+        lastSerializedBySection[sectionKey] = serialized;
+        delete pendingRemoteBySection[sectionKey];
         writeLocalBackup(state);
-        state.notification = currentNotification;
-        state.activeTab = currentTab || 'dashboard';
-        state.mobileMenuOpen = currentMobileOpen;
-        state.topNavOpen = currentTopOpen;
+        cloudStatus = "Synchronisé";
       } catch (_) {
       } finally {
-        isSyncingFromFirebase = false;
+        syncingFromFirebase.delete(sectionKey);
         renderApp();
       }
     }
 
     function flushPendingRemoteIfIdle() {
-      if (!pendingRemotePayload) return;
       const activeTag = document.activeElement?.tagName;
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
-      const raw = pendingRemotePayload;
-      pendingRemotePayload = null;
-      applyRemotePayload(raw);
+      const keys = Object.keys(pendingRemoteBySection);
+      for (const key of keys) {
+        const data = pendingRemoteBySection[key];
+        delete pendingRemoteBySection[key];
+        applyRemoteSectionData(key, data);
+      }
     }
 
     function openRubrique(tabId) {
@@ -642,7 +763,7 @@
       notifyTimeout = setTimeout(() => {
         state.notification = null;
         renderApp();
-      }, 3200);
+      }, 4200);
     }
 
     function toggleMobileMenu(forceValue) {
@@ -677,7 +798,7 @@
     }
 
     function initFirebaseSync() {
-      if (!auth || !db || !FIREBASE_GESTION_DOC) return;
+      if (!auth || !db || !Object.keys(docRefs).length) return;
 
       document.addEventListener('focusout', () => {
         setTimeout(() => flushPendingRemoteIfIdle(), 50);
@@ -685,36 +806,77 @@
 
       onAuthStateChanged(auth, async (user) => {
         firebaseUser = user;
-        try {
-          const snap = await getDoc(FIREBASE_GESTION_DOC);
-          if (snap.exists() && snap.data()?.payload && !isSavingToFirebase) {
-            const remoteRaw = snap.data().payload;
-            if (remoteRaw !== lastSerializedPayload) {
-              applyRemotePayload(remoteRaw);
+        if (!user) return;
+
+        let anyRemoteFound = false;
+
+        for (const [sectionKey, refDoc] of Object.entries(docRefs)) {
+          try {
+            const snap = await getDoc(refDoc);
+            if (snap.exists() && snap.data()?.data && !savingToFirebase.has(sectionKey)) {
+              anyRemoteFound = true;
+              const remoteData = snap.data().data;
+              const serialized = JSON.stringify(remoteData);
+              if (serialized !== lastSerializedBySection[sectionKey]) {
+                applySectionData(sectionKey, remoteData);
+                lastSerializedBySection[sectionKey] = serialized;
+              }
             }
-          } else if (!snap.exists()) {
-            await pushToFirestoreNow();
+          } catch (err) {
+            console.warn(`Firestore read warning (${sectionKey}):`, err);
           }
-        } catch (_) {
-          isSyncingFromFirebase = false;
         }
 
-        try {
-          onSnapshot(FIREBASE_GESTION_DOC, (docSnap) => {
-            if (!docSnap.exists() || !docSnap.data()?.payload || isSyncingFromFirebase || isSavingToFirebase) return;
-            const remoteRaw = docSnap.data().payload;
-            if (remoteRaw === lastSerializedPayload) return;
-            const activeTag = document.activeElement?.tagName;
-            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
-              pendingRemotePayload = remoteRaw;
-              return;
+        // Migration éventuelle depuis l'ancien document unique gestion_main_state
+        if (!anyRemoteFound && legacyDocRef) {
+          try {
+            const legacySnap = await getDoc(legacyDocRef);
+            if (legacySnap.exists() && legacySnap.data()?.payload) {
+              const parsedLegacy = mergeWithInitialState(JSON.parse(legacySnap.data().payload));
+              state = { ...parsedLegacy, activeTab: state.activeTab || 'dashboard', notification: null };
+              writeLocalBackup(state);
+              await pushAllSectionsToFirestore();
+              anyRemoteFound = true;
             }
-            applyRemotePayload(remoteRaw);
-          }, () => {});
-        } catch (_) {}
+          } catch (_) {}
+        }
+
+        if (!anyRemoteFound) {
+          await pushAllSectionsToFirestore();
+        } else {
+          writeLocalBackup(state);
+          cloudStatus = "Synchronisé";
+          renderApp();
+        }
+
+        // Écoute temps réel document par document
+        for (const [sectionKey, refDoc] of Object.entries(docRefs)) {
+          try {
+            onSnapshot(refDoc, (docSnap) => {
+              if (!docSnap.exists() || !docSnap.data()?.data) return;
+              if (syncingFromFirebase.has(sectionKey) || savingToFirebase.has(sectionKey)) return;
+              const remoteData = docSnap.data().data;
+              const serialized = JSON.stringify(remoteData);
+              if (serialized === lastSerializedBySection[sectionKey]) return;
+
+              const activeTag = document.activeElement?.tagName;
+              if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+                pendingRemoteBySection[sectionKey] = remoteData;
+                return;
+              }
+              applyRemoteSectionData(sectionKey, remoteData);
+            }, (err) => {
+              console.warn(`Firestore snapshot warning (${sectionKey}):`, err);
+            });
+          } catch (_) {}
+        }
       });
 
-      signInAnonymously(auth).catch(() => {});
+      signInAnonymously(auth).catch((err) => {
+        console.warn("Anonymous auth warning:", err);
+        cloudStatus = "Auth requise";
+        renderApp();
+      });
     }
 
     function addAudit(module, action, details, province = 'Kinshasa') {
@@ -1029,7 +1191,7 @@
       }
 
       resetOrganForm();
-      saveState();
+      saveState(['organs', 'audit']);
       renderApp();
     }
 
@@ -1038,7 +1200,7 @@
       if (!target) return;
       state.organForm = { ...target };
       state.selectedOrganId = id;
-      saveState();
+      saveState(['organs']);
       renderApp();
     }
 
@@ -1055,7 +1217,7 @@
         resetOrganForm();
       }
       addAudit('Structure et organes', 'SUPPRESSION_ORGANE', `Suppression de l'organe ${id}`);
-      saveState();
+      saveState(['organs', 'audit']);
       notify('Organe supprimé.');
       renderApp();
     }
@@ -1063,14 +1225,14 @@
     function publishOrganigramme() {
       state.organs = state.organs.map((o) => ({ ...o, publie: true }));
       addAudit('Structure et organes', 'PUBLICATION_ORGANIGRAMME', 'Publication officielle de l’organigramme hiérarchique');
-      saveState();
+      saveState(['organs', 'audit']);
       notify('Organigramme hiérarchique publié et mis à jour dans la section ci-dessous.');
     }
 
     function handleMosqueImageUpload(input) {
       readFileAsDataUrl(input, (res) => {
         state.mosqueForm.image = res;
-        saveState();
+        writeLocalBackup(state);
         renderApp();
       }, 'mosques');
     }
@@ -1098,7 +1260,7 @@
       if (!target) return;
       state.mosqueForm = { ...target };
       state.showMosqueForm = true;
-      saveState();
+      writeLocalBackup(state);
       renderApp();
     }
 
@@ -1124,7 +1286,7 @@
 
       state.showMosqueForm = false;
       resetMosqueForm();
-      saveState();
+      saveState(['mosques', 'audit']);
       renderApp();
     }
 
@@ -1132,7 +1294,7 @@
       state.mosques = state.mosques.filter((m) => m.id !== id);
       if (state.mosqueForm.id === id) resetMosqueForm();
       addAudit('Mosquées', 'SUPPRESSION_MOSQUEE', `Suppression de la mosquée ${id}`);
-      saveState();
+      saveState(['mosques', 'audit']);
       notify('Mosquée supprimée du registre.');
       renderApp();
     }
@@ -1140,7 +1302,7 @@
     function handleMemberImageUpload(input) {
       readFileAsDataUrl(input, (res) => {
         state.memberForm.image = res;
-        saveState();
+        writeLocalBackup(state);
         renderApp();
       }, 'members');
     }
@@ -1160,7 +1322,7 @@
       const generatedSecret = generateSystemCodeSecret();
       state.memberForm.idNational = generatedId;
       state.memberForm.codeSecret = generatedSecret;
-      saveState();
+      writeLocalBackup(state);
       notify(`ID National (${generatedId}) et Code Secret (${generatedSecret}) générés.`);
     }
 
@@ -1184,7 +1346,7 @@
       if (!target) return;
       state.memberForm = { ...target };
       state.selectedMemberId = idNational;
-      saveState();
+      saveState(['members']);
       renderApp();
     }
 
@@ -1213,7 +1375,7 @@
       addAudit('Membres', 'ENREGISTREMENT_STOCKAGE_MEMBRE', `Enregistrement et stockage du membre ${record.prenom} ${record.nom} (${idNat})`, record.provinceResidence);
       notify('Membre enregistré et stocké avec ID, Code Secret & Carte.');
       resetMemberForm();
-      saveState();
+      saveState(['members', 'audit']);
       renderApp();
     }
 
@@ -1226,7 +1388,7 @@
         resetMemberForm();
       }
       addAudit('Membres', 'SUPPRESSION_MEMBRE', `Suppression du membre ${idNational}`);
-      saveState();
+      saveState(['members', 'audit']);
       notify('Membre supprimé.');
       renderApp();
     }
@@ -1256,7 +1418,7 @@
       const acte = state.leaderForm.acteNomination.trim() || generateSystemArreteNumber();
       state.leaderForm.acteNomination = acte;
       state.leaderForm.arreteSigne = true;
-      saveState();
+      writeLocalBackup(state);
       notify(`Arrêté N° ${acte} généré et signé par l'autorité habilitée.`);
     }
 
@@ -1281,7 +1443,7 @@
       if (!target) return;
       state.leaderForm = { ...target };
       state.selectedLeaderId = id;
-      saveState();
+      saveState(['leaders']);
       renderApp();
     }
 
@@ -1311,7 +1473,7 @@
 
       state.selectedLeaderId = id;
       resetLeaderForm();
-      saveState();
+      saveState(['leaders', 'audit']);
       renderApp();
     }
 
@@ -1324,7 +1486,7 @@
         resetLeaderForm();
       }
       addAudit('Responsables religieux', 'SUPPRESSION_RESPONSABLE', `Suppression du responsable ${id}`);
-      saveState();
+      saveState(['leaders', 'audit']);
       notify('Responsable religieux supprimé.');
       renderApp();
     }
@@ -1377,7 +1539,7 @@
         notify('Opération financière enregistrée.');
       }
       resetFinanceForm();
-      saveState();
+      saveState(['finance', 'audit']);
       renderApp();
     }
 
@@ -1386,7 +1548,7 @@
       if (!target) return;
       state.financeForm = { ...target };
       state.selectedTransactionId = id;
-      saveState();
+      saveState(['finance']);
       renderApp();
     }
 
@@ -1395,7 +1557,7 @@
       if (state.selectedTransactionId === id) state.selectedTransactionId = state.transactions[0]?.id || '';
       if (state.financeForm.id === id) resetFinanceForm();
       addAudit('Finance & Zakat', 'SUPPRESSION_TRANSACTION', `Suppression de la transaction ${id}`);
-      saveState();
+      saveState(['finance', 'audit']);
       notify('Transaction supprimée.');
       renderApp();
     }
@@ -1432,7 +1594,7 @@
         notify('Événement enregistré.');
       }
       resetEventForm();
-      saveState();
+      saveState(['events', 'audit']);
       renderApp();
     }
 
@@ -1441,7 +1603,7 @@
       if (!target) return;
       state.eventForm = { ...target };
       state.selectedEventId = id;
-      saveState();
+      saveState(['events']);
       renderApp();
     }
 
@@ -1450,7 +1612,7 @@
       if (state.selectedEventId === id) state.selectedEventId = state.events[0]?.id || '';
       if (state.eventForm.id === id) resetEventForm();
       addAudit('Événements et fêtes', 'SUPPRESSION_EVENEMENT', `Suppression de l'événement ${id}`);
-      saveState();
+      saveState(['events', 'audit']);
       notify('Événement supprimé.');
       renderApp();
     }
@@ -1511,7 +1673,7 @@
         notify('Attestation religieuse enregistrée.');
       }
       resetCertificateForm();
-      saveState();
+      saveState(['certificates', 'audit']);
       renderApp();
     }
 
@@ -1520,7 +1682,7 @@
       if (!target) return;
       state.certificateForm = { ...target };
       state.selectedCertificateId = id;
-      saveState();
+      saveState(['certificates']);
       renderApp();
     }
 
@@ -1529,7 +1691,7 @@
       if (state.selectedCertificateId === id) state.selectedCertificateId = state.certificates[0]?.id || '';
       if (state.certificateForm.id === id) resetCertificateForm();
       addAudit('Attestations religieuses', 'SUPPRESSION_ATTESTATION', `Suppression de l'attestation ${id}`);
-      saveState();
+      saveState(['certificates', 'audit']);
       notify('Attestation supprimée.');
       renderApp();
     }
@@ -1577,7 +1739,7 @@
         notify('Entrée d’audit enregistrée.');
       }
       resetAuditForm();
-      saveState();
+      saveState(['audit']);
       renderApp();
     }
 
@@ -1595,7 +1757,7 @@
         image: target.image || ''
       };
       state.selectedAuditId = id;
-      saveState();
+      saveState(['audit']);
       renderApp();
     }
 
@@ -1603,7 +1765,7 @@
       state.auditLogs = state.auditLogs.filter((a) => a.id !== id);
       if (state.selectedAuditId === id) state.selectedAuditId = state.auditLogs[0]?.id || '';
       if (state.auditForm.id === id) resetAuditForm();
-      saveState();
+      saveState(['audit']);
       notify('Entrée d’audit supprimée.');
       renderApp();
     }
@@ -1637,7 +1799,7 @@
         notify('Bien Waqf enregistré.');
       }
       resetWaqfForm();
-      saveState();
+      saveState(['waqf', 'audit']);
       renderApp();
     }
 
@@ -1646,7 +1808,7 @@
       if (!target) return;
       state.waqfForm = { ...target };
       state.selectedWaqfId = id;
-      saveState();
+      saveState(['waqf']);
       renderApp();
     }
 
@@ -1655,7 +1817,7 @@
       if (state.selectedWaqfId === id) state.selectedWaqfId = state.waqfs[0]?.id || '';
       if (state.waqfForm.id === id) resetWaqfForm();
       addAudit('Action Sociale & Waqf', 'SUPPRESSION_WAQF', `Suppression du bien Waqf ${id}`);
-      saveState();
+      saveState(['waqf', 'audit']);
       notify('Bien Waqf supprimé.');
       renderApp();
     }
@@ -1691,7 +1853,7 @@
         notify('Dossier Hajj / Omra enregistré.');
       }
       resetHajjForm();
-      saveState();
+      saveState(['hajj', 'audit']);
       renderApp();
     }
 
@@ -1700,7 +1862,7 @@
       if (!target) return;
       state.hajjForm = { ...target };
       state.selectedHajjId = id;
-      saveState();
+      saveState(['hajj']);
       renderApp();
     }
 
@@ -1709,7 +1871,7 @@
       if (state.selectedHajjId === id) state.selectedHajjId = state.hajjPilgrims[0]?.id || '';
       if (state.hajjForm.id === id) resetHajjForm();
       addAudit('Gestion Hajj & Omra RDC', 'SUPPRESSION_PELERIN', `Suppression du dossier ${id}`);
-      saveState();
+      saveState(['hajj', 'audit']);
       notify('Dossier Hajj / Omra supprimé.');
       renderApp();
     }
@@ -1860,7 +2022,7 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Niveau Hiérarchique *</label>
-                <select onchange="state.organForm.niveau = this.value; saveState();" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                <select onchange="state.organForm.niveau = this.value; writeLocalBackup(state);" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                   ${['National', 'Provincial', 'Urbain / Territorial', 'Mosquée'].map((niv) => `
                     <option value="${escapeHtml(niv)}" ${f.niveau === niv ? 'selected' : ''}>${escapeHtml(niv)}</option>
                   `).join('')}
@@ -1908,7 +2070,7 @@
 
               <div class="flex justify-end gap-2 pt-2">
                 ${f.id ? `
-                  <button type="button" onclick="resetOrganForm(); saveState(); renderApp();" class="px-3 py-2 text-xs text-slate-600 bg-slate-100 rounded-lg">
+                  <button type="button" onclick="resetOrganForm(); writeLocalBackup(state); renderApp();" class="px-3 py-2 text-xs text-slate-600 bg-slate-100 rounded-lg">
                     Annuler édition
                   </button>
                 ` : ''}
@@ -1930,7 +2092,7 @@
                     org.niveau === 'Provincial' ? 'ml-4' :
                     org.niveau === 'Urbain / Territorial' ? 'ml-8' : 'ml-12';
                   return `
-                    <div onclick="state.selectedOrganId = '${escapeJsStr(org.id)}'; saveState(); renderApp();" class="${indent} p-3.5 rounded-xl border cursor-pointer transition ${isSel ? 'bg-emerald-50 border-emerald-600' : 'bg-white border-slate-200 hover:border-emerald-300'}">
+                    <div onclick="state.selectedOrganId = '${escapeJsStr(org.id)}'; saveState(['organs']); renderApp();" class="${indent} p-3.5 rounded-xl border cursor-pointer transition ${isSel ? 'bg-emerald-50 border-emerald-600' : 'bg-white border-slate-200 hover:border-emerald-300'}">
                       <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-900 text-white">${escapeHtml(org.code)}</span>
@@ -2059,7 +2221,7 @@
               <p class="text-sm text-slate-500">Recensement et gestion du patrimoine des mosquées</p>
             </div>
             <div class="flex flex-wrap gap-2">
-              <button type="button" onclick="state.showMosqueForm = !state.showMosqueForm; saveState(); renderApp();" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold">
+              <button type="button" onclick="state.showMosqueForm = !state.showMosqueForm; writeLocalBackup(state); renderApp();" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold">
                 + Recenser une Mosquée
               </button>
               <button type="button" onclick="window.print()" class="px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold">
@@ -2189,7 +2351,7 @@
                 <button type="button" onclick="downloadJson('mosquee-brouillon.json', state.mosqueForm)" class="px-4 py-2 text-xs font-semibold bg-blue-700 text-white rounded-lg">
                   Télécharger
                 </button>
-                <button type="button" onclick="state.showMosqueForm = false; resetMosqueForm(); saveState(); renderApp();" class="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">
+                <button type="button" onclick="state.showMosqueForm = false; resetMosqueForm(); writeLocalBackup(state); renderApp();" class="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">
                   Annuler
                 </button>
               </div>
@@ -2353,7 +2515,7 @@
               <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 max-h-72 overflow-y-auto no-print">
                 <h4 class="text-xs font-bold uppercase text-slate-500">Membres Stockés (${state.members.length})</h4>
                 ${state.members.map((m) => `
-                  <div onclick="state.selectedMemberId = '${escapeJsStr(m.idNational)}'; saveState(); renderApp();" class="p-2.5 rounded-lg border cursor-pointer flex items-center justify-between text-xs ${selected && selected.idNational === m.idNational ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
+                  <div onclick="state.selectedMemberId = '${escapeJsStr(m.idNational)}'; saveState(['members']); renderApp();" class="p-2.5 rounded-lg border cursor-pointer flex items-center justify-between text-xs ${selected && selected.idNational === m.idNational ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
                     <div>
                       <p class="font-bold text-slate-900">${escapeHtml(m.prenom)} ${escapeHtml(m.nom)} ${escapeHtml(m.postnom)}</p>
                       <p class="font-mono text-[11px] text-emerald-800">${escapeHtml(m.idNational)} • <span class="text-amber-800 font-bold">${escapeHtml(m.codeSecret || '')}</span></p>
@@ -2396,7 +2558,7 @@
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1">Photo du Responsable</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.leaderForm.photo = res; saveState(); renderApp(); }, 'leaders')" class="w-full px-2 py-1.5 text-xs border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.leaderForm.photo = res; writeLocalBackup(state); renderApp(); }, 'leaders')" class="w-full px-2 py-1.5 text-xs border rounded-lg bg-slate-50" />
                 </div>
               </div>
 
@@ -2480,7 +2642,7 @@
               <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2 no-print">
                 <h4 class="text-xs font-bold uppercase text-slate-500">Liste des Responsables Religieux (${state.leaders.length})</h4>
                 ${state.leaders.map((l) => `
-                  <div onclick="state.selectedLeaderId = '${escapeJsStr(l.id)}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer flex items-center justify-between gap-3 text-xs ${selected && selected.id === l.id ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
+                  <div onclick="state.selectedLeaderId = '${escapeJsStr(l.id)}'; saveState(['leaders']); renderApp();" class="p-3 rounded-lg border cursor-pointer flex items-center justify-between gap-3 text-xs ${selected && selected.id === l.id ? 'bg-emerald-50 border-emerald-600' : 'border-slate-100 hover:bg-slate-50'}">
                     <div class="flex items-center gap-3">
                       ${l.photo
                         ? `<img src="${escapeHtml(l.photo)}" alt="${escapeHtml(l.nom)}" class="w-10 h-10 rounded-full object-cover border border-slate-300 shrink-0" />`
@@ -2562,7 +2724,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center pt-1">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Image (Reçu / Justificatif)</label>
-                <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.financeForm.image = res; saveState(); renderApp(); }, 'finance')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.financeForm.image = res; writeLocalBackup(state); renderApp(); }, 'finance')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
               </div>
               <div id="finance-split-preview" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
                 Aperçu répartition : <strong>Locale $${prevLoc}</strong> • <strong>Provinciale $${prevProv}</strong> • <strong>Nationale $${prevNat}</strong>
@@ -2579,7 +2741,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Registre des Transactions Financières & Zakat (${state.transactions.length})</h3>
             ${state.transactions.map(t => `
-              <div onclick="state.selectedTransactionId = '${escapeJsStr(t.id)}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === t.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedTransactionId = '${escapeJsStr(t.id)}'; saveState(['finance']); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === t.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <div class="flex flex-wrap justify-between gap-2">
                   <span class="font-bold text-slate-900">${escapeHtml(t.id)} — ${escapeHtml(t.categorie)} (${escapeHtml(t.type || 'Entrée')} • ${escapeHtml(t.date)})</span>
                   <span class="font-bold text-emerald-900">$${Number(t.montantUSD).toLocaleString()} USD • ${escapeHtml(t.statut)}</span>
@@ -2634,7 +2796,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Image</label>
-              <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.eventForm.image = res; saveState(); renderApp(); }, 'events')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+              <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.eventForm.image = res; writeLocalBackup(state); renderApp(); }, 'events')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
 
@@ -2647,7 +2809,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Calendrier des Événements et Fêtes (${state.events.length})</h3>
             ${state.events.map(ev => `
-              <div onclick="state.selectedEventId = '${escapeJsStr(ev.id)}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === ev.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedEventId = '${escapeJsStr(ev.id)}'; saveState(['events']); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === ev.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(ev.titre)} <span class="text-emerald-800">(${escapeHtml(ev.type)})</span></p>
                 <p class="text-slate-600 mt-1">Date : <strong>${escapeHtml(ev.dateGregorien)}</strong> / ${escapeHtml(ev.dateHijri || '—')} • Lieu : <strong>${escapeHtml(ev.lieu)}</strong> (${escapeHtml(ev.province)}) • Participants : ${Number(ev.participantsAttendus).toLocaleString()}</p>
                 ${ev.image ? `<div class="mt-2">${renderMediaPreview(ev.image, 'image', ev.titre)}</div>` : ''}
@@ -2685,7 +2847,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Type d'Attestation</label>
-                <select onchange="state.certificateForm.type = this.value; state.certificateForm.noteHierarchie = ''; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg">
+                <select onchange="state.certificateForm.type = this.value; state.certificateForm.noteHierarchie = ''; writeLocalBackup(state); renderApp();" class="w-full px-3 py-2 border rounded-lg">
                   ${['Acte de Mariage Religieux (Nikah)', 'Certificat de Conversion / Shahada', 'Attestation d’Imamat'].map(t => `<option value="${escapeHtml(t)}" ${f.type === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
                 </select>
               </div>
@@ -2712,19 +2874,19 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block font-semibold text-slate-700 mb-1">Image — Époux</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpoux = res; saveState(); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpoux = res; writeLocalBackup(state); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                   ${f.imageEpoux ? `<img src="${escapeHtml(f.imageEpoux)}" alt="Époux" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
                 </div>
                 <div>
                   <label class="block font-semibold text-slate-700 mb-1">Image — Épouse</label>
-                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpouse = res; saveState(); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                  <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageEpouse = res; writeLocalBackup(state); renderApp(); }, 'certificates')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                   ${f.imageEpouse ? `<img src="${escapeHtml(f.imageEpouse)}" alt="Épouse" class="mt-2 h-28 w-28 object-cover rounded border" />` : ''}
                 </div>
               </div>
             ` : `
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Image — ${escapeHtml(f.type)}</label>
-                <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageUnique = res; saveState(); renderApp(); }, 'certificates')" class="w-full max-w-md px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="image/*,.pdf" onchange="readFileAsDataUrl(this, (res) => { state.certificateForm.imageUnique = res; writeLocalBackup(state); renderApp(); }, 'certificates')" class="w-full max-w-md px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${f.imageUnique ? renderMediaPreview(f.imageUnique, 'image', 'Attestation') : ''}
               </div>
             `}
@@ -2736,7 +2898,7 @@
               const isMar = c.type === 'Acte de Mariage Religieux (Nikah)';
               const noteText = buildCertificateNote(c);
               return `
-                <div onclick="state.selectedCertificateId = '${escapeJsStr(c.id)}'; saveState(); renderApp();" class="p-4 rounded-lg border cursor-pointer space-y-2 ${selId === c.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+                <div onclick="state.selectedCertificateId = '${escapeJsStr(c.id)}'; saveState(['certificates']); renderApp();" class="p-4 rounded-lg border cursor-pointer space-y-2 ${selId === c.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                   <p class="font-bold text-slate-900">${escapeHtml(c.id)} — ${escapeHtml(c.type)}</p>
                   <p class="text-slate-600">Bénéficiaire : <strong>${escapeHtml(c.beneficiaire)}</strong> • Mosquée : ${escapeHtml(c.mosquee)} (${escapeHtml(c.province)}) • Date : ${escapeHtml(c.dateEmission)}</p>
                   <p class="p-2.5 rounded bg-white border border-slate-200 text-slate-800 italic">${escapeHtml(noteText)}</p>
@@ -2815,17 +2977,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Audio</label>
-                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; saveState(); renderApp(); }, 'audit_audio')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; writeLocalBackup(state); renderApp(); }, 'audit_audio')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.audio, 'audio', 'Audio')}
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Vidéo</label>
-                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; saveState(); renderApp(); }, 'audit_video')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; writeLocalBackup(state); renderApp(); }, 'audit_video')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.video, 'video', 'Vidéo')}
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Image / Document</label>
-                <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; saveState(); renderApp(); }, 'audit_images')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; writeLocalBackup(state); renderApp(); }, 'audit_images')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.image, 'image', 'Document / Image')}
               </div>
             </div>
@@ -2834,7 +2996,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Entrées du Journal d'Audit (${state.auditLogs.length})</h3>
             ${state.auditLogs.map(a => `
-              <div onclick="state.selectedAuditId = '${escapeJsStr(a.id)}'; saveState(); renderApp();" class="p-3 rounded-lg border cursor-pointer space-y-2 ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedAuditId = '${escapeJsStr(a.id)}'; saveState(['audit']); renderApp();" class="p-3 rounded-lg border cursor-pointer space-y-2 ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(a.id)} • ${escapeHtml(a.timestamp)} • <span class="text-emerald-800">${escapeHtml(a.module)} / ${escapeHtml(a.action)}</span></p>
                 <p class="text-slate-600">${escapeHtml(a.details)} — Acteur : ${escapeHtml(a.acteur)} (${escapeHtml(a.province)})</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
@@ -2870,23 +3032,23 @@
             ${renderActionButtons({
               formId: 'admin-form',
               onModify: `notify('Paramètres d’administration prêts à être modifiés.')`,
-              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; saveState(); renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
+              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; saveState(['admin']); renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
               onDownload: `downloadJson('administration-comico-rdc.json', { splitRules: state.splitRules, provinces: PROVINCES_RDC })`
             })}
           </div>
 
-          <form id="admin-form" onsubmit="event.preventDefault(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); saveState(); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <form id="admin-form" onsubmit="event.preventDefault(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); saveState(['admin', 'audit']); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Locale (%)</label>
-              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0; saveState();" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Provinciale (%)</label>
-              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.provinciale)}" oninput="state.splitRules.provinciale = Number(this.value) || 0; saveState();" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.provinciale)}" oninput="state.splitRules.provinciale = Number(this.value) || 0; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Nationale (%)</label>
-              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.nationale)}" oninput="state.splitRules.nationale = Number(this.value) || 0; saveState();" class="w-full px-3 py-2 border rounded-lg" />
+              <input type="number" min="0" max="100" value="${escapeHtml(state.splitRules.nationale)}" oninput="state.splitRules.nationale = Number(this.value) || 0; writeLocalBackup(state);" class="w-full px-3 py-2 border rounded-lg" />
             </div>
           </form>
 
@@ -2948,7 +3110,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Registre Waqf & Action Sociale (${state.waqfs.length})</h3>
             ${state.waqfs.map(w => `
-              <div onclick="state.selectedWaqfId = '${escapeJsStr(w.id)}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === w.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedWaqfId = '${escapeJsStr(w.id)}'; saveState(['waqf']); renderApp();" class="p-3.5 rounded-lg border cursor-pointer ${selId === w.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(w.id)} — ${escapeHtml(w.designation)} (${escapeHtml(w.province)})</p>
                 <p class="text-slate-600 mt-1">Type : ${escapeHtml(w.type)} • Revenu mensuel : <strong>$${Number(w.revenuMensuelUSD).toLocaleString()} USD</strong> • Affectation : <strong>${escapeHtml(w.affectationRevenu)}</strong> • Statut : ${escapeHtml(w.statut)}</p>
               </div>
@@ -2998,7 +3160,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Image du Candidat</label>
-              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.hajjForm.photo = res; saveState(); renderApp(); }, 'hajj')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+              <input type="file" accept="image/*" onchange="readFileAsDataUrl(this, (res) => { state.hajjForm.photo = res; writeLocalBackup(state); renderApp(); }, 'hajj')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
             </div>
           </form>
 
@@ -3011,7 +3173,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
             <h3 class="font-bold text-sm text-slate-900 mb-2">Dossiers Hajj & Omra RDC (${state.hajjPilgrims.length})</h3>
             ${state.hajjPilgrims.map(h => `
-              <div onclick="state.selectedHajjId = '${escapeJsStr(h.id)}'; saveState(); renderApp();" class="p-3.5 rounded-lg border cursor-pointer flex items-center gap-3 ${selId === h.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
+              <div onclick="state.selectedHajjId = '${escapeJsStr(h.id)}'; saveState(['hajj']); renderApp();" class="p-3.5 rounded-lg border cursor-pointer flex items-center gap-3 ${selId === h.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 ${h.photo
                   ? `<img src="${escapeHtml(h.photo)}" alt="${escapeHtml(h.nom)}" class="w-14 h-14 rounded-lg object-cover border border-slate-300 shrink-0" />`
                   : `<div class="w-14 h-14 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold shrink-0">PHOTO</div>`
@@ -3152,9 +3314,14 @@
                   <button type="button" onclick="toggleMobileMenu(true)" class="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold">☰</button>
                   <span class="text-xs text-slate-500 font-medium">Système d’Information Unifié • Communauté Islamique en RDC</span>
                 </div>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                  ${escapeHtml(getHeaderBadgeText())}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cloudStatus === 'Synchronisé' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : cloudStatus === 'Erreur cloud' ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-slate-100 text-slate-700 border-slate-200'}">
+                    ${escapeHtml(cloudStatus)}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                    ${escapeHtml(getHeaderBadgeText())}
+                  </span>
+                </div>
               </header>
 
               <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
@@ -3181,7 +3348,10 @@
       INITIAL_STATE,
       deepClone,
       state,
+      writeLocalBackup,
       saveState,
+      pushSectionToFirestore,
+      pushAllSectionsToFirestore,
       openRubrique,
       notify,
       toggleMobileMenu,
