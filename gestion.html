@@ -571,6 +571,17 @@
     let state = readLocalBackup() || deepClone(INITIAL_STATE);
 
     function buildSectionData(sectionKey, rawState) {
+      if (sectionKey === 'audit') {
+        const auditClean = { ...rawState, notification: null, mobileMenuOpen: false, topNavOpen: false };
+        const keepAuditMedia = (val) => typeof val === 'string' && !val.startsWith('blob:') && val.length <= 850000 ? val : '';
+        const items = (auditClean.auditLogs || []).map((a) => ({
+          ...a,
+          audio: keepAuditMedia(a.audio),
+          video: keepAuditMedia(a.video),
+          image: keepAuditMedia(a.image)
+        }));
+        return { items, selectedId: auditClean.selectedAuditId || '' };
+      }
       const clean = stripHeavyMediaForStorage(rawState, 350000);
       switch (sectionKey) {
         case 'organs':
@@ -587,8 +598,6 @@
           return { items: clean.events || [], selectedId: clean.selectedEventId || '' };
         case 'certificates':
           return { items: clean.certificates || [], selectedId: clean.selectedCertificateId || '' };
-        case 'audit':
-          return { items: clean.auditLogs || [], selectedId: clean.selectedAuditId || '' };
         case 'waqf':
           return { items: clean.waqfs || [], selectedId: clean.selectedWaqfId || '' };
         case 'hajj':
@@ -632,7 +641,19 @@
           if (typeof data.selectedId === 'string') state.selectedCertificateId = data.selectedId;
           break;
         case 'audit':
-          if (Array.isArray(data.items)) state.auditLogs = data.items;
+          if (Array.isArray(data.items)) {
+            const localById = new Map((state.auditLogs || []).map((item) => [item.id, item]));
+            state.auditLogs = data.items.map((remoteItem) => {
+              const localItem = localById.get(remoteItem.id);
+              if (!localItem) return remoteItem;
+              return {
+                ...remoteItem,
+                audio: remoteItem.audio || localItem.audio || '',
+                video: remoteItem.video || localItem.video || '',
+                image: remoteItem.image || localItem.image || ''
+              };
+            });
+          }
           if (typeof data.selectedId === 'string') state.selectedAuditId = data.selectedId;
           break;
         case 'waqf':
@@ -999,6 +1020,23 @@
       return map[ext] || 'audio/mpeg';
     }
 
+    function normalizeVideoMime(file) {
+      if (file.type && file.type.startsWith('video/')) return file.type;
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const map = {
+        mp4: 'video/mp4',
+        webm: 'video/webm',
+        ogg: 'video/ogg',
+        ogv: 'video/ogg',
+        mov: 'video/quicktime',
+        m4v: 'video/mp4',
+        '3gp': 'video/3gpp',
+        mkv: 'video/x-matroska',
+        avi: 'video/x-msvideo'
+      };
+      return map[ext] || 'video/mp4';
+    }
+
     async function compressAndConvertMediaForFirebase(file, folderPath = 'gestion_media') {
       if (!file) return '';
       let payloadBlob = file;
@@ -1012,6 +1050,9 @@
           ext = 'jpg';
         } else if ((file.type && file.type.startsWith('audio/')) || /\.(mp3|m4a|aac|wav|ogg|opus|webm|3gp|amr)$/i.test(file.name || '')) {
           contentType = normalizeAudioMime(file);
+          payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
+        } else if ((file.type && file.type.startsWith('video/')) || /\.(mp4|webm|ogg|ogv|mov|m4v|3gp|mkv|avi)$/i.test(file.name || '')) {
+          contentType = normalizeVideoMime(file);
           payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
         }
       } catch (_) {
@@ -1032,7 +1073,7 @@
         return await getDownloadURL(snap.ref);
       } catch (_) {
         try {
-          if (payloadBlob.size <= 320000) {
+          if (payloadBlob.size <= 850000) {
             return await blobToDataUrl(payloadBlob);
           }
           return URL.createObjectURL(payloadBlob);
@@ -1046,9 +1087,11 @@
       const file = input && input.files && input.files[0];
       if (!file) return;
 
+      const isAuditFolder = folderPath === 'audit_audio' || folderPath === 'audit_video' || folderPath === 'audit_images';
+      const maxInlineBytes = isAuditFolder ? 850000 : 320000;
       let uploadedRemoteUrl = '';
 
-      if (file.size <= 320000) {
+      if (file.size <= maxInlineBytes) {
         blobToDataUrl(file)
           .then((dataUrl) => {
             if (!uploadedRemoteUrl && dataUrl) {
@@ -1068,6 +1111,62 @@
           if (finalUrl) {
             uploadedRemoteUrl = finalUrl;
             callback(finalUrl);
+          }
+        })
+        .catch(() => {});
+    }
+
+    function handleAuditMediaUpload(input, kind, folderPath) {
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+
+      let typedBlob = file;
+      if (kind === 'audio') {
+        const mime = normalizeAudioMime(file);
+        typedBlob = new Blob([file], { type: mime });
+      } else if (kind === 'video') {
+        const mime = normalizeVideoMime(file);
+        typedBlob = new Blob([file], { type: mime });
+      } else if (file.type && file.type.startsWith('image/')) {
+        typedBlob = file;
+      }
+
+      const applyMediaUrl = (url) => {
+        if (!url) return;
+        state.auditForm[kind] = url;
+        if (state.auditForm.id) {
+          state.auditLogs = state.auditLogs.map((a) =>
+            a.id === state.auditForm.id ? { ...a, [kind]: url } : a
+          );
+        }
+        writeLocalBackup(state);
+        renderApp();
+      };
+
+      let uploadedRemoteUrl = '';
+      if (typedBlob.size <= 850000) {
+        blobToDataUrl(typedBlob)
+          .then((dataUrl) => {
+            if (!uploadedRemoteUrl && dataUrl) {
+              applyMediaUrl(dataUrl);
+            }
+          })
+          .catch(() => {});
+      } else {
+        try {
+          const blobUrl = URL.createObjectURL(typedBlob);
+          if (blobUrl) applyMediaUrl(blobUrl);
+        } catch (_) {}
+      }
+
+      compressAndConvertMediaForFirebase(file, folderPath)
+        .then((finalUrl) => {
+          if (finalUrl) {
+            uploadedRemoteUrl = finalUrl;
+            applyMediaUrl(finalUrl);
+            if (state.auditForm.id) {
+              saveState(['audit']);
+            }
           }
         })
         .catch(() => {});
@@ -1133,7 +1232,7 @@
         return `<audio controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 w-full h-9"></audio>`;
       }
       if (kind === 'video') {
-        return `<video controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 max-h-32 rounded border"></video>`;
+        return `<video controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 max-h-40 w-full rounded border bg-black"></video>`;
       }
       const isPdfOrDoc = typeof url === 'string' && (
         url.startsWith('data:application/pdf') ||
@@ -1716,7 +1815,13 @@
       const now = new Date();
       const ts = `${now.toISOString().split('T')[0]} ${now.toTimeString().split(' ')[0]} WAT`;
       if (f.id) {
-        state.auditLogs = state.auditLogs.map((a) => (a.id === f.id ? { ...a, ...f } : a));
+        state.auditLogs = state.auditLogs.map((a) => (a.id === f.id ? {
+          ...a,
+          ...f,
+          audio: f.audio || a.audio || '',
+          video: f.video || a.video || '',
+          image: f.image || a.image || ''
+        } : a));
         state.selectedAuditId = f.id;
         notify('Entrée d’audit modifiée et enregistrée.');
       } else {
@@ -2977,17 +3082,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Audio</label>
-                <input type="file" accept="audio/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.audio = res; writeLocalBackup(state); renderApp(); }, 'audit_audio')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.webm,.3gp,.amr" onchange="handleAuditMediaUpload(this, 'audio', 'audit_audio')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.audio, 'audio', 'Audio')}
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Vidéo</label>
-                <input type="file" accept="video/*" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.video = res; writeLocalBackup(state); renderApp(); }, 'audit_video')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="video/*,.mp4,.webm,.ogg,.ogv,.mov,.m4v,.3gp,.mkv,.avi" onchange="handleAuditMediaUpload(this, 'video', 'audit_video')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.video, 'video', 'Vidéo')}
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 mb-1">Image / Document</label>
-                <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="readFileAsDataUrl(this, (res) => { state.auditForm.image = res; writeLocalBackup(state); renderApp(); }, 'audit_images')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
+                <input type="file" accept="image/*,.pdf,.doc,.docx" onchange="handleAuditMediaUpload(this, 'image', 'audit_images')" class="w-full px-2 py-1.5 border rounded-lg bg-slate-50" />
                 ${renderMediaPreview(f.image, 'image', 'Document / Image')}
               </div>
             </div>
@@ -3363,8 +3468,10 @@
       escapeJsStr,
       downloadJson,
       compressImageBlob,
+      normalizeVideoMime,
       compressAndConvertMediaForFirebase,
       readFileAsDataUrl,
+      handleAuditMediaUpload,
       renderMediaPreview,
       getHeaderBadgeText,
       buildQrSvg,
