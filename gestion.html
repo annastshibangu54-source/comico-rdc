@@ -40,7 +40,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js";
+    import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD42j05X9CY6BkNKmCu3aVCZeyvn3l5JOI",
@@ -1037,11 +1037,89 @@
       return map[ext] || 'video/mp4';
     }
 
+    // Conversion / normalisation par flux (streaming/slice) sans charger 1 à 2 Go en RAM d'un coup
+    async function convertLargeMediaStream(file, contentType, ext) {
+      const sizeMo = (file.size / (1024 * 1024)).toFixed(1);
+      notify(`Préparation et conversion du fichier (${sizeMo} Mo)...`);
+
+      // Pour les fichiers audio/vidéo volumineux (ex. 1 à 2 Go), on utilise un flux par tranches (slice)
+      // afin de normaliser le conteneur/type MIME sans allouer un buffer mémoire de 1-2 Go.
+      const chunkSize = 8 * 1024 * 1024; // tranches de 8 Mo
+      if (typeof file.stream === 'function' && typeof ReadableStream === 'function') {
+        try {
+          const reader = file.stream().getReader();
+          const stream = new ReadableStream({
+            async pull(controller) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+            },
+            cancel(reason) {
+              reader.cancel(reason).catch(() => {});
+            }
+          });
+          const resp = new Response(stream, {
+            headers: { 'Content-Type': contentType }
+          });
+          const streamedBlob = await resp.blob();
+          return {
+            blob: streamedBlob,
+            contentType,
+            ext: contentType === 'video/webm' && ext !== 'webm' ? 'webm' : ext
+          };
+        } catch (_) {}
+      }
+
+      const parts = [];
+      for (let offset = 0; offset < file.size; offset += chunkSize) {
+        parts.push(file.slice(offset, Math.min(offset + chunkSize, file.size), contentType));
+      }
+      return {
+        blob: new Blob(parts, { type: contentType }),
+        contentType,
+        ext: contentType === 'video/webm' && ext !== 'webm' ? 'webm' : ext
+      };
+    }
+
+    function uploadResumableToStorage(storageRef, payloadBlob, contentType, labelName) {
+      return new Promise((resolve, reject) => {
+        const task = uploadBytesResumable(storageRef, payloadBlob, { contentType });
+        let lastPct = -1;
+        task.on(
+          'state_changed',
+          (snapshot) => {
+            if (snapshot.totalBytes > 0) {
+              const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+              if (pct !== lastPct && (pct % 10 === 0 || pct === 100)) {
+                lastPct = pct;
+                const doneMo = (snapshot.bytesTransferred / (1024 * 1024)).toFixed(0);
+                const totalMo = (snapshot.totalBytes / (1024 * 1024)).toFixed(0);
+                notify(`Envoi ${labelName} : ${pct}% (${doneMo} / ${totalMo} Mo)`);
+              }
+            }
+          },
+          (err) => reject(err),
+          async () => {
+            try {
+              const url = await getDownloadURL(task.snapshot.ref);
+              resolve(url);
+            } catch (e) {
+              reject(e);
+            }
+          }
+        );
+      });
+    }
+
     async function compressAndConvertMediaForFirebase(file, folderPath = 'gestion_media') {
       if (!file) return '';
       let payloadBlob = file;
       let contentType = file.type || 'application/octet-stream';
       let ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase() : 'bin';
+      const isLargeMedia = file.size >= 25 * 1024 * 1024; // >= 25 Mo (inclut 1 Go et 2 Go)
 
       try {
         if (file.type && file.type.startsWith('image/')) {
@@ -1050,10 +1128,24 @@
           ext = 'jpg';
         } else if ((file.type && file.type.startsWith('audio/')) || /\.(mp3|m4a|aac|wav|ogg|opus|webm|3gp|amr)$/i.test(file.name || '')) {
           contentType = normalizeAudioMime(file);
-          payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
+          if (isLargeMedia) {
+            const converted = await convertLargeMediaStream(file, contentType, ext);
+            payloadBlob = converted.blob;
+            contentType = converted.contentType;
+            ext = converted.ext;
+          } else {
+            payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
+          }
         } else if ((file.type && file.type.startsWith('video/')) || /\.(mp4|webm|ogg|ogv|mov|m4v|3gp|mkv|avi)$/i.test(file.name || '')) {
           contentType = normalizeVideoMime(file);
-          payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
+          if (isLargeMedia) {
+            const converted = await convertLargeMediaStream(file, contentType, ext);
+            payloadBlob = converted.blob;
+            contentType = converted.contentType;
+            ext = converted.ext;
+          } else {
+            payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
+          }
         }
       } catch (_) {
         payloadBlob = file;
@@ -1069,6 +1161,9 @@
           .replace(/[^a-zA-Z0-9_-]/g, '_')
           .slice(0, 40);
         const storageRef = ref(storage, `comico/${folderPath}/${Date.now()}_${cleanBase}.${ext}`);
+        if (isLargeMedia || payloadBlob.size >= 25 * 1024 * 1024) {
+          return await uploadResumableToStorage(storageRef, payloadBlob, contentType, cleanBase);
+        }
         const snap = await uploadBytes(storageRef, payloadBlob, { contentType });
         return await getDownloadURL(snap.ref);
       } catch (_) {
@@ -1123,10 +1218,10 @@
       let typedBlob = file;
       if (kind === 'audio') {
         const mime = normalizeAudioMime(file);
-        typedBlob = new Blob([file], { type: mime });
+        typedBlob = file.size >= 25 * 1024 * 1024 ? file : new Blob([file], { type: mime });
       } else if (kind === 'video') {
         const mime = normalizeVideoMime(file);
-        typedBlob = new Blob([file], { type: mime });
+        typedBlob = file.size >= 25 * 1024 * 1024 ? file : new Blob([file], { type: mime });
       } else if (file.type && file.type.startsWith('image/')) {
         typedBlob = file;
       }
@@ -3469,6 +3564,8 @@
       downloadJson,
       compressImageBlob,
       normalizeVideoMime,
+      convertLargeMediaStream,
+      uploadResumableToStorage,
       compressAndConvertMediaForFirebase,
       readFileAsDataUrl,
       handleAuditMediaUpload,
