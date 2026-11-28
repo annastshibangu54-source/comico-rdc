@@ -271,6 +271,75 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Boutons Services / Madras & Gestion Start -->
+                <div class="row g-4 justify-content-center mt-4 wow fadeIn" data-wow-delay="0.3s">
+                    <div class="col-lg-6 col-xl-5">
+                        <div class="activities-item p-4 h-100">
+                            <i class="fa fa-school fa-4x text-dark"></i>
+                            <div class="ms-4">
+                                <h4>Créer et numériser votre Madras</h4>
+                                <p class="mb-4">Accédez à l'espace de création et de numérisation des Madras.</p>
+                                <a href="edu_comico.html" class="btn btn-primary px-3">Créer et numériser votre Madras</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xl-5">
+                        <div class="activities-item p-4 h-100">
+                            <i class="fa fa-users-cog fa-4x text-dark"></i>
+                            <div class="ms-4">
+                                <h4>Gérons la communauté</h4>
+                                <p class="mb-4">Accédez à l'espace de gestion communautaire de la COMICO-RDC.</p>
+                                <a href="gestion.html" class="btn btn-primary px-3">Gérons la communauté</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Boutons Services / Madras & Gestion End -->
+
+                <!-- Statistiques edu_comico.html & gestion.html Start -->
+                <div class="mt-5 pt-3 wow fadeIn" data-wow-delay="0.5s" id="statistiques-modules">
+                    <div class="mx-auto text-center mb-4" style="max-width: 700px;">
+                        <p class="fs-5 text-uppercase text-primary">Statistiques</p>
+                        <h2 class="display-6">Résultats de Edu COMICO &amp; Gestion</h2>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-6 col-xl-3">
+                            <div class="bg-light p-4 text-center h-100">
+                                <i class="fa fa-school fa-3x text-primary mb-3"></i>
+                                <h2 class="mb-1 text-primary" id="stat-madras-total">0</h2>
+                                <h5 class="mb-2">Madras numérisées</h5>
+                                <p class="mb-0 text-secondary">Source : edu_comico.html</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-xl-3">
+                            <div class="bg-light p-4 text-center h-100">
+                                <i class="fa fa-user-graduate fa-3x text-primary mb-3"></i>
+                                <h2 class="mb-1 text-primary" id="stat-apprenants-total">0</h2>
+                                <h5 class="mb-2">Apprenants enregistrés</h5>
+                                <p class="mb-0 text-secondary">Source : edu_comico.html</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-xl-3">
+                            <div class="bg-light p-4 text-center h-100">
+                                <i class="fa fa-mosque fa-3x text-primary mb-3"></i>
+                                <h2 class="mb-1 text-primary" id="stat-communautes-total">0</h2>
+                                <h5 class="mb-2">Entités / Mosquées gérées</h5>
+                                <p class="mb-0 text-secondary">Source : gestion.html</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-xl-3">
+                            <div class="bg-light p-4 text-center h-100">
+                                <i class="fa fa-users fa-3x text-primary mb-3"></i>
+                                <h2 class="mb-1 text-primary" id="stat-membres-total">0</h2>
+                                <h5 class="mb-2">Membres / Dossiers actifs</h5>
+                                <p class="mb-0 text-secondary">Source : gestion.html</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Statistiques edu_comico.html & gestion.html End -->
+
             </div>
         </div>
         <!-- Activities End -->
@@ -717,6 +786,108 @@
 
         <!-- Template Javascript -->
         <script src="js/main.js"></script>
+
+        <!-- Synchronisation Statistiques edu_comico.html & gestion.html Start -->
+        <script>
+            (function () {
+                function parseSafeNumber(val) {
+                    var n = Number(val);
+                    return isNaN(n) || !isFinite(n) ? 0 : n;
+                }
+
+                function extractModuleStats(rawData, fallbackCountKey, fallbackSecondKey) {
+                    var stats = { first: 0, second: 0 };
+                    if (!rawData) return stats;
+
+                    var parsed = rawData;
+                    if (typeof rawData === "string") {
+                        try {
+                            parsed = JSON.parse(rawData);
+                        } catch (e) {
+                            return stats;
+                        }
+                    }
+
+                    if (Array.isArray(parsed)) {
+                        stats.first = parsed.length;
+                        stats.second = parsed.reduce(function (acc, item) {
+                            if (!item || typeof item !== "object") return acc;
+                            var sub = item.apprenants || item.eleves || item.etudiants || item.membres || item.effectif;
+                            if (Array.isArray(sub)) return acc + sub.length;
+                            return acc + parseSafeNumber(sub || item[fallbackSecondKey] || 0);
+                        }, 0);
+                        return stats;
+                    }
+
+                    if (parsed && typeof parsed === "object") {
+                        stats.first = parseSafeNumber(
+                            parsed.madrasCount ||
+                            parsed.totalMadras ||
+                            parsed.communautesCount ||
+                            parsed.totalCommunautes ||
+                            parsed.count ||
+                            parsed[fallbackCountKey] ||
+                            (Array.isArray(parsed.items) ? parsed.items.length : 0) ||
+                            (Array.isArray(parsed.liste) ? parsed.liste.length : 0)
+                        );
+                        stats.second = parseSafeNumber(
+                            parsed.apprenantsCount ||
+                            parsed.totalApprenants ||
+                            parsed.membresCount ||
+                            parsed.totalMembres ||
+                            parsed.dossiersCount ||
+                            parsed.totalDossiers ||
+                            parsed[fallbackSecondKey] ||
+                            0
+                        );
+                    }
+                    return stats;
+                }
+
+                function refreshStatistics() {
+                    var eduRaw =
+                        localStorage.getItem("edu_comico_stats") ||
+                        localStorage.getItem("edu_comico_data") ||
+                        localStorage.getItem("comico_madras_data");
+
+                    var gestionRaw =
+                        localStorage.getItem("gestion_stats") ||
+                        localStorage.getItem("gestion_data") ||
+                        localStorage.getItem("comico_gestion_data");
+
+                    var eduStats = extractModuleStats(eduRaw, "madras", "apprenants");
+                    var gestionStats = extractModuleStats(gestionRaw, "entites", "membres");
+
+                    var elMadras = document.getElementById("stat-madras-total");
+                    var elApprenants = document.getElementById("stat-apprenants-total");
+                    var elCommunautes = document.getElementById("stat-communautes-total");
+                    var elMembres = document.getElementById("stat-membres-total");
+
+                    if (elMadras) elMadras.textContent = eduStats.first.toLocaleString("fr-FR");
+                    if (elApprenants) elApprenants.textContent = eduStats.second.toLocaleString("fr-FR");
+                    if (elCommunautes) elCommunautes.textContent = gestionStats.first.toLocaleString("fr-FR");
+                    if (elMembres) elMembres.textContent = gestionStats.second.toLocaleString("fr-FR");
+                }
+
+                window.addEventListener("storage", refreshStatistics);
+                window.addEventListener("message", function (event) {
+                    if (!event || !event.data) return;
+                    if (event.data.type === "COMICO_STATS_UPDATE") {
+                        if (event.data.eduComico !== undefined) {
+                            localStorage.setItem("edu_comico_stats", JSON.stringify(event.data.eduComico));
+                        }
+                        if (event.data.gestion !== undefined) {
+                            localStorage.setItem("gestion_stats", JSON.stringify(event.data.gestion));
+                        }
+                        refreshStatistics();
+                    }
+                });
+
+                document.addEventListener("DOMContentLoaded", refreshStatistics);
+                refreshStatistics();
+            })();
+        </script>
+        <!-- Synchronisation Statistiques edu_comico.html & gestion.html End -->
     </body>
 
 </html>
