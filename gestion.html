@@ -1129,7 +1129,9 @@
     }
 
     function normalizeAudioMime(file) {
-      if (file.type && file.type.startsWith('audio/')) return file.type;
+      if (file.type && file.type.startsWith('audio/') && file.type !== 'audio/3gpp' && file.type !== 'audio/amr') {
+        return file.type;
+      }
       const ext = (file.name || '').split('.').pop().toLowerCase();
       const map = {
         mp3: 'audio/mpeg',
@@ -1139,27 +1141,45 @@
         ogg: 'audio/ogg',
         opus: 'audio/opus',
         webm: 'audio/webm',
-        '3gp': 'audio/3gpp',
-        amr: 'audio/amr'
+        '3gp': 'audio/mp4',
+        amr: 'audio/mpeg'
       };
-      return map[ext] || 'audio/mpeg';
+      return map[ext] || (file.type && file.type.startsWith('audio/') ? file.type : 'audio/mpeg');
     }
 
     function normalizeVideoMime(file) {
-      if (file.type && file.type.startsWith('video/')) return file.type;
+      if (file.type && file.type.startsWith('video/') && !/3gpp|x-matroska|x-msvideo/.test(file.type)) {
+        return file.type;
+      }
       const ext = (file.name || '').split('.').pop().toLowerCase();
       const map = {
         mp4: 'video/mp4',
         webm: 'video/webm',
         ogg: 'video/ogg',
         ogv: 'video/ogg',
-        mov: 'video/quicktime',
+        mov: 'video/mp4',
         m4v: 'video/mp4',
-        '3gp': 'video/3gpp',
-        mkv: 'video/x-matroska',
-        avi: 'video/x-msvideo'
+        '3gp': 'video/mp4',
+        mkv: 'video/mp4',
+        avi: 'video/mp4'
       };
-      return map[ext] || 'video/mp4';
+      return map[ext] || (file.type && file.type.startsWith('video/') ? file.type : 'video/mp4');
+    }
+
+    function inferMimeFromUrl(url, kind) {
+      if (!url || typeof url !== 'string') return kind === 'audio' ? 'audio/mpeg' : 'video/mp4';
+      const matchData = url.match(/^data:([^;]+);base64,/i);
+      if (matchData && matchData[1]) return matchData[1];
+      const cleanUrl = url.split('?')[0].toLowerCase();
+      if (cleanUrl.endsWith('.webm')) return kind === 'audio' ? 'audio/webm' : 'video/webm';
+      if (cleanUrl.endsWith('.ogg') || cleanUrl.endsWith('.ogv') || cleanUrl.endsWith('.opus')) {
+        return kind === 'audio' ? 'audio/ogg' : 'video/ogg';
+      }
+      if (cleanUrl.endsWith('.m4a') || cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.3gp')) {
+        return kind === 'audio' ? 'audio/mp4' : 'video/mp4';
+      }
+      if (cleanUrl.endsWith('.wav')) return 'audio/wav';
+      return kind === 'audio' ? 'audio/mpeg' : 'video/mp4';
     }
 
     async function convertLargeMediaStream(file, contentType, ext) {
@@ -1483,10 +1503,12 @@
     function renderMediaPreview(url, kind = 'image', label = 'Fichier') {
       if (!url) return '';
       if (kind === 'audio') {
-        return `<audio controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 w-full h-9"></audio>`;
+        const mime = inferMimeFromUrl(url, 'audio');
+        return `<audio controls preload="metadata" playsinline class="mt-2 w-full h-9"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /></audio>`;
       }
       if (kind === 'video') {
-        return `<video controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 max-h-40 w-full rounded border bg-black"></video>`;
+        const mime = inferMimeFromUrl(url, 'video');
+        return `<video controls preload="metadata" playsinline class="mt-2 max-h-40 w-full rounded border bg-black"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /></video>`;
       }
       const isPdfOrDoc = typeof url === 'string' && (
         url.startsWith('data:application/pdf') ||
