@@ -446,12 +446,11 @@
       return merged;
     }
 
-    function stripHeavyMediaForStorage(rawState, maxDataLength = 120000) {
+    function stripHeavyMediaForStorage(rawState, maxDataLength = 350000) {
       const clean = { ...rawState, notification: null, mobileMenuOpen: false, topNavOpen: false };
       const isHeavyDataOrBlob = (val) => {
         if (typeof val !== 'string') return false;
         if (val.startsWith('blob:')) return true;
-        if (val.startsWith('data:video/') || val.startsWith('data:audio/')) return true;
         if (val.startsWith('data:') && val.length > maxDataLength) return true;
         return false;
       };
@@ -505,22 +504,23 @@
 
     function writeLocalBackup(rawState) {
       try {
-        const lightweight = stripHeavyMediaForStorage(rawState, 120000);
+        const lightweight = stripHeavyMediaForStorage(rawState, 350000);
         localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(lightweight));
       } catch (_) {
         try {
-          localStorage.removeItem(LOCAL_BACKUP_KEY);
-        } catch (__){}
+          const compact = stripHeavyMediaForStorage(rawState, 40000);
+          localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(compact));
+        } catch (__) {}
       }
     }
 
     let state = readLocalBackup() || structuredClone(INITIAL_STATE);
 
     function sanitizeStateForFirestore(rawState) {
-      let light = stripHeavyMediaForStorage(rawState, 180000);
+      let light = stripHeavyMediaForStorage(rawState, 350000);
       let serialized = JSON.stringify(light);
       if (serialized.length > 900000) {
-        light = stripHeavyMediaForStorage(rawState, 0);
+        light = stripHeavyMediaForStorage(rawState, 20000);
         serialized = JSON.stringify(light);
       }
       return light;
@@ -559,13 +559,13 @@
       if (firestoreSyncTimer) clearTimeout(firestoreSyncTimer);
       firestoreSyncTimer = setTimeout(() => {
         pushToFirestoreNow().catch(() => {});
-      }, 160);
+      }, 600);
       return true;
     }
 
     function notify(msg) {
       state.notification = msg;
-      saveState();
+      writeLocalBackup(state);
       renderApp();
       if (notifyTimeout) clearTimeout(notifyTimeout);
       notifyTimeout = setTimeout(() => {
@@ -618,6 +618,8 @@
           if (!docSnap.exists() || !docSnap.data()?.payload || isSyncingFromFirebase || isSavingToFirebase) return;
           const remoteRaw = docSnap.data().payload;
           if (remoteRaw === lastSerializedPayload) return;
+          const activeTag = document.activeElement?.tagName;
+          if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
           try {
             const remoteParsed = JSON.parse(remoteRaw);
             const currentNotification = state.notification;
@@ -738,25 +740,40 @@
       });
     }
 
+    function normalizeAudioMime(file) {
+      if (file.type && file.type.startsWith('audio/')) return file.type;
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const map = {
+        mp3: 'audio/mpeg',
+        m4a: 'audio/mp4',
+        aac: 'audio/aac',
+        wav: 'audio/wav',
+        ogg: 'audio/ogg',
+        opus: 'audio/opus',
+        webm: 'audio/webm',
+        '3gp': 'audio/3gpp',
+        amr: 'audio/amr'
+      };
+      return map[ext] || 'audio/mpeg';
+    }
+
     async function compressAndConvertMediaForFirebase(file, folderPath = 'gestion_media') {
       if (!file) return '';
       let payloadBlob = file;
+      let contentType = file.type || 'application/octet-stream';
       let ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase() : 'bin';
 
       try {
         if (file.type && file.type.startsWith('image/')) {
           payloadBlob = await compressImageBlob(file, 900, 0.78);
+          contentType = 'image/jpeg';
           ext = 'jpg';
+        } else if ((file.type && file.type.startsWith('audio/')) || /\.(mp3|m4a|aac|wav|ogg|opus|webm|3gp|amr)$/i.test(file.name || '')) {
+          contentType = normalizeAudioMime(file);
+          payloadBlob = new Blob([await file.arrayBuffer()], { type: contentType });
         }
       } catch (_) {
         payloadBlob = file;
-      }
-
-      let fallbackUrl = '';
-      try {
-        fallbackUrl = URL.createObjectURL(payloadBlob);
-      } catch (_) {
-        fallbackUrl = '';
       }
 
       try {
@@ -769,11 +786,18 @@
           .slice(0, 40);
         const storageRef = ref(storage, `comico/${folderPath}/${Date.now()}_${cleanBase}.${ext}`);
         const snap = await uploadBytes(storageRef, payloadBlob, {
-          contentType: payloadBlob.type || file.type || 'application/octet-stream'
+          contentType
         });
         return await getDownloadURL(snap.ref);
       } catch (_) {
-        return fallbackUrl;
+        try {
+          if (payloadBlob.size <= 320000) {
+            return await blobToDataUrl(payloadBlob);
+          }
+          return URL.createObjectURL(payloadBlob);
+        } catch (__) {
+          return '';
+        }
       }
     }
 
@@ -782,17 +806,8 @@
       if (!file) return;
 
       let uploadedRemoteUrl = '';
-      let previewUrl = '';
 
-      try {
-        previewUrl = URL.createObjectURL(file);
-      } catch (_) {
-        previewUrl = '';
-      }
-
-      if (previewUrl) {
-        callback(previewUrl);
-      } else if (file.size <= 250000) {
+      if (file.size <= 320000) {
         blobToDataUrl(file)
           .then((dataUrl) => {
             if (!uploadedRemoteUrl && dataUrl) {
@@ -800,6 +815,11 @@
             }
           })
           .catch(() => {});
+      } else {
+        try {
+          const previewUrl = URL.createObjectURL(file);
+          if (previewUrl) callback(previewUrl);
+        } catch (_) {}
       }
 
       compressAndConvertMediaForFirebase(file, folderPath)
@@ -869,10 +889,10 @@
     function renderMediaPreview(url, kind = 'image', label = 'Fichier') {
       if (!url) return '';
       if (kind === 'audio') {
-        return `<audio controls src="${escapeHtml(url)}" class="mt-2 w-full h-8"></audio>`;
+        return `<audio controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 w-full h-9"></audio>`;
       }
       if (kind === 'video') {
-        return `<video controls src="${escapeHtml(url)}" class="mt-2 max-h-32 rounded border"></video>`;
+        return `<video controls preload="metadata" playsinline src="${escapeHtml(url)}" class="mt-2 max-h-32 rounded border"></video>`;
       }
       const isPdfOrDoc = typeof url === 'string' && (
         url.startsWith('data:application/pdf') ||
@@ -949,12 +969,14 @@
         state.selectedOrganId = state.organs[0]?.id || '';
       }
       addAudit('Structure et organes', 'SUPPRESSION_ORGANE', `Suppression de l'organe ${id}`);
+      saveState();
       notify('Organe supprimé.');
     }
 
     function publishOrganigramme() {
       state.organs = state.organs.map((o) => ({ ...o, publie: true }));
       addAudit('Structure et organes', 'PUBLICATION_ORGANIGRAMME', 'Publication officielle de l’organigramme hiérarchique');
+      saveState();
       notify('Organigramme hiérarchique publié et mis à jour dans la section ci-dessous.');
     }
 
@@ -1009,6 +1031,7 @@
     function deleteMosque(id) {
       state.mosques = state.mosques.filter((m) => m.id !== id);
       addAudit('Mosquées', 'SUPPRESSION_MOSQUEE', `Suppression de la mosquée ${id}`);
+      saveState();
       notify('Mosquée supprimée du registre.');
     }
 
@@ -1035,6 +1058,7 @@
       const generatedSecret = generateSystemCodeSecret();
       state.memberForm.idNational = generatedId;
       state.memberForm.codeSecret = generatedSecret;
+      saveState();
       notify(`ID National (${generatedId}) et Code Secret (${generatedSecret}) générés.`);
     }
 
@@ -1084,6 +1108,7 @@
         state.selectedMemberId = state.members[0]?.idNational || '';
       }
       addAudit('Membres', 'SUPPRESSION_MEMBRE', `Suppression du membre ${idNational}`);
+      saveState();
       notify('Membre supprimé.');
     }
 
@@ -1111,6 +1136,7 @@
       const acte = state.leaderForm.acteNomination.trim() || generateSystemArreteNumber();
       state.leaderForm.acteNomination = acte;
       state.leaderForm.arreteSigne = true;
+      saveState();
       notify(`Arrêté N° ${acte} généré et signé par l'autorité habilitée.`);
     }
 
@@ -1162,6 +1188,7 @@
         state.selectedLeaderId = state.leaders[0]?.id || '';
       }
       addAudit('Responsables religieux', 'SUPPRESSION_RESPONSABLE', `Suppression du responsable ${id}`);
+      saveState();
       notify('Responsable religieux supprimé.');
     }
 
@@ -1211,6 +1238,7 @@
     function deleteFinance(id) {
       state.transactions = state.transactions.filter((t) => t.id !== id);
       if (state.selectedTransactionId === id) state.selectedTransactionId = state.transactions[0]?.id || '';
+      saveState();
       notify('Transaction supprimée.');
     }
 
@@ -1245,6 +1273,7 @@
     function deleteEvent(id) {
       state.events = state.events.filter((ev) => ev.id !== id);
       if (state.selectedEventId === id) state.selectedEventId = state.events[0]?.id || '';
+      saveState();
       notify('Événement supprimé.');
     }
 
@@ -1300,6 +1329,7 @@
     function deleteCertificate(id) {
       state.certificates = state.certificates.filter((c) => c.id !== id);
       if (state.selectedCertificateId === id) state.selectedCertificateId = state.certificates[0]?.id || '';
+      saveState();
       notify('Attestation supprimée.');
     }
 
@@ -1358,6 +1388,7 @@
     function deleteAudit(id) {
       state.auditLogs = state.auditLogs.filter((a) => a.id !== id);
       if (state.selectedAuditId === id) state.selectedAuditId = state.auditLogs[0]?.id || '';
+      saveState();
       notify('Entrée d’audit supprimée.');
     }
 
@@ -1392,6 +1423,7 @@
     function deleteWaqf(id) {
       state.waqfs = state.waqfs.filter((w) => w.id !== id);
       if (state.selectedWaqfId === id) state.selectedWaqfId = state.waqfs[0]?.id || '';
+      saveState();
       notify('Bien Waqf supprimé.');
     }
 
@@ -1426,6 +1458,7 @@
     function deleteHajj(id) {
       state.hajjPilgrims = state.hajjPilgrims.filter((h) => h.id !== id);
       if (state.selectedHajjId === id) state.selectedHajjId = state.hajjPilgrims[0]?.id || '';
+      saveState();
       notify('Dossier Hajj / Omra supprimé.');
     }
 
@@ -2535,13 +2568,12 @@
             ${renderActionButtons({
               formId: 'admin-form',
               onModify: `notify('Paramètres d’administration prêts à être modifiés.')`,
-              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
-              downloadName: 'administration-comico-rdc.json',
-              downloadData: '{ splitRules: state.splitRules, provinces: PROVINCES_RDC }'
+              onDelete: `state.splitRules = { locale: 50, provinciale: 30, nationale: 20 }; saveState(); renderApp(); notify('Clé de répartition réinitialisée (50/30/20).');`,
+              onDownload: `downloadJson('administration-comico-rdc.json', { splitRules: state.splitRules, provinces: PROVINCES_RDC })`
             })}
           </div>
 
-          <form id="admin-form" onsubmit="event.preventDefault(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <form id="admin-form" onsubmit="event.preventDefault(); addAudit('Administration', 'MISE_A_JOUR_PARAMETRES', 'Mise à jour de la clé de répartition (' + state.splitRules.locale + '/' + state.splitRules.provinciale + '/' + state.splitRules.nationale + ')'); saveState(); notify('Paramètres d’administration enregistrés.'); renderApp();" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Part Locale (%)</label>
               <input type="number" value="${escapeHtml(state.splitRules.locale)}" oninput="state.splitRules.locale = Number(this.value) || 0; saveState(); renderApp();" class="w-full px-3 py-2 border rounded-lg" />
