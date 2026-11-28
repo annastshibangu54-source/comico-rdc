@@ -104,12 +104,90 @@
     let cloudStatus = "Local";
     let auditIdbPromise = null;
 
+    // Cache mémoire des Blobs audio/vidéo/image par auditId et kind pour lecture instantanée et persistante
+    const auditBlobRegistry = new Map();
+    const auditObjectUrlsByKey = new Map();
+
     // Suivi des uploads audio/vidéo/image en cours pour les rattacher à l'entrée d'audit
     const pendingAuditMediaUploads = {
       audio: null,
       video: null,
       image: null
     };
+
+    function getAuditBlobKey(auditId, kind) {
+      return `${auditId}::${kind}`;
+    }
+
+    function registerAuditBlob(auditId, kind, blob) {
+      if (!auditId || !kind || !(blob instanceof Blob) || blob.size === 0) return '';
+      const key = getAuditBlobKey(auditId, kind);
+      auditBlobRegistry.set(key, blob);
+      const prevUrl = auditObjectUrlsByKey.get(key);
+      if (prevUrl) {
+        try { URL.revokeObjectURL(prevUrl); } catch (_) {}
+      }
+      const url = URL.createObjectURL(blob);
+      auditObjectUrlsByKey.set(key, url);
+      return url;
+    }
+
+    function getAuditBlobObjectUrl(auditId, kind) {
+      if (!auditId || !kind) return '';
+      const key = getAuditBlobKey(auditId, kind);
+      if (auditObjectUrlsByKey.has(key)) {
+        return auditObjectUrlsByKey.get(key);
+      }
+      const blob = auditBlobRegistry.get(key);
+      if (blob instanceof Blob && blob.size > 0) {
+        const url = URL.createObjectURL(blob);
+        auditObjectUrlsByKey.set(key, url);
+        return url;
+      }
+      return '';
+    }
+
+    function dedupeAuditLogsList(logs) {
+      if (!Array.isArray(logs)) return [];
+      const order = [];
+      const byId = new Map();
+
+      const pickMedia = (a, b) => {
+        const isHttp = (v) => typeof v === 'string' && (v.startsWith('https://') || v.startsWith('http://'));
+        const isData = (v) => typeof v === 'string' && v.startsWith('data:');
+        if (isHttp(a)) return a;
+        if (isHttp(b)) return b;
+        if (isData(a)) return a;
+        if (isData(b)) return b;
+        if (typeof a === 'string' && a.startsWith('blob:')) return a;
+        if (typeof b === 'string' && b.startsWith('blob:')) return b;
+        return a || b || '';
+      };
+
+      for (const rawItem of logs) {
+        if (!rawItem || typeof rawItem !== 'object') continue;
+        const id = rawItem.id || `AUD-${Math.floor(10000 + Math.random() * 90000)}`;
+        const item = { ...rawItem, id };
+        if (!byId.has(id)) {
+          order.push(id);
+          byId.set(id, item);
+        } else {
+          const prev = byId.get(id);
+          byId.set(id, {
+            ...prev,
+            ...item,
+            details: (item.details && item.details !== 'Pièce jointe audio enregistrée' && item.details !== 'Pièce jointe vidéo enregistrée' && item.details !== 'Pièce jointe image enregistrée')
+              ? item.details
+              : (prev.details || item.details || ''),
+            audio: pickMedia(item.audio, prev.audio),
+            video: pickMedia(item.video, prev.video),
+            image: pickMedia(item.image, prev.image)
+          });
+        }
+      }
+
+      return order.map((id) => byId.get(id));
+    }
 
     function openAuditIdb() {
       if (auditIdbPromise) return auditIdbPromise;
@@ -136,11 +214,29 @@
       try {
         const dbIdb = await openAuditIdb();
         if (!dbIdb) return;
+        const cleanLogs = dedupeAuditLogsList(logs || []).map((item) => ({
+          ...item,
+          audio: typeof item.audio === 'string' && item.audio.startsWith('blob:') ? '' : (item.audio || ''),
+          video: typeof item.video === 'string' && item.video.startsWith('blob:') ? '' : (item.video || ''),
+          image: typeof item.image === 'string' && item.image.startsWith('blob:') ? '' : (item.image || '')
+        }));
+        const blobsEntries = [];
+        for (const [k, b] of auditBlobRegistry.entries()) {
+          if (b instanceof Blob && b.size > 0) {
+            blobsEntries.push([k, b]);
+          }
+        }
         const tx = dbIdb.transaction(AUDIT_IDB_STORE, 'readwrite');
         const store = tx.objectStore(AUDIT_IDB_STORE);
         store.put({
-          auditLogs: deepClone(logs || []),
-          auditForm: deepClone(formData || {}),
+          auditLogs: deepClone(cleanLogs),
+          auditForm: deepClone({
+            ...(formData || {}),
+            audio: typeof formData?.audio === 'string' && formData.audio.startsWith('blob:') ? '' : (formData?.audio || ''),
+            video: typeof formData?.video === 'string' && formData.video.startsWith('blob:') ? '' : (formData?.video || ''),
+            image: typeof formData?.image === 'string' && formData.image.startsWith('blob:') ? '' : (formData?.image || '')
+          }),
+          auditBlobs: blobsEntries,
           updatedAt: Date.now()
         }, AUDIT_IDB_KEY);
       } catch (_) {}
@@ -162,29 +258,35 @@
       }
     }
 
-    function mergeAuditLogsWithCache(cachedLogs) {
-      if (!Array.isArray(cachedLogs) || !cachedLogs.length) return;
-      const cacheById = new Map(cachedLogs.map((item) => [item.id, item]));
-      const currentIds = new Set((state.auditLogs || []).map((item) => item.id));
-
-      const mergedExisting = (state.auditLogs || []).map((item) => {
-        const cached = cacheById.get(item.id);
-        if (!cached) return item;
-        const pickMedia = (curVal, cacheVal) => {
-          if (typeof curVal === 'string' && curVal.startsWith('http')) return curVal;
-          if (typeof cacheVal === 'string' && cacheVal.startsWith('http')) return cacheVal;
-          return curVal || cacheVal || '';
-        };
+    function hydrateAuditBlobUrlsOnState() {
+      state.auditLogs = dedupeAuditLogsList(state.auditLogs || []).map((item) => {
+        const audioBlobUrl = getAuditBlobObjectUrl(item.id, 'audio');
+        const videoBlobUrl = getAuditBlobObjectUrl(item.id, 'video');
+        const imageBlobUrl = getAuditBlobObjectUrl(item.id, 'image');
         return {
           ...item,
-          audio: pickMedia(item.audio, cached.audio),
-          video: pickMedia(item.video, cached.video),
-          image: pickMedia(item.image, cached.image)
+          audio: audioBlobUrl || ((typeof item.audio === 'string' && !item.audio.startsWith('blob:')) ? item.audio : ''),
+          video: videoBlobUrl || ((typeof item.video === 'string' && !item.video.startsWith('blob:')) ? item.video : ''),
+          image: imageBlobUrl || ((typeof item.image === 'string' && !item.image.startsWith('blob:')) ? item.image : '')
         };
       });
+      if (state.auditForm && state.auditForm.id) {
+        const fAudio = getAuditBlobObjectUrl(state.auditForm.id, 'audio');
+        const fVideo = getAuditBlobObjectUrl(state.auditForm.id, 'video');
+        const fImage = getAuditBlobObjectUrl(state.auditForm.id, 'image');
+        if (fAudio) state.auditForm.audio = fAudio;
+        if (fVideo) state.auditForm.video = fVideo;
+        if (fImage) state.auditForm.image = fImage;
+      }
+    }
 
-      const missingFromState = cachedLogs.filter((item) => !currentIds.has(item.id));
-      state.auditLogs = [...missingFromState, ...mergedExisting];
+    function mergeAuditLogsWithCache(cachedLogs) {
+      if (!Array.isArray(cachedLogs) || !cachedLogs.length) {
+        hydrateAuditBlobUrlsOnState();
+        return;
+      }
+      state.auditLogs = dedupeAuditLogsList([...(state.auditLogs || []), ...cachedLogs]);
+      hydrateAuditBlobUrlsOnState();
     }
 
     const PROVINCES_RDC = [
@@ -607,7 +709,7 @@
         imageEpouse: isHeavyDataOrBlob(c.imageEpouse) ? '' : c.imageEpouse,
         imageUnique: isHeavyDataOrBlob(c.imageUnique) ? '' : c.imageUnique
       }));
-      light.auditLogs = (light.auditLogs || []).map((a) => ({
+      light.auditLogs = dedupeAuditLogsList(light.auditLogs || []).map((a) => ({
         ...a,
         audio: isHeavyDataOrBlob(a.audio) ? '' : a.audio,
         video: isHeavyDataOrBlob(a.video) ? '' : a.video,
@@ -656,17 +758,30 @@
     }
 
     let state = readLocalBackup() || deepClone(INITIAL_STATE);
+    state.auditLogs = dedupeAuditLogsList(state.auditLogs || []);
 
     readAuditLocalCache().then((cached) => {
-      if (!cached) return;
+      if (!cached) {
+        hydrateAuditBlobUrlsOnState();
+        renderApp();
+        return;
+      }
+      if (Array.isArray(cached.auditBlobs)) {
+        for (const [k, b] of cached.auditBlobs) {
+          if (typeof k === 'string' && b instanceof Blob && b.size > 0) {
+            auditBlobRegistry.set(k, b);
+          }
+        }
+      }
       mergeAuditLogsWithCache(cached.auditLogs);
       if (cached.auditForm && typeof cached.auditForm === 'object') {
+        const formId = cached.auditForm.id || state.auditForm.id || '';
         state.auditForm = {
           ...state.auditForm,
           ...cached.auditForm,
-          audio: cached.auditForm.audio || state.auditForm.audio || '',
-          video: cached.auditForm.video || state.auditForm.video || '',
-          image: cached.auditForm.image || state.auditForm.image || ''
+          audio: (formId && getAuditBlobObjectUrl(formId, 'audio')) || cached.auditForm.audio || state.auditForm.audio || '',
+          video: (formId && getAuditBlobObjectUrl(formId, 'video')) || cached.auditForm.video || state.auditForm.video || '',
+          image: (formId && getAuditBlobObjectUrl(formId, 'image')) || cached.auditForm.image || state.auditForm.image || ''
         };
       }
       renderApp();
@@ -684,7 +799,7 @@
       if (sectionKey === 'audit') {
         const auditClean = { ...rawState, notification: null, mobileMenuOpen: false, topNavOpen: false };
         const keepAuditMedia = (val) => (isPersistentAuditMedia(val) ? val : '');
-        const items = (auditClean.auditLogs || []).map((a) => ({
+        const items = dedupeAuditLogsList(auditClean.auditLogs || []).map((a) => ({
           ...a,
           audio: keepAuditMedia(a.audio),
           video: keepAuditMedia(a.video),
@@ -752,25 +867,8 @@
           break;
         case 'audit':
           if (Array.isArray(data.items)) {
-            const localById = new Map((state.auditLogs || []).map((item) => [item.id, item]));
-            const remoteIds = new Set(data.items.map((item) => item.id));
-            const mergedRemote = data.items.map((remoteItem) => {
-              const localItem = localById.get(remoteItem.id);
-              if (!localItem) return remoteItem;
-              const pickBestMedia = (remoteVal, localVal) => {
-                if (typeof remoteVal === 'string' && remoteVal.startsWith('http')) return remoteVal;
-                if (typeof localVal === 'string' && localVal.startsWith('http')) return localVal;
-                return remoteVal || localVal || '';
-              };
-              return {
-                ...remoteItem,
-                audio: pickBestMedia(remoteItem.audio, localItem.audio),
-                video: pickBestMedia(remoteItem.video, localItem.video),
-                image: pickBestMedia(remoteItem.image, localItem.image)
-              };
-            });
-            const unsyncedLocal = (state.auditLogs || []).filter((item) => !remoteIds.has(item.id));
-            state.auditLogs = [...unsyncedLocal, ...mergedRemote];
+            state.auditLogs = dedupeAuditLogsList([...(state.auditLogs || []), ...data.items]);
+            hydrateAuditBlobUrlsOnState();
             writeAuditLocalCache(state.auditLogs, state.auditForm);
           }
           if (typeof data.selectedId === 'string') state.selectedAuditId = data.selectedId;
@@ -852,6 +950,7 @@
         : Object.keys(RUBRIQUE_DOCS);
 
       if (keys.includes('audit')) {
+        state.auditLogs = dedupeAuditLogsList(state.auditLogs || []);
         writeAuditLocalCache(state.auditLogs, state.auditForm);
       }
 
@@ -896,6 +995,9 @@
     function openRubrique(tabId) {
       state.activeTab = tabId || 'dashboard';
       state.mobileMenuOpen = false;
+      if (state.activeTab === 'audit') {
+        hydrateAuditBlobUrlsOnState();
+      }
       writeLocalBackup(state);
       renderApp();
     }
@@ -1041,6 +1143,7 @@
         video: '',
         image: ''
       });
+      state.auditLogs = dedupeAuditLogsList(state.auditLogs);
       writeAuditLocalCache(state.auditLogs, state.auditForm);
     }
 
@@ -1348,7 +1451,7 @@
         const exists = state.auditLogs.some((a) => a.id === targetId);
         if (exists) {
           state.auditLogs = state.auditLogs.map((a) =>
-            a.id === targetId ? { ...a, [kind]: url } : a
+            a.id === targetId ? { ...a, [kind]: url || a[kind] || '' } : a
           );
         } else {
           const now = new Date();
@@ -1371,16 +1474,26 @@
           });
         }
       }
+      state.auditLogs = dedupeAuditLogsList(state.auditLogs);
       return targetId;
     }
 
     function attachAuditMediaUrlToTarget(kind, url, targetAuditId = '') {
       if (!url) return;
-      state.auditForm[kind] = url;
-      const idToUpdate = targetAuditId || ensureAuditEntryForMedia(kind, url);
-      state.auditLogs = state.auditLogs.map((a) =>
-        a.id === idToUpdate ? { ...a, [kind]: url } : a
+      const idToUpdate = targetAuditId || state.auditForm.id || ensureAuditEntryForMedia(kind, url);
+      const blobUrl = getAuditBlobObjectUrl(idToUpdate, kind);
+      const effectiveUrl = blobUrl || url;
+
+      if (state.auditForm.id === idToUpdate) {
+        state.auditForm[kind] = effectiveUrl;
+      }
+
+      state.auditLogs = dedupeAuditLogsList(
+        state.auditLogs.map((a) =>
+          a.id === idToUpdate ? { ...a, [kind]: effectiveUrl } : a
+        )
       );
+
       writeLocalBackup(state);
       writeAuditLocalCache(state.auditLogs, state.auditForm);
       renderApp();
@@ -1393,46 +1506,57 @@
       const file = input && input.files && input.files[0];
       if (!file) return;
 
-      let typedBlob = file;
-      if (kind === 'audio') {
-        const mime = normalizeAudioMime(file);
-        typedBlob = file.size >= 25 * 1024 * 1024 ? file : new Blob([file], { type: mime });
-      } else if (kind === 'video') {
-        const mime = normalizeVideoMime(file);
-        typedBlob = file.size >= 25 * 1024 * 1024 ? file : new Blob([file], { type: mime });
-      } else if (file.type && file.type.startsWith('image/')) {
-        typedBlob = file;
-      }
+      const buildTypedBlob = async () => {
+        if (kind === 'audio') {
+          const mime = normalizeAudioMime(file);
+          return file.size >= 25 * 1024 * 1024 ? file : new Blob([await file.arrayBuffer()], { type: mime });
+        }
+        if (kind === 'video') {
+          const mime = normalizeVideoMime(file);
+          return file.size >= 25 * 1024 * 1024 ? file : new Blob([await file.arrayBuffer()], { type: mime });
+        }
+        if (file.type && file.type.startsWith('image/')) {
+          return await compressImageBlob(file, 900, 0.78);
+        }
+        return file;
+      };
 
       const initialAuditId = ensureAuditEntryForMedia(kind, '');
-      writeLocalBackup(state);
-      writeAuditLocalCache(state.auditLogs, state.auditForm);
 
-      let uploadedRemoteUrl = '';
-      if (typedBlob.size <= 850000) {
-        blobToDataUrl(typedBlob)
-          .then((dataUrl) => {
-            if (!uploadedRemoteUrl && dataUrl) {
-              attachAuditMediaUrlToTarget(kind, dataUrl, initialAuditId);
+      const runUploadFlow = async () => {
+        const typedBlob = await buildTypedBlob();
+        const localBlobUrl = registerAuditBlob(initialAuditId, kind, typedBlob);
+
+        if (localBlobUrl) {
+          attachAuditMediaUrlToTarget(kind, localBlobUrl, initialAuditId);
+        }
+
+        if (typedBlob.size <= 850000) {
+          try {
+            const dataUrl = await blobToDataUrl(typedBlob);
+            if (dataUrl) {
+              state.auditLogs = dedupeAuditLogsList(
+                state.auditLogs.map((a) =>
+                  a.id === initialAuditId ? { ...a, [kind]: getAuditBlobObjectUrl(initialAuditId, kind) || dataUrl } : a
+                )
+              );
+              writeLocalBackup(state);
+              await writeAuditLocalCache(state.auditLogs, state.auditForm);
             }
-          })
-          .catch(() => {});
-      } else {
-        try {
-          const blobUrl = URL.createObjectURL(typedBlob);
-          if (blobUrl) attachAuditMediaUrlToTarget(kind, blobUrl, initialAuditId);
-        } catch (_) {}
-      }
+          } catch (_) {}
+        } else {
+          await writeAuditLocalCache(state.auditLogs, state.auditForm);
+        }
 
-      const uploadPromise = compressAndConvertMediaForFirebase(file, folderPath)
-        .then((finalUrl) => {
-          if (finalUrl) {
-            uploadedRemoteUrl = finalUrl;
-            const boundId = pendingAuditMediaUploads[kind]?.boundAuditId || initialAuditId || state.auditForm.id || '';
-            attachAuditMediaUrlToTarget(kind, finalUrl, boundId);
-          }
-          return finalUrl || '';
-        })
+        const finalUrl = await compressAndConvertMediaForFirebase(file, folderPath);
+        if (finalUrl) {
+          const boundId = pendingAuditMediaUploads[kind]?.boundAuditId || initialAuditId || state.auditForm.id || '';
+          attachAuditMediaUrlToTarget(kind, finalUrl, boundId);
+        }
+        return finalUrl || localBlobUrl || '';
+      };
+
+      const uploadPromise = runUploadFlow()
         .catch(() => '')
         .finally(() => {
           if (pendingAuditMediaUploads[kind]?.promise === uploadPromise) {
@@ -2093,17 +2217,24 @@
       let savedId = f.id || '';
 
       if (f.id) {
+        const existing = state.auditLogs.find((a) => a.id === f.id);
+        const audioVal = getAuditBlobObjectUrl(f.id, 'audio') || f.audio || existing?.audio || '';
+        const videoVal = getAuditBlobObjectUrl(f.id, 'video') || f.video || existing?.video || '';
+        const imageVal = getAuditBlobObjectUrl(f.id, 'image') || f.image || existing?.image || '';
         state.auditLogs = state.auditLogs.map((a) => (a.id === f.id ? {
           ...a,
           ...f,
-          audio: f.audio || a.audio || '',
-          video: f.video || a.video || '',
-          image: f.image || a.image || ''
+          audio: audioVal,
+          video: videoVal,
+          image: imageVal
         } : a));
         state.selectedAuditId = f.id;
         notify('Entrée d’audit modifiée et enregistrée.');
       } else {
         savedId = `AUD-${Math.floor(10000 + Math.random() * 90000)}`;
+        const audioVal = getAuditBlobObjectUrl(savedId, 'audio') || f.audio || '';
+        const videoVal = getAuditBlobObjectUrl(savedId, 'video') || f.video || '';
+        const imageVal = getAuditBlobObjectUrl(savedId, 'image') || f.image || '';
         state.auditLogs.unshift({
           id: savedId,
           timestamp: ts,
@@ -2114,13 +2245,15 @@
           action: f.action,
           details: f.details,
           ip: '197.242.118.42',
-          audio: f.audio || '',
-          video: f.video || '',
-          image: f.image || ''
+          audio: audioVal,
+          video: videoVal,
+          image: imageVal
         });
         state.selectedAuditId = savedId;
         notify('Entrée d’audit enregistrée.');
       }
+
+      state.auditLogs = dedupeAuditLogsList(state.auditLogs);
 
       for (const kind of ['audio', 'video', 'image']) {
         if (pendingAuditMediaUploads[kind]) {
@@ -2148,9 +2281,9 @@
         module: target.module,
         action: target.action,
         details: target.details,
-        audio: target.audio || '',
-        video: target.video || '',
-        image: target.image || ''
+        audio: getAuditBlobObjectUrl(target.id, 'audio') || target.audio || '',
+        video: getAuditBlobObjectUrl(target.id, 'video') || target.video || '',
+        image: getAuditBlobObjectUrl(target.id, 'image') || target.image || ''
       };
       state.selectedAuditId = id;
       saveState(['audit']);
@@ -2158,7 +2291,16 @@
     }
 
     function deleteAudit(id) {
-      state.auditLogs = state.auditLogs.filter((a) => a.id !== id);
+      for (const kind of ['audio', 'video', 'image']) {
+        const key = getAuditBlobKey(id, kind);
+        auditBlobRegistry.delete(key);
+        const prevUrl = auditObjectUrlsByKey.get(key);
+        if (prevUrl) {
+          try { URL.revokeObjectURL(prevUrl); } catch (_) {}
+          auditObjectUrlsByKey.delete(key);
+        }
+      }
+      state.auditLogs = dedupeAuditLogsList(state.auditLogs.filter((a) => a.id !== id));
       if (state.selectedAuditId === id) state.selectedAuditId = state.auditLogs[0]?.id || '';
       if (state.auditForm.id === id) resetAuditForm();
       saveState(['audit']);
@@ -3329,7 +3471,8 @@
 
     function renderAudit() {
       const f = state.auditForm;
-      const selected = state.auditLogs.find((a) => a.id === state.selectedAuditId) || state.auditLogs[0] || null;
+      const auditList = dedupeAuditLogsList(state.auditLogs || []);
+      const selected = auditList.find((a) => a.id === state.selectedAuditId) || auditList[0] || null;
       const selId = selected ? selected.id : '';
       const selJsId = escapeJsStr(selId);
       return `
@@ -3390,27 +3533,32 @@
           </form>
 
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-data-only space-y-2 text-xs">
-            <h3 class="font-bold text-sm text-slate-900 mb-2">Entrées du Journal d'Audit (${state.auditLogs.length})</h3>
-            ${state.auditLogs.map(a => `
+            <h3 class="font-bold text-sm text-slate-900 mb-2">Entrées du Journal d'Audit (${auditList.length})</h3>
+            ${auditList.map(a => {
+              const audioSrc = getAuditBlobObjectUrl(a.id, 'audio') || a.audio || '';
+              const videoSrc = getAuditBlobObjectUrl(a.id, 'video') || a.video || '';
+              const imageSrc = getAuditBlobObjectUrl(a.id, 'image') || a.image || '';
+              return `
               <div onclick="state.selectedAuditId = '${escapeJsStr(a.id)}'; saveState(['audit']); renderApp();" class="p-3 rounded-lg border cursor-pointer space-y-2 ${selId === a.id ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'}">
                 <p class="font-bold text-slate-900">${escapeHtml(a.id)} • ${escapeHtml(a.timestamp)} • <span class="text-emerald-800">${escapeHtml(a.module)} / ${escapeHtml(a.action)}</span></p>
                 <p class="text-slate-600">${escapeHtml(a.details)} — Acteur : ${escapeHtml(a.acteur)} (${escapeHtml(a.province)})</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
                   <div>
                     <span class="text-[10px] font-bold text-slate-500 block">Audio</span>
-                    ${a.audio ? renderMediaPreview(a.audio, 'audio', 'Audio') : `<span class="text-[11px] text-slate-400">Aucun audio</span>`}
+                    ${audioSrc ? renderMediaPreview(audioSrc, 'audio', 'Audio') : `<span class="text-[11px] text-slate-400">Aucun audio</span>`}
                   </div>
                   <div>
                     <span class="text-[10px] font-bold text-slate-500 block">Vidéo</span>
-                    ${a.video ? renderMediaPreview(a.video, 'video', 'Vidéo') : `<span class="text-[11px] text-slate-400">Aucune vidéo</span>`}
+                    ${videoSrc ? renderMediaPreview(videoSrc, 'video', 'Vidéo') : `<span class="text-[11px] text-slate-400">Aucune vidéo</span>`}
                   </div>
                   <div>
                     <span class="text-[10px] font-bold text-slate-500 block">Image</span>
-                    ${a.image ? renderMediaPreview(a.image, 'image', 'Image audit') : `<span class="text-[11px] text-slate-400">Aucune image</span>`}
+                    ${imageSrc ? renderMediaPreview(imageSrc, 'image', 'Image audit') : `<span class="text-[11px] text-slate-400">Aucune image</span>`}
                   </div>
                 </div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         </div>
       `;
@@ -3608,6 +3756,7 @@
       if (!appEl) return;
 
       try {
+        const auditCount = dedupeAuditLogsList(state.auditLogs || []).length;
         const navSections = [
           {
             title: 'Pilotage & Vue Globale',
@@ -3623,7 +3772,7 @@
               { id: 'finance', label: '5. Finance & Zakat', badge: state.transactions.length },
               { id: 'events', label: '6. Événements et fêtes', badge: state.events.length },
               { id: 'certificates', label: '7. Attestations religieuses', badge: state.certificates.length },
-              { id: 'audit', label: "8. Journal d'audit", badge: state.auditLogs.length },
+              { id: 'audit', label: "8. Journal d'audit", badge: auditCount },
               { id: 'admin', label: '9. Administration' }
             ]
           },
@@ -3757,6 +3906,7 @@
       writeLocalBackup,
       writeAuditLocalCache,
       readAuditLocalCache,
+      dedupeAuditLogsList,
       saveState,
       pushSectionToFirestore,
       pushAllSectionsToFirestore,
