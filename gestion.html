@@ -1504,11 +1504,11 @@
       if (!url) return '';
       if (kind === 'audio') {
         const mime = inferMimeFromUrl(url, 'audio');
-        return `<audio controls preload="metadata" playsinline class="mt-2 w-full h-9"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /></audio>`;
+        return `<audio controls preload="metadata" playsinline class="mt-2 w-full h-9" onerror="try{this.removeAttribute('type');this.load();}catch(_){}"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /><source src="${escapeHtml(url)}" /></audio>`;
       }
       if (kind === 'video') {
         const mime = inferMimeFromUrl(url, 'video');
-        return `<video controls preload="metadata" playsinline class="mt-2 max-h-40 w-full rounded border bg-black"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /></video>`;
+        return `<video controls preload="metadata" playsinline class="mt-2 max-h-40 w-full rounded border bg-black" onerror="try{this.removeAttribute('type');this.load();}catch(_){}"><source src="${escapeHtml(url)}" type="${escapeHtml(mime)}" /><source src="${escapeHtml(url)}" /></video>`;
       }
       const isPdfOrDoc = typeof url === 'string' && (
         url.startsWith('data:application/pdf') ||
@@ -3726,6 +3726,9 @@
             </div>
           </div>
         `;
+        appEl.querySelectorAll('audio, video').forEach((mediaEl) => {
+          try { mediaEl.load(); } catch (_) {}
+        });
       } catch (err) {
         console.error("Render error:", err);
         appEl.innerHTML = `
